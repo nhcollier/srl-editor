@@ -52,6 +52,10 @@ public class Literal implements TypeExpr {
     public void reset() {
        
     }
+    
+    public String getVal() {
+        return literal;
+    }
 
     @Override
     public String toString() {

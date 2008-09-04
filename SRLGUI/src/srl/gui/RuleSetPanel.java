@@ -20,7 +20,9 @@ import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentListener;
 import mccrae.tools.process.StopSignal;
+import mccrae.tools.strings.Strings;
 import mccrae.tools.struct.Pair;
+import org.apache.lucene.analysis.TokenStream;
 import srl.rule.parser.ParseException;
 import srl.corpus.*;
 import srl.rule.parser.TokenMgrError;
@@ -336,6 +338,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                 rule.comment = commentField.getText();
                 ruleSet.rules.get(oldSelectIndex).second = rule;
                 ruleSet.rules.get(oldSelectIndex).first = idEditor.getText();
+                validateRule(rule);
             } catch (ParseException x) {
                 if (JOptionPane.showConfirmDialog(this, "Rule syntax is not correct, discard changes?", "Can't save rule", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
                     int temp = oldSelectIndex;
@@ -383,6 +386,7 @@ private void ruleEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             String ruleID = ruleSet.rules.get(ruleIDList.getSelectedIndex()).first;
             dlm.setElementAt(ruleID + ": " + rule.toString(), ruleIDList.getSelectedIndex());
             rule.comment = commentField.getText();
+            validateRule(rule);
             SRLGUIApp.getApplication().setModified();
             if (matcherThread != null && matcherThread.isAlive()) {
                 matchFinder.sig.stop();
@@ -397,7 +401,33 @@ private void ruleEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         }
     
 }//GEN-LAST:event_ruleEditorActionPerformed
-    private Thread matcherThread;
+
+    private void validateRule(Rule rule) {
+        for(TypeExpr te : rule.body) {
+            if(te instanceof Literal) {
+                Literal l = (Literal)te;
+                TokenStream ts = SRLGUIApp.getApplication().proj.corpus.getProcessor().getTokenStream(l.getVal());
+                List<String> tokens = new LinkedList<String>();
+                while(true) {
+                    try {
+                        org.apache.lucene.analysis.Token s = ts.next();
+                        if(s == null)
+                            break;
+                        tokens.add(s.termText());
+                    } catch(IOException x) {
+                        x.printStackTrace();
+                        break;
+                    }
+                }
+                if(tokens.size() != 1) {
+                    JOptionPane.showMessageDialog(this, "Literal is not single token so will not match: \n\"" + l.getVal() +
+                            "\" should be \"" + Strings.join("\" \"", tokens) + "\"", "Invalid literal", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        }
+    }
+
+private Thread matcherThread;
     private RuleMatchFinder matchFinder;
 
     private void onRuleSelect() {

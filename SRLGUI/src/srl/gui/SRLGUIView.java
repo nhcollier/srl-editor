@@ -10,9 +10,8 @@
  */
 package srl.gui;
 
-import java.awt.Component;
-import java.awt.HeadlessException;
-import java.awt.MenuItem;
+import java.awt.*;
+import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import org.jdesktop.application.Action;
 import org.jdesktop.application.ResourceMap;
@@ -73,6 +72,7 @@ public class SRLGUIView extends FrameView {
         ruleSetIcon = resourceMap.getIcon("srl.ruleSetIcon");
         wordListIcon = resourceMap.getIcon("srl.wordListIcon");
         corpusIcon = resourceMap.getIcon("srl.corpusIcon");
+        closeTabIcon = resourceMap.getIcon("srl.closeTabIcon");
 
         // connecting action tasks to status bar via TaskMonitor
         TaskMonitor taskMonitor = new TaskMonitor(getApplication().getContext());
@@ -540,7 +540,12 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         } else {
             Component c = new CorpusDocumentPanel();
             rightPane.addTab("Corpus", corpusIcon, c);
-            rightPane.setTabComponentAt(rightPane.getTabCount() - 1, new CloseTabButton(SRLGUIApp.SRL_CORPUS, "Corpus"));
+            try {
+                rightPane.setTabComponentAt(rightPane.getTabCount() - 1, new CloseTabButton(SRLGUIApp.SRL_CORPUS, "Corpus",corpusIcon));
+            } catch(NoSuchMethodError e) {
+                // Java 1.5 compatibility
+                rightPane.setIconAt(rightPane.getTabCount() - 1, new CloseTabIcon());
+            }
             rightPane.setSelectedComponent(c);
         }
     }
@@ -552,11 +557,79 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         } else {
             Component c = new WordListPanel(SRLGUIApp.getApplication().wordLists.get(wordListName));
             rightPane.addTab(wordListName, wordListIcon, c);
-            rightPane.setTabComponentAt(rightPane.getTabCount() - 1, new CloseTabButton(SRLGUIApp.SRL_WORDLIST, wordListName));
+            try {
+                rightPane.setTabComponentAt(rightPane.getTabCount() - 1, new CloseTabButton(SRLGUIApp.SRL_WORDLIST, wordListName,wordListIcon));
+            } catch(NoSuchMethodError e) {
+                // Java 1.5 compatibility
+                rightPane.setIconAt(rightPane.getTabCount() - 1, new CloseTabIcon());
+            }
             rightPane.setSelectedComponent(c);
         }
     }
 
+    private class CloseTabIcon implements Icon {
+ 
+	private final Icon icon;
+	private JTabbedPane tabbedPane = null;
+	private transient Rectangle position = null;
+ 
+	/**
+	 * Creates a new instance of CloseTabIcon.
+	 */
+	public CloseTabIcon() {
+		this.icon = closeTabIcon;
+	}
+ 
+	/**
+	 * when painting, remember last position painted so we can see if the user clicked on the icon.
+	 */
+	public void paintIcon(Component component, Graphics g, int x, int y) {
+ 
+		// Lazily create a link to the owning JTabbedPane and attach a listener to it, so clicks on the
+		// selector tab can be intercepted by this code.
+		if (tabbedPane == null) {
+			tabbedPane = (JTabbedPane) component;
+ 
+			tabbedPane.addMouseListener(new MouseAdapter() {
+ 
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					// asking for isConsumed is *very* important, otherwise more than one tab might get closed!
+					if (! e.isConsumed() && position.contains(e.getX(), e.getY())) {
+						Component p = tabbedPane.getSelectedComponent();
+						if (p instanceof Closeable) {
+                                                    if (!((Closeable) p).onClose()) {
+                                                        e.consume();
+                                                        return;
+                                                    }
+                                                }
+                                                rightPane.remove(p);
+						e.consume();
+					}
+				}
+			});
+		}
+ 
+		position = new Rectangle(x, y, getIconWidth(), getIconHeight());
+		icon.paintIcon(component, g, x, y);
+	}
+ 
+	/**
+	 * just delegate
+	 */
+	public int getIconWidth() {
+		return icon.getIconWidth();
+	}
+ 
+	/**
+	 * just delegate
+	 */
+	public int getIconHeight() {
+		return icon.getIconHeight();
+	}
+ 
+    }
+    
     private void openRuleSetPane(String ruleSetName, int ruleType) {
         JPanel p = getPanel(ruleType + 1, ruleSetName);
         if (p != null) {
@@ -570,7 +643,12 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             }
             Component c = new RuleSetPanel(rs);
             rightPane.addTab(ruleSetName, ruleSetIcon, c);
-            rightPane.setTabComponentAt(rightPane.getTabCount() - 1, new CloseTabButton(ruleType + 1, ruleSetName));
+            try {
+                rightPane.setTabComponentAt(rightPane.getTabCount() - 1, new CloseTabButton(ruleType + 1, ruleSetName,ruleSetIcon));
+            } catch(NoSuchMethodError e) {
+                // Java 1.5 compatibility
+                rightPane.setIconAt(rightPane.getTabCount() - 1, new CloseTabIcon());
+            }
             rightPane.setSelectedComponent(c);
         }
     }
@@ -1068,6 +1146,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private final Icon ruleSetIcon;
     private final Icon wordListIcon;
     private final Icon corpusIcon;
+    private final Icon closeTabIcon;
     private int busyIconIndex = 0;
     private JDialog aboutBox;
 }

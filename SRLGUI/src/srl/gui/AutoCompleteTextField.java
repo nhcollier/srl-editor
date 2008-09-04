@@ -39,111 +39,124 @@ public class AutoCompleteTextField extends JTextField {
             entitiesKeyWords.add(s);
         }
         getCaret().addChangeListener(new ChangeListener() {
+
             AutoCompleteTextField actf = AutoCompleteTextField.this;
+
             public void stateChanged(ChangeEvent e) {
-                if(!showPopupMenu)
+                if (!showPopupMenu) {
                     return;
+                }
                 Point p = getCaret().getMagicCaretPosition();
                 if (popupMenu != null && p != null) {
-                        Point p2 = actf.getLocationOnScreen();
-			popupMenu.setLocation(new Point(p2.x + p.x, p2.y + actf.getHeight()));
-			popupMenu.setVisible(true);
+                    Point p2 = actf.getLocationOnScreen();
+                    popupMenu.setLocation(new Point(p2.x + p.x, p2.y + actf.getHeight()));
+                    popupMenu.setVisible(true);
                 }
             }
         });
         addKeyListener(new KeyAdapter() {
+
             public void keyPressed(KeyEvent e) {
-                if(e.getKeyCode() == KeyEvent.VK_DOWN) {
-                    if(popupMenu.isVisible()) {
+                if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                    if (popupMenu.isVisible()) {
                         int selIdx = popupMenu.theList.getSelectedIndex();
-                        if(selIdx + 1 >= popupMenu.theList.getModel().getSize()) {
+                        if (selIdx + 1 >= popupMenu.theList.getModel().getSize()) {
                             selIdx = 0;
                         } else {
                             selIdx++;
                         }
                         popupMenu.theList.setSelectedIndex(selIdx);
                     }
-                } else if(e.getKeyCode() == KeyEvent.VK_UP) {
-                    if(popupMenu.isVisible()) {
+                } else if (e.getKeyCode() == KeyEvent.VK_UP) {
+                    if (popupMenu.isVisible()) {
                         int selIdx = popupMenu.theList.getSelectedIndex();
-                        if(selIdx <= 0) {
+                        if (selIdx <= 0) {
                             selIdx = popupMenu.theList.getModel().getSize() - 1;
                         } else {
                             selIdx--;
                         }
                         popupMenu.theList.setSelectedIndex(selIdx);
                     }
-                } else if(e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     popupMenu.setVisible(false);
-                } else if(e.getKeyCode() == KeyEvent.VK_SPACE) {
-                    if(popupMenu.isVisible()) {
-                        if(getText().matches(".* "))
-                            setText(getText().substring(0, getText().length()-1));
-                        ignoreNextSpace = true;
-                        complete((String)popupMenu.theList.getSelectedValue());
+                } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    if (popupMenu != null && popupMenu.isVisible()) {
+                        if (getText().matches(".* ")) {
+                            setText(getText().substring(0, getText().length() - 1));
+                        }
+                        if(popupMenu.theList.getSelectedValue()!= null) {
+                            complete((String) popupMenu.theList.getSelectedValue());
+                            ignoreNextSpace = true;
+                        }
                     }
-                }
-            }    
-        });
-        SrlProject proj = SRLGUIApp.getApplication().proj;
-        for(Pair<String,String> ent : proj.entities) {
-            entitiesKeyWords.add(ent.first);
-            if(!entityValues.containsKey(ent.first))
-                entityValues.put(ent.first, new TreeSet<String>());
-            entityValues.get(ent.first).add(ent.second);
-        }
-        proj.entities.addCollectionChangeListener(new CollectionChangeListener<Pair<String, String>>() {
-
-            public void collectionChanged(CollectionChangeEvent<Pair<String, String>> e) {
-                if(e.getOldVal() != null) {
-                    entitiesKeyWords.remove(e.getOldVal().first);
-                    entityValues.remove(e.getOldVal().first);
-                }
-                if(e.getNewVal() != null) {
-                    entitiesKeyWords.add(e.getNewVal().first);
-                    if(!entityValues.containsKey(e.getNewVal().first)) {
-                        entityValues.put(e.getNewVal().first,new TreeSet<String>());
-                    }
-                    entityValues.get(e.getNewVal().first).add(e.getNewVal().second);
                 }
             }
         });
-        for(WordList wl : proj.wordlists) {
-            wl.wordLists.addCollectionChangeListener(new WLCCL());
-            for(String s: wl.wordLists.keySet())
-                wordLists.add(s);
-        }
-        proj.wordlists.addCollectionChangeListener(new CollectionChangeListener<WordList>() {
+        try {
+            SrlProject proj = SRLGUIApp.getApplication().proj;
+            for (Pair<String, String> ent : proj.entities) {
+                entitiesKeyWords.add(ent.first);
+                if (!entityValues.containsKey(ent.first)) {
+                    entityValues.put(ent.first, new TreeSet<String>());
+                }
+                entityValues.get(ent.first).add(ent.second);
+            }
+            proj.entities.addCollectionChangeListener(new CollectionChangeListener<Pair<String, String>>() {
 
-            public void collectionChanged(CollectionChangeEvent<WordList> e) {
-                if(e.getNewVal() != null) {
-                    e.getNewVal().wordLists.addCollectionChangeListener(new WLCCL());
+                public void collectionChanged(CollectionChangeEvent<Pair<String, String>> e) {
+                    if (e.getOldVal() != null) {
+                        entitiesKeyWords.remove(e.getOldVal().first);
+                        entityValues.remove(e.getOldVal().first);
+                    }
+                    if (e.getNewVal() != null) {
+                        entitiesKeyWords.add(e.getNewVal().first);
+                        if (!entityValues.containsKey(e.getNewVal().first)) {
+                            entityValues.put(e.getNewVal().first, new TreeSet<String>());
+                        }
+                        entityValues.get(e.getNewVal().first).add(e.getNewVal().second);
+                    }
+                }
+            });
+            for (WordList wl : proj.wordlists) {
+                wl.wordLists.addCollectionChangeListener(new WLCCL());
+                for (String s : wl.wordLists.keySet()) {
+                    wordLists.add(s);
                 }
             }
-        });
+            proj.wordlists.addCollectionChangeListener(new CollectionChangeListener<WordList>() {
+
+                public void collectionChanged(CollectionChangeEvent<WordList> e) {
+                    if (e.getNewVal() != null) {
+                        e.getNewVal().wordLists.addCollectionChangeListener(new WLCCL());
+                    }
+                }
+            });
+        } catch (Exception x) {
+            x.printStackTrace();
+        }
     }
 
     private class WLCCL implements CollectionChangeListener<ListenableSet<WordList.Entry>> {
 
         public void collectionChanged(CollectionChangeEvent<ListenableSet<WordList.Entry>> e) {
-            if(e.getOldVal() != null) {
+            if (e.getOldVal() != null) {
                 wordLists.remove(e.getReference());
-            } 
-            if(e.getNewVal() != null) {
-                wordLists.add((String)e.getReference());
+            }
+            if (e.getNewVal() != null) {
+                wordLists.add((String) e.getReference());
             }
         }
-        
     }
-    
+
     private void showMatches(SortedSet<String> matches) {
         if (matches == null || matches.size() == 1 && getText().matches(".*" + matches.first())) {
-            if(popupMenu != null)
+            if (popupMenu != null) {
                 popupMenu.setVisible(false);
+            }
             showPopupMenu = false;
             return; // Already there exactly
         }
-        if(popupMenu == null) {
+        if (popupMenu == null) {
             popupMenu = new PopUpWindow();
             Point p2 = getLocationOnScreen();
             popupMenu.setLocation(new Point(p2.x, p2.y + getHeight()));
@@ -154,7 +167,7 @@ public class AutoCompleteTextField extends JTextField {
     }
 
     private void onTextChange() {
-        String text = getText().substring(0,getCaretPosition());
+        String text = getText().substring(0, getCaretPosition());
         if (text.matches(".* [a-z][A-Za-z0-9]*")) {
             Matcher m = Pattern.compile(".* ([a-z][A-Za-z0-9]*)").matcher(text);
             m.matches();
@@ -162,10 +175,11 @@ public class AutoCompleteTextField extends JTextField {
         } else if (text.matches(".* (strmatches|approx)?\\s*\\(\\s*@\\w*")) {
             Matcher m = Pattern.compile(".* (strmatches|approx)?\\s*\\(\\s*@(\\w*)").matcher(text);
             m.matches();
-            if(m.group(2) != null && m.group(2).length() > 0)
+            if (m.group(2) != null && m.group(2).length() > 0) {
                 showMatches(wordLists.subSet(m.group(2), m.group(2) + "{"));
-            else
+            } else {
                 showMatches(wordLists);
+            }
         } else {
             Matcher m = Pattern.compile(".* ([a-z][A-Za-z0-9]*)\\((\\w*)").matcher(text);
             if (!m.matches() || entityValues.get(m.group(1)) == null) {
@@ -187,17 +201,18 @@ public class AutoCompleteTextField extends JTextField {
     public TreeSet<String> getWordLists() {
         return wordLists;
     }
-    
+
     protected void complete(String s) {
         int end = -1;
-        String text = getText().substring(0,getCaretPosition());
-        for(int i = 0; i <= s.length(); i++) {
-            if(text.matches(".*" + s.substring(0,i)))
+        String text = getText().substring(0, getCaretPosition());
+        for (int i = 0; i <= s.length(); i++) {
+            if (text.matches(".*" + s.substring(0, i))) {
                 end = i;
+            }
         }
         int oldCaret = getCaretPosition();
-        setText(text + s.substring(end,s.length()) + getText().substring(getCaretPosition(),getText().length()));
-        setCaretPosition(oldCaret + s.length()-end);
+        setText(text + s.substring(end, s.length()) + getText().substring(getCaretPosition(), getText().length()));
+        setCaretPosition(oldCaret + s.length() - end);
         popupMenu.setVisible(false);
     }
 
@@ -233,8 +248,8 @@ public class AutoCompleteTextField extends JTextField {
             theList.addKeyListener(new KeyAdapter() {
 
                 public void keyPressed(KeyEvent e) {
-                    if(e.getKeyCode() == KeyEvent.VK_ENTER) {
-                        complete((String)theList.getSelectedValue());
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        complete((String) theList.getSelectedValue());
                     }
                 }
             });
@@ -278,8 +293,7 @@ public class AutoCompleteTextField extends JTextField {
 
         public void insertString(int i, String s, AttributeSet attributeSet)
                 throws BadLocationException {
-            System.out.println(s);
-            if(ignoreNextSpace && s.matches(" ")) {
+            if (ignoreNextSpace && s.matches(" ")) {
                 ignoreNextSpace = false;
                 return;
             }

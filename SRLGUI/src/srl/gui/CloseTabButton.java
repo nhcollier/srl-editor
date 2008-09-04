@@ -26,12 +26,18 @@ public class CloseTabButton extends JPanel {
     final int tabType;
     final String tabName;
 
-    public CloseTabButton(int tabType, String tabName) {
+    public CloseTabButton(int tabType, String tabName, Icon icon) {
         //unset default FlowLayout' gaps
         super(new FlowLayout(FlowLayout.LEFT, 0, 0));
         this.tabType = tabType;
         this.tabName = tabName;
         setOpaque(false);
+        
+        JButton iconButton = new JButton();
+        iconButton.setIcon(icon);
+        iconButton.setBorderPainted(false);
+        iconButton.setBorder(BorderFactory.createEmptyBorder(0, 0,0,5));
+        add(iconButton);
         
         //make JLabel read titles from JTabbedPane
         JLabel label = new JLabel(tabName);

@@ -31,7 +31,7 @@ public class WordListPanel extends javax.swing.JPanel {
 
     /** Creates new form WordListPanel */
     public WordListPanel(WordList wordList) {
-        oldTable = new LinkedList<String>();
+        oldTable = new Vector<String>();
         wl = wordList;
         initComponents();
         int i = 0;
@@ -278,6 +278,7 @@ public class WordListPanel extends javax.swing.JPanel {
         if (!userChangeFlag) {
             return;
         }
+        System.out.println(oldTable);
         String list = (String) listCombo.getSelectedItem();
         if (!wl.wordLists.containsKey(list)) {
             return;
@@ -297,7 +298,7 @@ public class WordListPanel extends javax.swing.JPanel {
                 userChangeFlag = false;
                 ((DefaultTableModel) mainList.getModel()).removeRow(idx);
                 wordList.remove(oldWle);
-                oldTable.remove(oldVal);
+                oldTable.remove(idx);
                 SRLGUIApp.getApplication().setModified();
                 userChangeFlag = true;
                 return;
@@ -307,9 +308,11 @@ public class WordListPanel extends javax.swing.JPanel {
             } else {
                 userChangeFlag = false;
                 DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
-                String[] rowData = {""};
-                dlm.addRow(rowData);
-                oldTable.add("");
+                if(!oldTable.get(oldTable.size()-1).equals("") || oldTable.size()-1 == idx) {
+                    String[] rowData = {""};
+                    dlm.addRow(rowData);
+                    oldTable.add("");
+                }
                 userChangeFlag = true;
             }
         } catch (Exception x) {
@@ -317,7 +320,7 @@ public class WordListPanel extends javax.swing.JPanel {
             return;
         }
         wl.wordLists.get(list).add(wl.getEntry(newVal));
-        oldTable.add(oldTable.size() - 2, newVal);
+        oldTable.set(idx, newVal);
         SRLGUIApp.getApplication().setModified();
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
