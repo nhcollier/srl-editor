@@ -10,10 +10,11 @@
  */
 package srl.rule;
 
-import mccrae.tools.strings.Strings;
+import java.util.Stack;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 import java.util.regex.*;
+import mccrae.tools.struct.Pair;
 
 /**
  *
@@ -34,7 +35,7 @@ public class StrMatchOrtho implements TypeExpr {
     public void getQuery(SrlQuery query) {
     }
 
-    public TypeExpr matches(Token token, int no) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
         for(String exp : expressions) {
             if(!token.termText().matches(exp))
                 return null;

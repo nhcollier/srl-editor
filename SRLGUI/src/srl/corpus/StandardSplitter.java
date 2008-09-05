@@ -122,6 +122,7 @@ public class StandardSplitter implements Splitter {
                  currentToken = tokIter.next();
              }
          }
+         currentSentence.add(currentToken);
          if(!currentSentence.isEmpty())
             rval.add(currentSentence);
          return rval;

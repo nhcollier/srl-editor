@@ -151,6 +151,7 @@ void readNERules(RuleSet ruleSet) :
        ruleSet.rules.add(new Pair<String,Rule>(ruleID.image, r));
        r.comment = comment.toString();
        comment = new StringBuffer();
+       typeExpr(r);
      } 
     |
      ruleID = <COMMENT>

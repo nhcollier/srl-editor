@@ -12,7 +12,8 @@ package srl.rule;
 
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
-
+import java.util.*;
+import mccrae.tools.struct.*;
 
 /**
  *
@@ -33,7 +34,7 @@ public class Literal implements TypeExpr {
         query.query.append(literal);
     }
 
-    public TypeExpr matches(Token token, int no) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
         if(token.termText().toLowerCase().equals(literal.toLowerCase())) {
             return next;
         } else {

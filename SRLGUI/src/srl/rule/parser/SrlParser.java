@@ -138,6 +138,7 @@ boolean cleanHead = false;
        ruleSet.rules.add(new Pair<String,Rule>(ruleID.image, r));
        r.comment = comment.toString();
        comment = new StringBuffer();
+       typeExpr(r);
         break;
       case COMMENT:
         ruleID = jj_consume_token(COMMENT);

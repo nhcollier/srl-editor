@@ -10,6 +10,8 @@
  */
 package srl.rule;
 
+import java.util.Stack;
+import mccrae.tools.struct.Pair;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 
@@ -30,7 +32,7 @@ public class StrMatchRegex implements TypeExpr {
     public void getQuery(SrlQuery query) {
     }
 
-    public TypeExpr matches(Token token, int no) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
         if(token.termText().matches(expression)) {
             return next;
         } else {

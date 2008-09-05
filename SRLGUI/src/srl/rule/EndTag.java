@@ -6,6 +6,8 @@ package srl.rule;
 
 import org.apache.lucene.analysis.Token;
 import srl.corpus.*;
+import java.util.*;
+import mccrae.tools.struct.*;
 
 
 /**
@@ -23,7 +25,7 @@ public class EndTag implements TypeExpr {
     public void getQuery(SrlQuery query) {
     }
 
-    public TypeExpr matches(Token token, int tokenNo) {
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
         if(token instanceof EndTagToken) {
             EndTagToken ett = (EndTagToken)token;
             if(ett.type.equals(entityType))

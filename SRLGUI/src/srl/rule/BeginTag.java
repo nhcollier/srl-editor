@@ -13,6 +13,7 @@ package srl.rule;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.*;
 import mccrae.tools.struct.*;
+import java.util.*;
 
 /**
  *
@@ -32,7 +33,7 @@ public class BeginTag implements TypeExpr {
         query.entities.add(new Pair<String,String>(entityType,entityValue));
     }
 
-    public TypeExpr matches(Token token, int tokenNo) {
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
         if(token instanceof BeginTagToken) {
             BeginTagToken btt = (BeginTagToken)token;
             if(btt.type.equals(entityType) && btt.type.equals(entityValue))

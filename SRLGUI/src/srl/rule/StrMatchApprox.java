@@ -13,6 +13,7 @@ package srl.rule;
 import srl.corpus.SrlQuery;
 import srl.wordlist.*;
 import java.util.*;
+import mccrae.tools.struct.Pair;
 import org.apache.lucene.analysis.Token;
 
 /**
@@ -35,7 +36,7 @@ public class StrMatchApprox implements TypeExpr {
         query.wordLists.add(wordListName);
     }
 
-    public TypeExpr matches(Token token, int no) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
         Set<WordList.Entry> list = WordList.getWordList(wordListName);
         for(WordList.Entry wle : list) {
             String s = wle.toString();

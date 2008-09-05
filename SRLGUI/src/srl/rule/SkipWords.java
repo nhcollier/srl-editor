@@ -10,6 +10,8 @@
 */
 package srl.rule;
 
+import java.util.Stack;
+import mccrae.tools.struct.Pair;
 import srl.corpus.SrlQuery;
 import org.apache.lucene.analysis.Token;
 
@@ -30,13 +32,21 @@ public class SkipWords implements TypeExpr {
     public void getQuery(SrlQuery query) {
     }
 
-    public TypeExpr matches(Token token, int no) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
 	if(i < min) {
 	    i++;
 	    return this;
 	} 
-        TypeExpr te = next.matches(token,no);
+        if(!stack.empty() && 
+                stack.contains(new MatchFork(no,this))) {
+            stack.peek().split(no, this);
+            i++;
+            return this;
+        }
+        TypeExpr te = next.matches(token,no,stack);
         if(te != null) {
+            if(stack.empty() || stack.peek().tokenNo < no)
+                stack.push(new MatchFork(no,this));
             // We have already matched to our next state, so we go straight on
             return te;
         } else if(i < max) {
@@ -62,7 +72,7 @@ public class SkipWords implements TypeExpr {
 
     @Override
     public String toString() {
-        return "words(" + (min == 0 ? "" : min) + "," + (min == Integer.MAX_VALUE ? "" : max) + ")";
+        return "words(" + (min == 0 ? "" : min) + "," + (max == Integer.MAX_VALUE ? "" : max) + ")";
     }
     
     public boolean canEnd() {

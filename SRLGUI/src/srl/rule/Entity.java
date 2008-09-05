@@ -16,6 +16,7 @@ import srl.corpus.SrlQuery;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.BeginTagToken;
 import srl.corpus.EndTagToken;
+import mccrae.tools.struct.*;
 
 /**
  *
@@ -60,8 +61,8 @@ public class Entity implements TypeExpr, Expr {
         }
     }
 
-    public TypeExpr matches(Token token, int tokenNo) {
-	current = current.matches(token, tokenNo);
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
+	current = current.matches(token, tokenNo,stack);
         if(current == null)
             return null;
 	if(match.beginRegion < 0) {
@@ -191,8 +192,8 @@ class EntitySuccessState implements TypeExpr {
         throw new IllegalStateException();
     }
 
-    public TypeExpr matches(Token token, int no) {
-        TypeExpr te = next.matches(token,no);
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
+        TypeExpr te = next.matches(token,no,stack);
         if(te == null) 
             next.reset();
         return te;

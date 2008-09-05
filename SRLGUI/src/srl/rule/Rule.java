@@ -102,19 +102,33 @@ public class Rule implements Expr {
         TypeExpr typeExpr;
         ListIterator<Token> iter1 = sentence.listIterator();
         LinkedList<HashMap<Entity, SrlMatchRegion>> rval = new LinkedList<HashMap<Entity, SrlMatchRegion>>();
-        int i = 0;
+        Stack<MatchFork> stack = new Stack<MatchFork>();
+        int i = -1;
+        Token tk = null;
         MAIN: while (iter1.hasNext()) {
-            Token tk = iter1.next();
+            while(!stack.empty() && stack.peek().used) {
+                stack.pop();
+            }
+            // If the stack is not empty, keep looping until it is
+            if(stack.empty()) {
+                // Read next token
+                tk = iter1.next();
+                i++;
+            }
+            // Ignore empty tokens, do not count tag tokens
             if (!(tk instanceof BeginTagToken) && !(tk instanceof EndTagToken) && tk.termText().matches("\\s*")) {
                 continue;
-            } else if (tk instanceof BeginTagToken || tk instanceof EndTagToken) {
+            } else if ((tk instanceof BeginTagToken || tk instanceof EndTagToken) && stack.empty()) {
                 i--;
             }
+            // Reset search
             if(body.isEmpty())
                 return rval;
             typeExpr = body.get(0);
             resetSearch();
-            if ((typeExpr = typeExpr.matches(tk, i++)) != null) {
+            // Match first token
+            if ((typeExpr = typeExpr.matches(tk, i, stack)) != null) {
+                // Check for single token match
                 if (typeExpr == successState) {
                     onMatch(rval);
                     if (firstOnly) {
@@ -122,22 +136,24 @@ public class Rule implements Expr {
                     }
                     continue;
                 }
-                int j = i;
+                // Otherwise carry on matching
+                int j = i+1;
                 Iterator<Token> iter2 = sentence.listIterator(iter1.nextIndex());
                 while (iter2.hasNext()) {
-                    tk = iter2.next();
+                    Token tk2 = iter2.next();
                     // Skip whitespace tokens
-                    if (!(tk instanceof BeginTagToken) && !(tk instanceof EndTagToken) && tk.termText().matches("\\s*")) {
+                    if (!(tk2 instanceof BeginTagToken) && !(tk2 instanceof EndTagToken) && tk2.termText().matches("\\s*")) {
                         j++;
                         continue;
-                    } else if (tk instanceof BeginTagToken || tk instanceof EndTagToken) {
+                    } else if (tk2 instanceof BeginTagToken || tk2 instanceof EndTagToken) {
                         j--;
                     }
                     if (typeExpr == null) {
                         break;
                     } // Match failed
 
-                    typeExpr = typeExpr.matches(tk, j++);
+                    // Check next token
+                    typeExpr = typeExpr.matches(tk2, j++,stack);
                     if (typeExpr == successState) {
                         onMatch(rval);
                         if (firstOnly) {
@@ -146,6 +162,7 @@ public class Rule implements Expr {
                         continue MAIN;
                     }
                 }
+                // Check to see if we are caught in "words(1,) <EOL>" trap
                 if (typeExpr != null && typeExpr.canEnd()) {
                     if(typeExpr instanceof Entity) {
                        ((Entity)typeExpr).match.endRegion = j+1;
@@ -224,7 +241,7 @@ class SuccessState implements TypeExpr {
         throw new IllegalStateException();
     }
 
-    public TypeExpr matches(Token token, int no) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
         return this;
     }
 

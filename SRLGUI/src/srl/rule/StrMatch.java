@@ -12,6 +12,7 @@ package srl.rule;
 
 import srl.wordlist.*;
 import java.util.*;
+import mccrae.tools.struct.Pair;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 
@@ -34,18 +35,26 @@ public class StrMatch implements TypeExpr {
         query.wordLists.add(wordListName);
     }
 
-    public TypeExpr matches(Token token, int no) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
         if(matches == null) {
             matches = WordList.getMatchSet(wordListName, token.termText().toLowerCase());
             currentMatch = WordList.getWordListSet(wordListName).getEntry(token.termText().toLowerCase());
         } else {
             currentMatch.addWord(token.termText());
         }
+        if(!stack.empty() &&
+                stack.contains(new MatchFork(no, this))) {
+            stack.peek().split(no, this);
+            return this;
+        }
         Iterator<WordList.Entry> wleIter = matches.iterator();
         while(wleIter.hasNext()) {
             WordList.Entry wle = wleIter.next();
-            if(wle.equals(currentMatch))
+            if(wle.equals(currentMatch)) {
+                if(matches.size() > 1 && (stack.empty() || stack.peek().tokenNo < no))
+                    stack.push(new MatchFork(no,this));
                 return next;
+            }
             if(!wle.matchable(currentMatch))
                 wleIter.remove();
         }
