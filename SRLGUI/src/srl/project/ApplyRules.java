@@ -9,13 +9,14 @@
  * licence.html, and is also available at http://www.fsf.org/licensing/licenses/info/GPLv2.html.
 */
 package srl.project;
-import gnu.getopt.*;
+import com.sun.org.apache.xalan.internal.xsltc.cmdline.getopt.GetOpt;
 import java.io.*;
 import java.util.*;
 import mccrae.tools.struct.Pair;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlDocument;
 import srl.rule.Entity;
+import srl.rule.Head;
 import srl.rule.Rule;
 import srl.rule.RuleSet;
 import srl.rule.SrlMatchRegion;
@@ -30,19 +31,19 @@ public class ApplyRules {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         SrlProject proj = null;
         boolean namedEntity = false;
-        Getopt opt = new Getopt("erm", args, "i:o:p:n");
+        GetOpt opt = new GetOpt(args, "i:o:p:n");
         int c;
         try {
-            while((c = opt.getopt()) != -1) {
+            while((c = opt.getNextOption()) != -1) {
                 switch(c) {
                     case 'i':
-                        in = new BufferedReader(new FileReader(opt.getOptarg()));
+                        in = new BufferedReader(new FileReader(opt.getOptionArg()));
                         break;
                     case 'o':
-                        out = new PrintStream(new File(opt.getOptarg()));
+                        out = new PrintStream(new File(opt.getOptionArg()));
                         break;
                     case 'p':
-                        proj = SrlProject.openSrlProject(new File(opt.getOptarg()));
+                        proj = SrlProject.openSrlProject(new File(opt.getOptionArg()));
                         break;
                     case 'n':
                         namedEntity = true;
@@ -79,12 +80,9 @@ public class ApplyRules {
             for(RuleSet rs : proj.templateRulesets) {
                 for(Pair<String,Rule> r : rs.rules) {
                     for(SrlDocument srlDoc : tagged) {
-                        List<HashMap<Entity,SrlMatchRegion>> matches = r.second.getMatch(srlDoc, false);
-                        for(HashMap<Entity,SrlMatchRegion> match : matches) {
-                            for(Map.Entry<Entity,SrlMatchRegion> m : match.entrySet()) {
-                                // TO DO
-                            }
-                        }
+                        List<String> heads = r.second.getHeads(srlDoc);
+                        for(String head : heads)
+                            out.println(head);
                     }
                 }
             }

@@ -18,11 +18,12 @@ import srl.corpus.BeginTagToken;
 import srl.corpus.EndTagToken;
 import mccrae.tools.struct.*;
 
+
 /**
  *
  * @author john
  */
-public class Entity implements TypeExpr, Expr {
+public class Entity implements TypeExpr, Expr, Comparable<Entity> {
 
     List<TypeExpr> body;
     
@@ -159,6 +160,15 @@ public class Entity implements TypeExpr, Expr {
         return true;
     }
 
+    public int compareTo(Entity o) {
+        int rv = var.compareTo(o.var);
+        if(rv != 0) return rv;
+        rv = entityType.compareTo(o.entityType);
+        if(rv != 0) return rv;
+        rv = entityValue.compareTo(o.entityValue);
+        return rv;
+    }
+
     @Override
     public int hashCode() {
         int hash = 5;
@@ -180,7 +190,6 @@ public class Entity implements TypeExpr, Expr {
         }
     }
 }
-
 class EntitySuccessState implements TypeExpr {
     TypeExpr next;
     
