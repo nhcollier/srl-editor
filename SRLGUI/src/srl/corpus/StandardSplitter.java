@@ -101,10 +101,10 @@ public class StandardSplitter implements Splitter {
       * @return The tokens split into sentences
       * @see Tokeniser.tokenise(String)
       */
-     public List<Collection<Token>> split(Collection<Token> doc) {
+     public List<SrlDocument> split(Collection<Token> doc, String docName) {
          DFSMState currentState = initial;
-         LinkedList<Token> currentSentence = new LinkedList<Token>();
-         LinkedList<Collection<Token>> rval = new LinkedList<Collection<Token>>();
+         SrlDocument currentSentence = new SrlDocument(docName + " 0");
+         LinkedList<SrlDocument> rval = new LinkedList<SrlDocument>();
          Iterator<Token> tokIter = doc.iterator();
          Token currentToken;
          if(tokIter.hasNext())
@@ -116,7 +116,7 @@ public class StandardSplitter implements Splitter {
              if(currentState == terminating) {
                  rval.add(currentSentence);
                  currentState = initial;
-                 currentSentence = new LinkedList<Token>();
+                 currentSentence = new SrlDocument(docName + " " + rval.size());
              } else {
                  currentSentence.add(currentToken);
                  currentToken = tokIter.next();

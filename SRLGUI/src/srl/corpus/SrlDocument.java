@@ -25,6 +25,18 @@ public class SrlDocument extends AbstractList<Token> {
     int readPoint;
     String name;
 
+    /**
+     * Create an empty SrlDocument. Use this constructor only if you wish
+     * to add the contents one word at a time
+     * @param name The document name
+     */
+    public SrlDocument(String name) {
+        this.name = name;
+        tokensRead = new LinkedList<Token>();
+        stream = null;
+        readPoint = -1;
+    }
+    
     public SrlDocument(Document doc, Processor processor, boolean tagged) {
         try {
             init(doc.getField(tagged ? "taggedContents" : "contents").stringValue(), processor);
@@ -44,6 +56,16 @@ public class SrlDocument extends AbstractList<Token> {
         this.name = name;
     }
 
+    @Override
+    public boolean add(Token arg0) {
+        if(stream != null)
+            throw new IllegalStateException("Attempting to add to stream based document");
+        readPoint++;         
+        return tokensRead.add(arg0);   
+    }
+
+    
+    
     public String getName() {
         return name;
     }
@@ -87,20 +109,29 @@ public class SrlDocument extends AbstractList<Token> {
         }
 
         public void add(Token e) {
-            throw new UnsupportedOperationException("Nope");
+            if(stream != null)
+                throw new IllegalStateException("Attempting to add to stream based document");
+            tokensRead.add(pos,e);
+            readPoint++;
         }
 
         public void set(Token e) {
-            throw new UnsupportedOperationException("Nope");
+            if(stream != null)
+                throw new IllegalStateException("Attempting to add to stream based document");
+            tokensRead.set(pos, e);
         }
 
         public void remove() {
-            throw new UnsupportedOperationException("Nope");
+            if(stream != null)
+                throw new IllegalStateException("Attempting to remove from stream based document");
+            tokensRead.remove(pos);
         }
 
         public boolean hasNext() {
             if (pos == readPoint) {
                 try {
+                    if(stream == null)
+                        return false;
                     Token t = stream.next();
                     if (t == null) {
                         return false;
@@ -125,6 +156,8 @@ public class SrlDocument extends AbstractList<Token> {
         public Token next() {
             if (pos == readPoint) {
                 try {
+                    if(stream == null)
+                        throw new IllegalStateException();
                     Token t = stream.next();
                     if (t == null) {
                         throw new IllegalStateException();
@@ -162,11 +195,30 @@ public class SrlDocument extends AbstractList<Token> {
 
     @Override
     public Token get(int index) {
-        throw new UnsupportedOperationException("Nah, don't want to do it");
+        if(tokensRead.size() > index)
+            return tokensRead.get(index);
+        else if(stream == null)
+            throw new ArrayIndexOutOfBoundsException();
+        else
+            throw new IllegalStateException("get() cannot be called until after the token stream has been completely read");
     }
 
     @Override
     public int size() {
-        throw new UnsupportedOperationException("Dunno.");
+        if(stream == null)
+            return tokensRead.size();
+        Token t;
+        try {
+            t = stream.next();
+        } catch(IOException x) {
+            x.printStackTrace();
+            throw new RuntimeException(x.getMessage());
+        }
+        if(t == null)
+            return tokensRead.size();
+        tokensRead.add(t);
+        readPoint++;
+        throw new IllegalStateException("size() cannot be called until after the token stream has been completely read");
+            
     }
 }

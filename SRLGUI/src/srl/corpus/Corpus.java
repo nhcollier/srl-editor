@@ -61,7 +61,7 @@ public class Corpus {
             indexSearcher.close();
         }
     }
-
+    
     /** Opens the corpus so that new documents can be added
      * @param indexFile The location of the indexFile
      * @param processor An instance of the processor used
@@ -130,7 +130,7 @@ public class Corpus {
         //support.addWordListInfo(name, wordListForDoc(contents.toLowerCase()));
         docNames.add(name);
         int i = 0;
-        for (Collection<org.apache.lucene.analysis.Token> sentence : processor.getSplitter().split(new SrlDocument(name, contents, processor))) {
+        for (Collection<org.apache.lucene.analysis.Token> sentence : processor.getSplitter().split(new SrlDocument(name, contents, processor),name)) {
             StringBuffer sent = new StringBuffer();
             Iterator<org.apache.lucene.analysis.Token> tkIter = sentence.iterator();
             while (tkIter.hasNext()) {
@@ -265,8 +265,9 @@ public class Corpus {
                 // Empty queries match everything (!)
                 System.out.println("Empty Query! This may significantly affect performance");
                 for (int i = 0; i < indexSearcher.maxDoc(); i++) {
-                    collector.hit(indexSearcher.doc(i), signal);
-                    if (signal.isStopped()) {
+                    if(indexSearcher.doc(i).getField("contents") != null)
+                        collector.hit(indexSearcher.doc(i), signal);
+                    if (signal != null && signal.isStopped()) {
                         return;
                     }
                 }
@@ -280,7 +281,7 @@ public class Corpus {
             }
             for (String docName : docs) {
                 collector.hit(getDoc(docName), signal);
-                if (signal.isStopped()) {
+                if (signal != null && signal.isStopped()) {
                     return;
                 }
             }
@@ -505,13 +506,14 @@ public class Corpus {
         addDoc(name, contents);
     }
 
-    public List<SrlDocument> tagSentences(List<Collection<org.apache.lucene.analysis.Token>> sents, Collection<RuleSet> ruleSets) throws IOException {
+    public static List<SrlDocument> tagSentences(List<SrlDocument> sents, Collection<RuleSet> ruleSets, Processor p) throws IOException {
         final Vector<List<HashMap<Entity, SrlMatchRegion>>> allMatches =
                 new Vector<List<HashMap<Entity, SrlMatchRegion>>>(sents.size());
         for(RuleSet ruleSet : ruleSets) {
             for(Pair<String,Rule> rulePair : ruleSet.rules) {
                 int i = 0;
                 for(Collection<org.apache.lucene.analysis.Token> sent : sents) {
+                    allMatches.add(new LinkedList<HashMap<Entity, SrlMatchRegion>>());
                     allMatches.get(i++).addAll(rulePair.second.getMatch((SrlDocument)sent, false));
                 }
             }
@@ -519,7 +521,7 @@ public class Corpus {
         List<SrlDocument> rval = new Vector<SrlDocument>(sents.size());
         int i = 0;
         for(List<HashMap<Entity,SrlMatchRegion>> matches : allMatches) {
-            rval.add(new SrlDocument("name", addEntities((SrlDocument)sents.get(i), matches), getProcessor()));
+            rval.add(new SrlDocument("name", addEntities((SrlDocument)sents.get(i), matches), p));
         }
         return rval;
     }
@@ -587,7 +589,7 @@ public class Corpus {
     /**
      * Add Named Entity Tags
      */
-    private String addEntities(SrlDocument sentence, List<HashMap<Entity, SrlMatchRegion>> matches) {
+    private static String addEntities(SrlDocument sentence, List<HashMap<Entity, SrlMatchRegion>> matches) {
         List<String> tokens = new LinkedList<String>();
         for (org.apache.lucene.analysis.Token tk : sentence) {
             tokens.add(tk.termText());

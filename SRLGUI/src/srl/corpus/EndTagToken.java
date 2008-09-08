@@ -19,4 +19,6 @@ public class EndTagToken extends SrlToken {
 	    throw new IllegalArgumentException();
 	this.type = val.substring(2,val.length()-1);
     }
+    
+    public String getTag() { return "</" + type + ">"; }
 }

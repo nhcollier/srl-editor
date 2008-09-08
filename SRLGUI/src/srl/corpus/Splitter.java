@@ -18,5 +18,5 @@ import java.util.*;
  */
 public interface Splitter {
 
-    public List<Collection<Token>> split(Collection<Token> doc);
+    public List<SrlDocument> split(Collection<Token> doc, String docName);
 }

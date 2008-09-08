@@ -14,12 +14,12 @@ import java.io.*;
 import java.util.*;
 import mccrae.tools.struct.Pair;
 import org.apache.lucene.analysis.Token;
+import srl.corpus.BeginTagToken;
+import srl.corpus.Corpus;
+import srl.corpus.EndTagToken;
 import srl.corpus.SrlDocument;
-import srl.rule.Entity;
-import srl.rule.Head;
 import srl.rule.Rule;
 import srl.rule.RuleSet;
-import srl.rule.SrlMatchRegion;
 
 /**
  * @author John McCrae, National Institute of Informatics
@@ -43,7 +43,7 @@ public class ApplyRules {
                         out = new PrintStream(new File(opt.getOptionArg()));
                         break;
                     case 'p':
-                        proj = SrlProject.openSrlProject(new File(opt.getOptionArg()));
+                        proj = SrlProject.openSrlProject(new File(opt.getOptionArg()), false);
                         break;
                     case 'n':
                         namedEntity = true;
@@ -54,7 +54,7 @@ public class ApplyRules {
                 System.err.println("Could not initialize: " + x.getMessage());
         }
         if(proj == null) {
-            System.out.println("Please specifiy project");
+            System.out.println("Please specify project");
             return;
         }
         StringBuffer doc = new StringBuffer();
@@ -65,13 +65,19 @@ public class ApplyRules {
             }
         
        
-            List<Collection<Token>> sents = proj.corpus.getProcessor().getSplitter().split(
-                new SrlDocument("test", doc.toString(), proj.corpus.getProcessor()));
-            List<SrlDocument> tagged = proj.corpus.tagSentences(sents, proj.entityRulesets);
+            List<SrlDocument> sents = proj.processor.getSplitter().split(
+                new SrlDocument("test", doc.toString(), proj.processor),"doc");
+            List<SrlDocument> tagged = Corpus.tagSentences(sents, proj.entityRulesets,proj.processor);
             if(namedEntity) {
                 for(SrlDocument srlDoc : tagged) {
                     for(Token tk : srlDoc) {
-                        out.print(tk.termText() + " ");
+                        if(tk instanceof EndTagToken) {
+                            out.print(((EndTagToken)tk).getTag() + " ");
+                        } else if(tk instanceof BeginTagToken) {
+                            out.print(((BeginTagToken)tk).getTag() + " ");
+                        } else {
+                            out.print(tk.termText() + " ");
+                        }
                     }
                     out.println("");
                 }

@@ -26,6 +26,7 @@ import srl.rule.parser.TokenMgrError;
  */
 public class SrlProjectDocumentHandler extends DefaultHandler {
 
+    boolean dontOpenCorpus = false;
     SrlProject proj;
     private int tag;
     private static final int srlproject = 0;
@@ -64,7 +65,9 @@ public class SrlProjectDocumentHandler extends DefaultHandler {
             String tokenizerClassName = attributes.getValue(uri, "tokenizer");
             String splitterClassName = attributes.getValue(uri, "splitter");
             try {
-                proj.openCorpus(new Processor(analyzerClassName, tokenizerClassName, splitterClassName));
+                proj.processor = new Processor(analyzerClassName, tokenizerClassName, splitterClassName);
+                if(!dontOpenCorpus)
+                    proj.openCorpus(proj.processor);
             } catch (Exception x) {
                 x.printStackTrace();
                 throw new RuntimeException(x.getMessage());

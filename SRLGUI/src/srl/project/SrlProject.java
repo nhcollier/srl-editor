@@ -36,6 +36,7 @@ public class SrlProject {
     public ListenableList<WordList> wordlists;
     public final StringBuffer name = new StringBuffer();
     public final StringBuffer description = new StringBuffer();
+    public Processor processor;
     public ListenableList<Pair<String,String>> entities = 
             new ListenableList<Pair<String, String>>(new LinkedList<Pair<String, String>>());
     public Corpus corpus;
@@ -50,6 +51,10 @@ public class SrlProject {
      * @throws IOException If a disk error occurred
      */
     public SrlProject(File path, Processor processor) throws IllegalArgumentException, IOException {
+        this(path,processor,true);
+    }
+    
+    public SrlProject(File path, Processor processor, boolean openCorpus) throws IllegalArgumentException, IOException {
         if (path.exists()) {
             if (!path.isDirectory()) {
                 throw new IllegalArgumentException(path.toString() + " is not a directory!");
@@ -59,7 +64,9 @@ public class SrlProject {
         } else if (!path.mkdir()) {
             throw new IOException("Could not create directory " + path);
         }
-        corpus = Corpus.openCorpus(new File(path, "corpus"), processor, true);
+        if(openCorpus)
+            corpus = Corpus.openCorpus(new File(path, "corpus"), processor, true);
+        this.processor = processor;
         entityRulesets = new LinkedList<RuleSet>();
         if (!(new File(path, "entity_rules")).mkdir()) {
             throw new IOException("Could not create directory " + path.toString() + "entity_rules");
@@ -84,11 +91,16 @@ public class SrlProject {
     }
 
     public static SrlProject openSrlProject(File path) throws IllegalArgumentException, IOException, SAXException {
+        return openSrlProject(path,true);
+    }
+    
+    public static SrlProject openSrlProject(File path, boolean openCorpus) throws IllegalArgumentException, IOException, SAXException {
         SrlProject proj = new SrlProject();
         proj.path = path;
         WordList.reset();
         XMLReader xr = XMLReaderFactory.createXMLReader();
         SrlProjectDocumentHandler handler = new SrlProjectDocumentHandler(proj);
+        handler.dontOpenCorpus = !openCorpus;
         xr.setContentHandler(handler);
         xr.setErrorHandler(handler);
         xr.parse(new InputSource(new FileInputStream(new File(path, "project.xml"))));

@@ -23,4 +23,6 @@ public class BeginTagToken extends SrlToken {
 	type = m.group(1).toLowerCase();
 	this.val = m.group(2).toLowerCase();
     }
+    
+    public String getTag() { return "<" + type + " cl=\"" + val + "\">"; }
 }
