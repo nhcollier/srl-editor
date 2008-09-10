@@ -33,9 +33,8 @@ public class CloseTabButton extends JPanel {
         this.tabName = tabName;
         setOpaque(false);
         
-        JButton iconButton = new JButton();
+        JLabel iconButton = new JLabel(icon);
         iconButton.setIcon(icon);
-        iconButton.setBorderPainted(false);
         iconButton.setBorder(BorderFactory.createEmptyBorder(0, 0,0,5));
         add(iconButton);
         

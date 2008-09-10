@@ -9,8 +9,11 @@
  * licence.html, and is also available at http://www.fsf.org/licensing/licenses/info/GPLv2.html.
 */
 package srl.corpus;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.*;
 import org.apache.lucene.analysis.*;
+import srl.corpus.token.StandardTokenizer;
 
 /**
  * @author John McCrae, National Institute of Informatics
@@ -94,7 +97,42 @@ public class StandardSplitter implements Splitter {
         }
      }
     
-    
+     /** 
+      * Split a string into sentences. Uses srl.corpus.token.StandardTokenizer for
+      * tokenization but includes whitespace as is.
+      * @param tokens A list of tokens, see Tokeniser
+      * @return The tokens split into sentences
+      * @see Tokeniser.tokenise(String)
+      */
+     public List<SrlDocument> split(String string, String docName) {
+         DFSMState currentState = initial;
+         SrlDocument currentSentence = new SrlDocument(docName + " 0");
+         LinkedList<SrlDocument> rval = new LinkedList<SrlDocument>();
+         StandardTokenizer tok = new StandardTokenizer(new StringReader(string));
+         tok.outputWhitespace = true;
+         try {
+         Token currentToken = tok.next();
+         while(currentToken != null) { 
+             currentState = currentState.trans[getType(currentToken.termText())];
+             if(currentState == terminating) {
+                 rval.add(currentSentence);
+                 currentState = initial;
+                 currentSentence = new SrlDocument(docName + " " + rval.size());
+             } else {
+                 currentSentence.add(currentToken);
+                 currentToken = tok.next();
+             }
+         }
+         if(!currentSentence.isEmpty())
+            rval.add(currentSentence);
+         } catch(IOException x) {
+             x.printStackTrace();
+             throw new RuntimeException(x.getMessage());
+         }
+         return rval;
+     }
+     
+     
      /**
       * Split a list of tokens into sentences.
       * @param tokens A list of tokens, see Tokeniser

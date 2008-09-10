@@ -31,6 +31,8 @@ import srl.corpus.*;
 
 public class StandardTokenizer extends org.apache.lucene.analysis.Tokenizer {
     boolean finished = false;
+    /** If this variable is true, tokenizer will also output whitespace */
+    public boolean outputWhitespace = false;
 
   /** Constructs a tokenizer for this Reader. */
   public StandardTokenizer(Reader reader) {
@@ -166,6 +168,22 @@ TOKEN : {					  // token patterns
        // "\uac00"-"\ud7a3"
       ]
   >
+| < SPACE:
+    [ "\u0009"-"\u000d",
+      " ",
+      "\u0085",
+      "\u00a0",
+      "\u1680",
+      "\u180e",
+      "\u2000"-"\u200a",
+      "\u2028",
+      "\u2029",
+      "\u202f",
+      "\u205f",
+      "\u3000"
+    ]
+  >
+      
 | < #DIGIT:					  // unicode digits
       [
        "\u0030"-"\u0039",
@@ -210,12 +228,20 @@ org.apache.lucene.analysis.Token next2() throws IOException :
     tk = <CJ> |
     tk = <KOREAN> |
     tk = <BEGIN_TAG> |
-    tk = <END_TAG> 
+    tk = <END_TAG>
    )
     {
 	return
 	    SrlToken.makeToken(tk.image,tk.kind,tk.beginColumn,tk.endColumn);
      
+    }
+   |
+    tk = <SPACE>
+    {
+        if(outputWhitespace)
+            return SrlToken.makeToken(tk.image,tk.kind, tk.beginColumn, tk.endColumn);
+        else
+            return next();
     }
    |
     <EOF>

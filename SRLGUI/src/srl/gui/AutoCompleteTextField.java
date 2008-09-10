@@ -149,7 +149,8 @@ public class AutoCompleteTextField extends JTextField {
     }
 
     private void showMatches(SortedSet<String> matches) {
-        if (matches == null || matches.size() == 1 && getText().matches(".*" + matches.first())) {
+        if (matches == null || matches.size() == 1 && getText().matches(".*" + matches.first()) ||
+                matches.size() == 0) {
             if (popupMenu != null) {
                 popupMenu.setVisible(false);
             }
@@ -157,7 +158,7 @@ public class AutoCompleteTextField extends JTextField {
             return; // Already there exactly
         }
         if (popupMenu == null) {
-            popupMenu = new PopUpWindow();
+            popupMenu = new PopUpWindow(this);
             Point p2 = getLocationOnScreen();
             popupMenu.setLocation(new Point(p2.x, p2.y + getHeight()));
         }
@@ -221,13 +222,15 @@ public class AutoCompleteTextField extends JTextField {
         JList theList;
         DefaultListModel theModel;
         Point theRelativePosition;
+        AutoCompleteTextField actf;
 
-        public PopUpWindow() {
+        public PopUpWindow(AutoCompleteTextField actf) {
             super(SRLGUIApp.getApplication().getMainFrame());
             theModel = new DefaultListModel();
             theRelativePosition = new Point(0, 0);
             loadUIElements();
             setEventManagement();
+            this.actf = actf;
         }
 
         private void loadUIElements() {
@@ -239,6 +242,14 @@ public class AutoCompleteTextField extends JTextField {
             };
             theList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
             theList.setBackground(new Color(235, 244, 254));
+            theList.addFocusListener(new FocusAdapter() {
+
+                @Override
+                public void focusGained(FocusEvent e) {
+                    actf.requestFocus();
+                }
+                
+            });
             JScrollPane scrollPane = new JScrollPane(theList, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
             scrollPane.setBorder(LineBorder.createGrayLineBorder());
             setContentPane(scrollPane);
