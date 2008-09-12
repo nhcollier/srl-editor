@@ -1089,6 +1089,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 if (!corpus.isIndexOpen()) {
                     corpus.reopenIndex();
                 }
+                int replaceDoc = 0; // 0=? 1=YES -1=NO
                 JPanel p = getPanel(SRLGUIApp.getApplication().SRL_CORPUS, "");
                 for (File file : jfc.getSelectedFiles()) {
                     BufferedReader br;
@@ -1103,8 +1104,23 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                         contents.append(in + "\n");
                         in = br.readLine();
                     }
+                    br.close();
                     String fName = file.getName().replaceAll("[^A-Za-z0-9]", "");
-                    corpus.addDoc(fName, contents.toString());
+                    if(corpus.containsDoc(fName)) {
+                        if(replaceDoc == 0) {
+                            String[] opts = { "Skip", "Replace", "Skip All", "Replace All" };
+                            int opt = JOptionPane.showOptionDialog(this.getFrame(), "Document called "+fName+" already exists", "Duplicate Document", 
+                                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, opts, opts[0]);
+                            if(opt == 2) { replaceDoc = -1; }
+                            if(opt == 3) { replaceDoc = 1; }
+                            if(opt == 0 || opt == 2) {
+                                corpus.updateDoc(fName, contents.toString());
+                            }
+                        } else if(replaceDoc == 1) {
+                            corpus.updateDoc(fName, contents.toString());
+                        }
+                    } else
+                        corpus.addDoc(fName, contents.toString());
                     if (p != null) {
                         ((CorpusDocumentPanel) p).addDoc(fName);
                     }

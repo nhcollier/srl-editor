@@ -304,6 +304,10 @@ public class Corpus {
         }
     }
 
+    public boolean containsDoc(String docName) {
+        return docNames.contains(docName);
+    }
+    
     /** Query the corpus */
     public Hits query(String query) throws IOException {
         if (query.equals("")) {
