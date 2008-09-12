@@ -184,6 +184,7 @@ public class Rule implements Expr {
         for (TypeExpr te : body) {
             if (te instanceof Entity) {
                 match.put((Entity) te, ((Entity) te).match);
+                ((Entity)te).match.sourceRule = this;
             }
         }
         rval.add(match);
@@ -198,14 +199,13 @@ public class Rule implements Expr {
 
     public List<String> getHeads(SrlDocument sentence) {
         List<String> rv = new LinkedList<String>();
-        for (Head head : heads) {
-            List<HashMap<Entity, SrlMatchRegion>> ents = getMatch(sentence, false);
-            for (Map<Entity, SrlMatchRegion> map : ents) {
-                for (Entity e : map.keySet()) {
-                    if (e.var.equals(head.var)) {
-                        // MULTIPLE MATCHES
-                        rv.add(head.name + "(\"" + map.get(e).value.toString() + "\")");
-                    }
+        List<HashMap<Entity, SrlMatchRegion>> ents = getMatch(sentence, false);
+        Vector<Pair<Entity,SrlMatchRegion>> matches = srl.corpus.Corpus.sortMatches(ents);
+        for (Pair<Entity,SrlMatchRegion> map : matches) {
+            for (Head head : heads) {
+                if (map.first.var.equals(head.var)) {
+                    // MULTIPLE MATCHES
+                    rv.add(head.name + "(\"" + map.second.value.toString() + "\")");
                 }
             }
         }

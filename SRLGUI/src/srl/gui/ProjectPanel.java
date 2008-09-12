@@ -13,6 +13,8 @@ package srl.gui;
 import java.util.*;
 import javax.swing.event.*;
 import javax.swing.table.DefaultTableModel;
+import mccrae.tools.struct.CollectionChangeEvent;
+import mccrae.tools.struct.CollectionChangeListener;
 import mccrae.tools.struct.Pair;
 import srl.project.SrlProject;
 
@@ -34,6 +36,24 @@ public class ProjectPanel extends javax.swing.JPanel {
             String[] ss = { entity.first, entity.second };
             ((DefaultTableModel)entityTable.getModel()).addRow(ss);
         }
+        proj.entities.addCollectionChangeListener(new CollectionChangeListener<Pair<String, String>>() {
+
+            public void collectionChanged(CollectionChangeEvent<Pair<String, String>> e) {
+                userChangeFlag = false;
+                if(e.getOldVal() != null) {
+                    for(int i = 0; i < entityTable.getRowCount(); i++) {
+                        if(entityTable.getValueAt(i, 0).equals(e.getOldVal().first) &&
+                                entityTable.getValueAt(i, 1).equals(e.getOldVal().second)) {
+                            ((DefaultTableModel)entityTable.getModel()).removeRow(i);
+                        }
+                    }
+                }
+                if(e.getNewVal() != null) {
+                    Object[] rowData = { e.getNewVal().first, e.getNewVal().second };
+                    ((DefaultTableModel)entityTable.getModel()).addRow(rowData);
+                }
+            }
+        });
         projectNameField.getDocument().addDocumentListener(new DocumentListener() {
 
             public void insertUpdate(DocumentEvent e) {

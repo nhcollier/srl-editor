@@ -36,6 +36,7 @@ public class SRLGUIApp extends SingleFrameApplication {
     public static final int SRL_WORDLIST = 3;
     public static final int SRL_CORPUS = 4;
     public static final int SRL_PROJECT = 5;
+    public static final int SRL_SEARCH = 6;
     
     /**
      * At startup create and show the main frame of the application.

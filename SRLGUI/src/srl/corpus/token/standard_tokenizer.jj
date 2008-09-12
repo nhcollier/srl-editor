@@ -161,15 +161,9 @@ TOKEN : {					  // token patterns
 
       ]
   >
-| < KOREAN:                                          // Korean
-      [
-       "\uac00"-"\ud7af",     // Hangul Syllables
-       "\u1100"-"\u11ff"      // Hangul Jamo
-       // "\uac00"-"\ud7a3"
-      ]
-  >
 | < SPACE:
-    [ "\u0009"-"\u000d",
+    [ 
+      "\u0009"-"\r",
       " ",
       "\u0085",
       "\u00a0",
@@ -183,6 +177,15 @@ TOKEN : {					  // token patterns
       "\u3000"
     ]
   >
+
+| < KOREAN:                                          // Korean
+      [
+       "\uac00"-"\ud7af",     // Hangul Syllables
+       "\u1100"-"\u11ff"      // Hangul Jamo
+       // "\uac00"-"\ud7a3"
+      ]
+  >
+
       
 | < #DIGIT:					  // unicode digits
       [

@@ -29,7 +29,7 @@ public class EndTag implements TypeExpr {
         if(token instanceof EndTagToken) {
             EndTagToken ett = (EndTagToken)token;
             if(ett.type.equals(entityType))
-                return Rule.successState;
+                return Entity.successState;
             else
                 return null;
         } else {
@@ -42,7 +42,7 @@ public class EndTag implements TypeExpr {
     }
 
     public void setNext(TypeExpr te) {
-        if(te != Rule.successState)
+        if(te != Entity.successState)
             throw new IllegalArgumentException();
     }
 

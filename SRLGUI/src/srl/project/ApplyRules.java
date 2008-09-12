@@ -83,9 +83,9 @@ public class ApplyRules {
                 }
                 return;
             }
-            for(RuleSet rs : proj.templateRulesets) {
-                for(Pair<String,Rule> r : rs.rules) {
-                    for(SrlDocument srlDoc : tagged) {
+            for(SrlDocument srlDoc : tagged) {
+                for(RuleSet rs : proj.templateRulesets) {
+                    for(Pair<String,Rule> r : rs.rules) {
                         List<String> heads = r.second.getHeads(srlDoc);
                         for(String head : heads)
                             out.println(head);

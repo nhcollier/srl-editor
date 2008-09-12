@@ -34,7 +34,7 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
     SrlMatchRegion match;
     TypeExpr endTag;
     public final int ruleType;
-    public TypeExpr successState;
+    public static final TypeExpr successState = new EntitySuccessState(Rule.successState);
     
     public Entity(String entityType, String entityValue, String var, int ruleType) {
         this.entityType = entityType;
@@ -42,13 +42,13 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
         this.var = var;
 	this.ruleType = ruleType;
         body = new LinkedList<TypeExpr>();
-        successState = new EntitySuccessState(Rule.successState);
         if(ruleType == Rule.TEMPLATE_RULE) {
             endTag = new EndTag(entityType);
             endTag.setNext(successState);
             BeginTag bt = new BeginTag(entityType, entityValue);
             bt.setNext(endTag);
             body.add(bt);
+            body.add(endTag);
         } else {
             endTag = successState;
         }
@@ -74,20 +74,24 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
 	}
 	
         if(current == successState) {
-            match.value.append(token.termText() + " ");
+            if(token.termText().length() > 1)
+                match.value.append(token.termText());
             if(token instanceof EndTagToken)
                 match.endRegion = tokenNo;
             else
                 match.endRegion = tokenNo+1;
+            if(match.value.toString().matches(".* "))
+                match.value.deleteCharAt(match.value.length()-1);
 	    if(ruleType == Rule.ENTITY_RULE)
 		return next;
 	    else
 		return this;
-        } else if(!body.contains(current)) { // Change this is nesting occurs
+        } else if(!body.contains(current)) { // Change this if nesting occurs
             match.endRegion = tokenNo - 1;
             return current;
         } else {
-            match.value.append(token.termText() + " ");
+            if(token.termText().length() > 1)
+                match.value.append(token.termText() + (current instanceof EndTag ? "" : " "));
         }
         return this;
     }
@@ -125,7 +129,10 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
             current = typeExpr;
         }
         typeExpr.setNext(endTag);
-        body.add(typeExpr);
+        if(ruleType == Rule.ENTITY_RULE)
+            body.add(typeExpr);
+        else
+            body.add(body.size()-1,typeExpr);
     }
     
     public void skip(Token token) {

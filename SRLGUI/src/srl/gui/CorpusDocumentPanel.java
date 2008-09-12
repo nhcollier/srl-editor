@@ -94,6 +94,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         tagRadio = new javax.swing.JRadioButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         mainPane = new javax.swing.JTextPane();
+        templatesRadio = new javax.swing.JRadioButton();
 
         setName("Corpus"); // NOI18N
 
@@ -175,6 +176,15 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         mainPane.setName("mainPane"); // NOI18N
         jScrollPane1.setViewportView(mainPane);
 
+        buttonGroup1.add(templatesRadio);
+        templatesRadio.setText(resourceMap.getString("templatesRadio.text")); // NOI18N
+        templatesRadio.setName("templatesRadio"); // NOI18N
+        templatesRadio.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                templatesRadioActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -189,7 +199,9 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                         .add(tokenRadio)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(tagRadio)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 324, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(templatesRadio)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 227, Short.MAX_VALUE)
                         .add(addButton)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(deleteButton)
@@ -220,7 +232,8 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(textRadio)
                         .add(tokenRadio)
-                        .add(tagRadio)))
+                        .add(tagRadio)
+                        .add(templatesRadio)))
                 .add(13, 13, 13))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -274,8 +287,10 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             textRadioActionPerformed(null);
         } else if (tagRadio.isSelected()) {
             tagRadioActionPerformed(null);
-        } else {
+        } else if (tokenRadio.isSelected()) {
             tokenRadioActionPerformed(null);
+        } else {
+            templatesRadioActionPerformed(null);
         }
     }//GEN-LAST:event_docListValueChanged
 
@@ -380,6 +395,23 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         userChange = true;
     }//GEN-LAST:event_tagRadioActionPerformed
 
+    private void templatesRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_templatesRadioActionPerformed
+        userChange = false;
+        if(textSelected) {
+            saveButtonActionPerformed(evt);
+        }
+        String docName = (String) docList.getSelectedValue();
+        try {
+            mainPane.setText(Strings.join("\n", corpus.getDocTemplateExtractions(docName)));
+        } catch(IOException x) {
+            x.printStackTrace();
+            mainPane.setText("<<<<IO Error>>>>");
+        }
+        mainPane.setEditable(false);
+        textSelected = false;
+        userChange = true;
+    }//GEN-LAST:event_templatesRadioActionPerformed
+
     public void addDoc(String name) {
         ((DefaultListModel) docList.getModel()).addElement(name);
         mainPane.setEditable(true);
@@ -397,6 +429,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
     private javax.swing.JTextPane mainPane;
     private javax.swing.JButton saveButton;
     private javax.swing.JRadioButton tagRadio;
+    private javax.swing.JRadioButton templatesRadio;
     private javax.swing.JRadioButton textRadio;
     private javax.swing.JRadioButton tokenRadio;
     // End of variables declaration//GEN-END:variables

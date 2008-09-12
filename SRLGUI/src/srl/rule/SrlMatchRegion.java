@@ -16,6 +16,7 @@ public class SrlMatchRegion {
         public int beginRegion = -1;
 	public int endRegion = -1;
 	public StringBuffer value = new StringBuffer();
+        public Rule sourceRule;
         
         public void reset() {
                 beginRegion = endRegion = -1;

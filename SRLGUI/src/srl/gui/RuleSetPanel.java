@@ -290,6 +290,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             rule.addHead("head", "X");
         }
         ruleSet.rules.add(new Pair<String, Rule>((String) ruleID, rule));
+        ruleLookup.put(ruleID, rule);
         dlm.addElement(ruleID + ": " + rule.toString());
         SRLGUIApp.getApplication().setModified();
     }//GEN-LAST:event_addButtonActionPerformed
@@ -422,6 +423,15 @@ private void ruleEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
                 if(tokens.size() != 1) {
                     JOptionPane.showMessageDialog(this, "Literal is not single token so will not match: \n\"" + l.getVal() +
                             "\" should be \"" + Strings.join("\" \"", tokens) + "\"", "Invalid literal", JOptionPane.WARNING_MESSAGE);
+                }
+            } else if(te instanceof Entity) {
+                Pair<String,String> ent = new Pair<String,String>(((Entity)te).entityType, ((Entity)te).entityValue);
+                if(!SRLGUIApp.getApplication().proj.entities.contains(ent)) {
+                    int opt = JOptionPane.showConfirmDialog(this, "Unknown entity type/value: " + ent.first + "/" + ent.second + ". Add to project?", 
+                            "Unknown entity", JOptionPane.YES_NO_OPTION);
+                    if(opt == JOptionPane.YES_OPTION) {
+                        SRLGUIApp.getApplication().proj.entities.add(ent);
+                    }
                 }
             }
         }

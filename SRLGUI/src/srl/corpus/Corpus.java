@@ -127,6 +127,7 @@ public class Corpus {
         Document d = new Document();
         d.add(new Field("originalContents", contents, Field.Store.YES, Field.Index.TOKENIZED));
         d.add(new Field("name", name, Field.Store.YES, Field.Index.TOKENIZED));
+        d.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
         //support.addWordListInfo(name, wordListForDoc(contents.toLowerCase()));
         docNames.add(name);
         int i = 0;
@@ -142,6 +143,7 @@ public class Corpus {
             Document d2 = new Document();
             d2.add(new Field("contents", sent.toString(), Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("name", name + " " + i, Field.Store.YES, Field.Index.TOKENIZED));
+            d2.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
             support.addWordListInfo(name + " " + i, wordListForDoc(sent.toString()));
             indexWriter.addDocument(d2);
             i++;
@@ -150,6 +152,19 @@ public class Corpus {
         indexWriter.addDocument(d);
     }
 
+    
+    private HashSet<String> uids = new HashSet<String>();
+    private Random random = new Random();
+    
+    private String generateUID() {
+        String s;
+        do {
+            s = random.nextLong() + "";
+        } while(uids.contains(s));
+        uids.add(s);
+        return s;
+    }
+    
     protected Set<Pair<String, String>> wordListForDoc(String contents) {
         Set<Pair<String, String>> rval = new HashSet<Pair<String, String>>();
         for (String name : WordList.getAllWordListNames()) {
@@ -235,6 +250,7 @@ public class Corpus {
         }
         try {
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
+            qp.setDefaultOperator(QueryParser.Operator.AND);
             StringBuffer queryStr = new StringBuffer(cleanQuery(query.query.toString()));
             queryStr.append(" ");
             for (Pair<String, String> entity : query.entities) {
@@ -298,6 +314,7 @@ public class Corpus {
         }
         try {
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
+            qp.setDefaultOperator(QueryParser.Operator.AND);
             Query q = qp.parse(cleanQuery(query));
             return indexSearcher.search(q);
         } catch (Exception x) {
@@ -315,7 +332,7 @@ public class Corpus {
 
     /** Get the names of all the documents in the corpus */
     public Set<String> getDocNames() {
-        return docNames;
+        return new TreeSet<String>(docNames);
     }
 
     private List<String> extractDocNames() throws IOException, IllegalStateException {
@@ -325,8 +342,10 @@ public class Corpus {
         List<String> rv = new Vector<String>();
         for (int i = 0; i < indexSearcher.maxDoc(); i++) {
             String docName = indexSearcher.doc(i).getField("name").stringValue();
+            String uid = indexSearcher.doc(i).getField("uid").stringValue();
             if (docName.matches("\\w+")) {
                 rv.add(docName);
+                uids.add(uid);
             }
         }
         return rv;
@@ -350,7 +369,7 @@ public class Corpus {
         }
         BitSet bs = new BitSet(indexSearcher.maxDoc());
         for (int i = 0; i < indexSearcher.maxDoc(); i++) {
-            if (filterDocs.contains(indexSearcher.doc(i))) {
+            if (filterDocs.contains(indexSearcher.doc(i).getField("name").stringValue())) {
                 bs.set(i);
             }
         }
@@ -457,7 +476,38 @@ public class Corpus {
                     }
                     if (hits.doc(i).getField("taggedContents") != null) {
                         rval.set(Integer.parseInt(m.group(1)),
+                                hits.doc(i).getField("taggedContents").stringValue());
+                    } else {
+                        rval.set(Integer.parseInt(m.group(1)),
                                 hits.doc(i).getField("contents").stringValue());
+                    }
+                }
+            }
+        } catch (org.apache.lucene.queryParser.ParseException x) {
+            x.printStackTrace();
+            return null;
+        }
+        return rval;
+    }
+    
+    public List<String> getDocTemplateExtractions(String name) throws IOException {
+        QueryParser qp = new QueryParser("name", processor.getAnalyzer());
+        Vector<String> rval = new Vector<String>();
+        try {
+            Query q = qp.parse("\"" + cleanQuery(name) + "\"");
+            Hits hits = indexSearcher.search(q);
+            for (int i = 0; i < hits.length(); i++) {
+                String docName = hits.doc(i).getField("name").stringValue();
+                if (docName.equals(name)) { // Not necessary, but it's nice to set the vector to the correct size
+                    rval.setSize(Integer.parseInt(hits.doc(i).getField("sentCount").stringValue()));
+                } else {
+                    Matcher m = Pattern.compile(".* (\\d+)").matcher(docName);
+                    if (!m.matches()) {
+                        throw new RuntimeException("Invalid document name in corpus: " + docName);
+                    }
+                    if (hits.doc(i).getField("extracted") != null) {
+                        rval.set(Integer.parseInt(m.group(1)),
+                                hits.doc(i).getField("extracted").stringValue());
                     } else {
                         rval.set(Integer.parseInt(m.group(1)), "");
                     }
@@ -521,16 +571,30 @@ public class Corpus {
         List<SrlDocument> rval = new Vector<SrlDocument>(sents.size());
         int i = 0;
         for(List<HashMap<Entity,SrlMatchRegion>> matches : allMatches) {
-            rval.add(new SrlDocument("name", addEntities((SrlDocument)sents.get(i), matches), p));
+            rval.add(new SrlDocument("name", addEntities((SrlDocument)sents.get(i), sortMatches(matches)), p));
         }
         return rval;
     }
     
+    public class Overlap {
+        public Entity e1,e2;
+        public SrlMatchRegion r1,r2;
+        
+        public Overlap(Pair<Entity,SrlMatchRegion> m1, Pair<Entity,SrlMatchRegion> m2) {
+            e1 = m1.first;
+            e2 = m2.first;
+            r1 = m1.second;
+            r2 = m2.second;
+        }
+    }
+    
     /**
      * Tag the corpus
+     * @param overlaps A collection, which this function will add any overlaps it detects to (an overlap is a pair of matches
+     * where both matches hit the same token and both matches have one token not matched by the other e.g., [0,4] &amp; [1,5])
      * @param ruleSets The set of rules for named entity extraction
      */
-    public void tagCorpus(Collection<RuleSet> ruleSets) throws IOException {
+    public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps) throws IOException {
         if (isIndexOpen()) {
             closeIndex();
         }
@@ -553,26 +617,59 @@ public class Corpus {
         reopenIndex();
         IndexReader reader = IndexReader.open(indexWriter.getDirectory());
         for (Map.Entry<String, List<HashMap<Entity, SrlMatchRegion>>> entry : allMatches.entrySet()) {
-            Term t = new Term("name", entry.getKey().toLowerCase());
+            Vector<Pair<Entity,SrlMatchRegion>> matches = findOverlapsAndKill(entry.getValue(),overlaps);
+            Term t = new Term("name", entry.getKey().toLowerCase().split(" ")[0]);
+            int docNo = Integer.parseInt(entry.getKey().split(" ")[1]);
             TermDocs td = reader.termDocs(t);
-            if (!td.next()) {
-                throw new RuntimeException("Lost document: " + entry.getKey());
+            Document old;
+            while(true) {
+                if (!td.next()) {
+                        throw new RuntimeException("Lost document: " + entry.getKey());
+                }
+                old = reader.document(td.doc());
+                String dn = old.getField("name").stringValue();
+                if(dn.matches(".* .*") && Integer.parseInt(dn.split(" ")[1]) == docNo)
+                        break;
             }
-            Document old = reader.document(td.doc());
             Document newDoc = new Document();
             newDoc.add(new Field("name", old.getField("name").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
             newDoc.add(new Field("contents", old.getField("contents").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
-            String taggedContents = addEntities(new SrlDocument(old, processor, false), entry.getValue());
+            newDoc.add(new Field("uid",  old.getField("uid").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
+            String taggedContents = addEntities(new SrlDocument(old, processor, false), matches);
             System.out.println(taggedContents);
             newDoc.add(new Field("taggedContents", taggedContents, Field.Store.YES, Field.Index.TOKENIZED));
-
-            indexWriter.updateDocument(t, newDoc);
+            Term uidT = new Term("uid", old.getField("uid").stringValue());
+            indexWriter.updateDocument(uidT, newDoc);
         }
         closeIndex();
         reader.close();
 
     }
 
+    private Vector<Pair<Entity,SrlMatchRegion>> findOverlapsAndKill(List<HashMap<Entity, SrlMatchRegion>> allMatches,
+            Collection<Overlap> overlaps) {
+        Vector<Pair<Entity,SrlMatchRegion>> matches = sortMatches(allMatches);
+        ListIterator<Pair<Entity,SrlMatchRegion>> mIter = matches.listIterator(matches.size());
+        LOOP: while(mIter.hasPrevious()) {
+            Pair<Entity,SrlMatchRegion> m1 = mIter.previous();
+            ListIterator<Pair<Entity,SrlMatchRegion>> mIter2 = matches.listIterator();
+            while(mIter2.hasNext()) {
+                Pair<Entity,SrlMatchRegion> m2 = mIter2.next();
+                if(m2.second.beginRegion < m1.second.beginRegion && 
+                        m2.second.endRegion < m1.second.endRegion &&
+                        m2.second.beginRegion < m1.second.endRegion) {
+                    mIter2.remove();
+                    mIter = matches.listIterator(matches.size());
+                    if(overlaps != null)
+                        overlaps.add(new Overlap(m1, m2));
+                    continue LOOP;
+                }
+            
+            }
+        }
+        return matches;
+    }
+    
     /** Reinitialize the corpus support
      * @throws java.io.IOException
      */
@@ -586,28 +683,64 @@ public class Corpus {
         support = newSupport;
     }
 
+    public static Vector<Pair<Entity,SrlMatchRegion>> sortMatches(List<HashMap<Entity,SrlMatchRegion>> matches) {
+        Vector<Pair<Entity,SrlMatchRegion>> rv = new Vector<Pair<Entity, SrlMatchRegion>>(matches.size());
+        for (HashMap<Entity, SrlMatchRegion> match : matches) {
+            for (Map.Entry<Entity, SrlMatchRegion> entry : match.entrySet()) {
+                rv.add(new Pair<Entity, SrlMatchRegion>(entry.getKey(), entry.getValue()));
+            }
+        }
+        Collections.sort(rv, new Comparator() {
+
+            public int compare(Object o1, Object o2) {
+                Pair<Entity,SrlMatchRegion> m1 = (Pair<Entity,SrlMatchRegion>)o1, m2 = (Pair<Entity,SrlMatchRegion>)o2;
+                if(m1.second.endRegion < m2.second.endRegion)
+                    return -1;
+                else if(m1.second.endRegion > m2.second.endRegion)
+                    return 1;
+                else if(m1.second.beginRegion < m2.second.beginRegion)
+                    return -1;
+                else if(m2.second.beginRegion > m2.second.endRegion)
+                    return 1;
+                else 
+                    return m1.first.entityType.compareTo(m2.first.entityType);
+            }
+        });
+        Iterator<Pair<Entity,SrlMatchRegion>> matchIter = rv.iterator();
+        if(!matchIter.hasNext())
+                return rv;
+        Pair<Entity,SrlMatchRegion> last = matchIter.next();
+        while(matchIter.hasNext()) {
+            Pair<Entity,SrlMatchRegion> next = matchIter.next();
+            if(next.first == last.first && next.second.beginRegion == last.second.beginRegion
+                    && next.second.endRegion == last.second.endRegion)
+                matchIter.remove();
+            else
+                last = next;
+        }
+        return rv;
+    }
+    
     /**
      * Add Named Entity Tags
      */
-    private static String addEntities(SrlDocument sentence, List<HashMap<Entity, SrlMatchRegion>> matches) {
+    private static String addEntities(SrlDocument sentence, Vector<Pair<Entity, SrlMatchRegion>> matches) {
         List<String> tokens = new LinkedList<String>();
         for (org.apache.lucene.analysis.Token tk : sentence) {
             tokens.add(tk.termText());
         }
         List<List<String>> begins = new LinkedList<List<String>>();
         List<List<String>> ends = new LinkedList<List<String>>();
-        for (int i = 0; i < tokens.size(); i++) {
+        for (int i = 0; i <= tokens.size(); i++) {
             ends.add(new LinkedList<String>());
             begins.add(new LinkedList<String>());
         }
-        for (HashMap<Entity, SrlMatchRegion> match : matches) {
-            for (Map.Entry<Entity, SrlMatchRegion> entry : match.entrySet()) {
-                begins.get(entry.getValue().beginRegion).add("<" +
-                        entry.getKey().entityType + " cl=\"" +
-                        entry.getKey().entityValue + "\">");
-                ends.get(entry.getValue().endRegion + 1).add("</" +
-                        entry.getKey().entityType + ">");
-            }
+        for (Pair<Entity,SrlMatchRegion> entry : matches) {
+                begins.get(entry.second.beginRegion).add(0,"<" +
+                        entry.first.entityType + " cl=\"" +
+                        entry.first.entityValue + "\">");
+                ends.get(entry.second.endRegion + 1).add("</" +
+                        entry.first.entityType + ">");
         }
         int offset = 0;
         for (int i = 0; i < begins.size(); i++) {
@@ -622,66 +755,42 @@ public class Corpus {
                 offset++;
             }
         }
-
-        //int offset = 0;
-        // TODO: Check for overlapping matches
-        /*for (HashMap<Entity, SrlMatchRegion> match : matches) {
-        for (Map.Entry<Entity, SrlMatchRegion> entry : match.entrySet()) {
-        tokens.add(entry.getValue().beginRegion + offset++, "<" +
-        entry.getKey().entityType + " cl=\"" +
-        entry.getKey().entityValue + "\">");
-        tokens.add(entry.getValue().endRegion + 1, "</" +
-        entry.getKey().entityType + ">");
-        for (HashMap<Entity, SrlMatchRegion> match2 : matches) {
-        for (Map.Entry<Entity, SrlMatchRegion> entry2 : match2.entrySet()) {
-        int overlap1, overlap2, nest1, nest2;
-        if (entry == entry2) {
-        continue;
-        }
-        overlap1 = overlap2 = nest1 = nest2 = 0;
-        if (entry2.getValue().beginRegion >= entry.getValue().beginRegion) {
-        entry2.getValue().beginRegion++;
-        nest1++;
-        overlap2++;
-        } else {
-        nest2++;
-        overlap1++;
-        }
-        if (entry2.getValue().endRegion >= entry.getValue().endRegion) {
-        entry2.getValue().endRegion++;
-        nest2++;
-        overlap2++;
-        } else {
-        nest1++;
-        overlap1++;
-        }
-        if (entry2.getValue().beginRegion >= entry.getValue().endRegion) {
-        entry2.getValue().beginRegion++;
-        overlap1++;
-        nest2++;
-        } else {
-        nest1++;
-        overlap1++;
-        }
-        if (entry2.getValue().endRegion >= entry.getValue().beginRegion) {
-        entry2.getValue().endRegion++;
-        nest1++;
-        overlap2++;
-        } else {
-        nest2++;
-        overlap1++;
-        }
-        if (!nestingAllowed && (nest1 == 4 || nest2 == 4)) {
-        throw new RuntimeException("Nesting dected");
-        }
-        if (!overlappingAllowed && (overlap1 == 4 || overlap2 == 4)) {
-        throw new RuntimeException("Overlapping detected");
-        }
-        }
-        }
-        }
-        }*/
         return Strings.join(" ", tokens);
+    }
+    
+    public void extractTemplates(Collection<RuleSet> ruleSets) throws IOException {
+        if (isIndexOpen()) {
+            closeIndex();
+        }
+        final HashMap<String, List<String>> allMatches =
+                new HashMap<String, List<String>>();
+        for (RuleSet ruleSet : ruleSets) {
+            for (final Pair<String, Rule> rulePair : ruleSet.rules) {
+                query(rulePair.second.getCorpusQuery(), new QueryHit() {
+
+                    public void hit(Document d, StopSignal signal) {
+                        String name = d.getField("uid").stringValue();
+                        if (allMatches.get(name) == null) {
+                            allMatches.put(name, new LinkedList<String>());
+                        }
+                        allMatches.get(name).addAll(rulePair.second.getHeads(new SrlDocument(d, processor, true)));
+                    }
+                });
+            }
+        }
+        reopenIndex();
+        IndexReader reader = IndexReader.open(indexWriter.getDirectory());
+        for(Map.Entry<String,List<String>> entry : allMatches.entrySet()) {
+            TermDocs td = reader.termDocs(new Term("uid", entry.getKey()));
+            if(!td.next())
+                throw new RuntimeException("Lost Document!");
+            Document d = reader.document(td.doc());
+            d.removeFields("extracted");
+            d.add(new Field("extracted", Strings.join("\n", entry.getValue()), Field.Store.YES, Field.Index.NO));
+            indexWriter.updateDocument(new Term("uid", entry.getKey()), d);
+        }
+        reader.close();
+        closeIndex();
     }
 
     /** Is the corpus open for indexing */

@@ -26,6 +26,7 @@ import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.List;
 import java.util.Iterator;
+import java.util.LinkedList;
 import javax.swing.*;
 import javax.swing.tree.*;
 import mccrae.tools.struct.ListenableSet;
@@ -73,6 +74,7 @@ public class SRLGUIView extends FrameView {
         wordListIcon = resourceMap.getIcon("srl.wordListIcon");
         corpusIcon = resourceMap.getIcon("srl.corpusIcon");
         closeTabIcon = resourceMap.getIcon("srl.closeTabIcon");
+        searchIcon = resourceMap.getIcon("srl.searchTabIcon");
 
         // connecting action tasks to status bar via TaskMonitor
         TaskMonitor taskMonitor = new TaskMonitor(getApplication().getContext());
@@ -137,7 +139,9 @@ public class SRLGUIView extends FrameView {
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
+        jSeparator4 = new javax.swing.JToolBar.Separator();
         jButton7 = new javax.swing.JButton();
+        jButton8 = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         newProjectMenuItem = new javax.swing.JMenuItem();
@@ -149,7 +153,11 @@ public class SRLGUIView extends FrameView {
         jMenuItem3 = new javax.swing.JMenuItem();
         jMenuItem4 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JSeparator();
         jMenuItem6 = new javax.swing.JMenuItem();
+        jMenuItem7 = new javax.swing.JMenuItem();
+        jSeparator5 = new javax.swing.JSeparator();
+        jMenuItem8 = new javax.swing.JMenuItem();
         javax.swing.JMenu helpMenu = new javax.swing.JMenu();
         javax.swing.JMenuItem aboutMenuItem = new javax.swing.JMenuItem();
         statusPanel = new javax.swing.JPanel();
@@ -243,6 +251,9 @@ public class SRLGUIView extends FrameView {
         jButton6.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         jToolBar1.add(jButton6);
 
+        jSeparator4.setName("jSeparator4"); // NOI18N
+        jToolBar1.add(jSeparator4);
+
         jButton7.setAction(actionMap.get("tagCorpus")); // NOI18N
         jButton7.setText(resourceMap.getString("jButton7.text")); // NOI18N
         jButton7.setFocusable(false);
@@ -251,6 +262,14 @@ public class SRLGUIView extends FrameView {
         jButton7.setName("jButton7"); // NOI18N
         jButton7.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         jToolBar1.add(jButton7);
+
+        jButton8.setAction(actionMap.get("extractTemplates")); // NOI18N
+        jButton8.setText(resourceMap.getString("jButton8.text")); // NOI18N
+        jButton8.setFocusable(false);
+        jButton8.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton8.setName("jButton8"); // NOI18N
+        jButton8.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButton8);
 
         org.jdesktop.layout.GroupLayout mainPanelLayout = new org.jdesktop.layout.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
@@ -322,9 +341,23 @@ public class SRLGUIView extends FrameView {
         jMenuItem5.setName("jMenuItem5"); // NOI18N
         jMenu1.add(jMenuItem5);
 
+        jSeparator1.setName("jSeparator1"); // NOI18N
+        jMenu1.add(jSeparator1);
+
         jMenuItem6.setAction(actionMap.get("tagCorpus")); // NOI18N
         jMenuItem6.setName("jMenuItem6"); // NOI18N
         jMenu1.add(jMenuItem6);
+
+        jMenuItem7.setAction(actionMap.get("extractTemplates")); // NOI18N
+        jMenuItem7.setName("jMenuItem7"); // NOI18N
+        jMenu1.add(jMenuItem7);
+
+        jSeparator5.setName("jSeparator5"); // NOI18N
+        jMenu1.add(jSeparator5);
+
+        jMenuItem8.setAction(actionMap.get("searchCorpus")); // NOI18N
+        jMenuItem8.setName("jMenuItem8"); // NOI18N
+        jMenu1.add(jMenuItem8);
 
         menuBar.add(jMenu1);
 
@@ -684,6 +717,11 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                     break;
                 case SRLGUIApp.SRL_PROJECT:
                     if (c instanceof ProjectPanel) {
+                        return (JPanel) c;
+                    }
+                    break;
+                case SRLGUIApp.SRL_SEARCH:
+                    if (c instanceof SearchPanel && ((SearchPanel)c).name.equals(name)) {
                         return (JPanel) c;
                     }
                     break;
@@ -1065,9 +1103,10 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                         contents.append(in + "\n");
                         in = br.readLine();
                     }
-                    corpus.addDoc(file.getName(), contents.toString());
+                    String fName = file.getName().replaceAll("[^A-Za-z0-9]", "");
+                    corpus.addDoc(fName, contents.toString());
                     if (p != null) {
-                        ((CorpusDocumentPanel) p).addDoc(file.getName());
+                        ((CorpusDocumentPanel) p).addDoc(fName);
                     }
                 }
             } catch (Exception x) {
@@ -1102,14 +1141,65 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
         public void run() {
             try {
-                SRLGUIApp.getApplication().proj.corpus.tagCorpus(SRLGUIApp.getApplication().proj.entityRulesets);
-                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Corpus tagging complete", "Corpus tagger", JOptionPane.INFORMATION_MESSAGE);
+                LinkedList<Corpus.Overlap> overlaps = new LinkedList<Corpus.Overlap>();
+                SRLGUIApp.getApplication().proj.corpus.tagCorpus(SRLGUIApp.getApplication().proj.entityRulesets,overlaps);
+                if(overlaps.isEmpty())
+                    JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Corpus tagging complete", "Corpus tagger", JOptionPane.INFORMATION_MESSAGE);
+                else {
+                    StringBuffer message = new StringBuffer("Corpus tagging complete. A number of overlapping entity matches occurred:\n");
+                    for(Corpus.Overlap overlap : overlaps) {
+                        message.append("\t" + overlap.r1.value + " as " + overlap.e1.entityType + "=" + overlap.e1.entityValue 
+                                + " and " + overlap.r2.value + " as " + overlap.e2.entityType + "=" + overlap.e2.entityValue + 
+                                "\n");
+                    }
+                    JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), message.toString(), "Corpus tagger", JOptionPane.INFORMATION_MESSAGE);
+                }
             } catch (IOException x) {
                 x.printStackTrace();
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Corpus Tagging Failed", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
+
+    @Action
+    public void extractTemplates() {
+        Thread t = new Thread(new ExtractTemplatesTask());
+        t.start();
+    }
+    
+    private class ExtractTemplatesTask implements Runnable {
+
+        public void run() {
+            try {
+                SRLGUIApp.getApplication().proj.corpus.extractTemplates(SRLGUIApp.getApplication().proj.templateRulesets);
+                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Template Extraction Complete", "Template Extraction", JOptionPane.INFORMATION_MESSAGE);
+            } catch(IOException x) {
+                x.printStackTrace();
+                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Corpus Tagging Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public static int searchCount = 1;
+    
+    @Action
+    public void searchCorpus() {
+        String query = JOptionPane.showInputDialog(getFrame(), "Query", "");
+        if(query != null && query.length() != 0) {
+            String title = "Search " + searchCount++;
+            JPanel c =  new SearchPanel(query, title);
+            rightPane.addTab(title, c);
+             try {
+                rightPane.setTabComponentAt(rightPane.getTabCount() - 1, new CloseTabButton(SRLGUIApp.SRL_SEARCH, title,searchIcon));
+            } catch(NoSuchMethodError e) {
+                // Java 1.5 compatibility
+                rightPane.setIconAt(rightPane.getTabCount() - 1, new CloseTabIcon());
+            }
+            rightPane.setSelectedComponent(c);
+        }
+    }
+    
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
@@ -1118,6 +1208,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
+    private javax.swing.JButton jButton8;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
@@ -1125,9 +1216,14 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
     private javax.swing.JMenuItem jMenuItem6;
+    private javax.swing.JMenuItem jMenuItem7;
+    private javax.swing.JMenuItem jMenuItem8;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JToolBar.Separator jSeparator3;
+    private javax.swing.JToolBar.Separator jSeparator4;
+    private javax.swing.JSeparator jSeparator5;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JTree mainTree;
@@ -1147,6 +1243,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private final Icon wordListIcon;
     private final Icon corpusIcon;
     private final Icon closeTabIcon;
+    private final Icon searchIcon;
     private int busyIconIndex = 0;
     private JDialog aboutBox;
 }
