@@ -74,7 +74,7 @@ Ortho classes are the same as Unicode categories
   * InCJKUnifiedIdeographs: Chinese symbols (漢字)
   * InThai
 These are prefixed by
-Nothing: The string is entirely composed of this type of character
+  * Nothing: The string is entirely composed of this type of character
   * ^: The string starts with this character type
   * _x_: The string is exactly _x_ characters of this type
   * _x_+: The string contains at least _x_ characters of the chosen type
