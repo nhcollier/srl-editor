@@ -42,8 +42,8 @@ public class StrMatch implements TypeExpr {
         } else {
             currentMatch.addWord(token.termText());
         }
-        if(!stack.empty() &&
-                stack.contains(new MatchFork(no, this))) {
+        MatchFork mf = MatchFork.find(stack, no, this);
+        if(mf != null && (mf.used == true || stack.peek() == mf)) {
             stack.peek().split(no, this);
             return this;
         }

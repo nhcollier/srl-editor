@@ -891,7 +891,6 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         if (jfc == null) {
             jfc = new JFileChooser();
         }
-        int oldFSM = jfc.getFileSelectionMode();
         jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         if (jfc.showOpenDialog(this.getFrame()) == JFileChooser.APPROVE_OPTION) {
             try {
@@ -917,7 +916,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open project", JOptionPane.ERROR_MESSAGE);
             }
         }
-        jfc.setFileSelectionMode(oldFSM);
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
     }
 
     @Action
@@ -1047,8 +1046,21 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         
     }
     
+    private class NullTask extends Task {
+
+        public NullTask() {
+            super(SRLGUIApp.getApplication());
+        }
+
+        @Override
+        protected Object doInBackground() throws Exception {
+            return null;
+        }
+        
+    }
+    
     @Action
-    public void addCorpusDoc() {
+    public Task addCorpusDoc() {
         if (jfc == null) {
             jfc = new JFileChooser();
         }
@@ -1066,14 +1078,14 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 return "Plain text (" + Charset.defaultCharset().name() + ")";
             }
         });
+        String encoding = null;
         if (jfc.showOpenDialog(this.getFrame()) == JFileChooser.APPROVE_OPTION) {
-            String encoding = null;
             if(jfc.getFileFilter() instanceof CustomEncodingFilter) {
                 encoding = JOptionPane.showInputDialog(this.getFrame(), "Enter encoding (e.g., \"UTF-8\"): ", "");
                 if(encoding == null) {
                     jfc.setMultiSelectionEnabled(false);
                     jfc.resetChoosableFileFilters();
-                    return;
+                    return new NullTask();
                 }
                 try {
                     Charset.forName(encoding);
@@ -1081,9 +1093,29 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                     JOptionPane.showMessageDialog(this.getFrame(), "Invalid encoding", "Cannot load", JOptionPane.WARNING_MESSAGE);
                     jfc.setMultiSelectionEnabled(false);
                     jfc.resetChoosableFileFilters();
-                    return;
+                    return new NullTask();
                 }
             }
+        }
+        File[] sf = jfc.getSelectedFiles();
+        jfc.setMultiSelectionEnabled(false);
+        jfc.resetChoosableFileFilters();
+        return new DocumentLoadThread(encoding, sf);
+    }
+    
+    private class DocumentLoadThread extends Task {
+        String encoding;
+        File[] selectedFiles;
+        
+        public DocumentLoadThread(String encoding, File[] selectedFiles)
+        {
+            super(SRLGUIApp.getApplication());
+            this.encoding = encoding;
+            this.selectedFiles = selectedFiles;
+        }
+
+        
+        public Object doInBackground() throws Exception {
             try {
                 Corpus corpus = SRLGUIApp.getApplication().proj.corpus;
                 if (!corpus.isIndexOpen()) {
@@ -1091,7 +1123,11 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 }
                 int replaceDoc = 0; // 0=? 1=YES -1=NO
                 JPanel p = getPanel(SRLGUIApp.getApplication().SRL_CORPUS, "");
-                for (File file : jfc.getSelectedFiles()) {
+                int i = 0;
+                for (File file : selectedFiles) {
+                    String fName = file.getName().replaceAll("[^A-Za-z0-9]", "");
+                    setMessage("Adding " + fName);
+                    setProgress((float)i++ / (float)selectedFiles.length);
                     BufferedReader br;
                     if(encoding == null) {
                         br= new BufferedReader(new FileReader(file));
@@ -1105,11 +1141,10 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                         in = br.readLine();
                     }
                     br.close();
-                    String fName = file.getName().replaceAll("[^A-Za-z0-9]", "");
                     if(corpus.containsDoc(fName)) {
                         if(replaceDoc == 0) {
                             String[] opts = { "Skip", "Replace", "Skip All", "Replace All" };
-                            int opt = JOptionPane.showOptionDialog(this.getFrame(), "Document called "+fName+" already exists", "Duplicate Document", 
+                            int opt = JOptionPane.showOptionDialog(SRLGUIApp.getApplication().getMainFrame(), "Document called "+fName+" already exists", "Duplicate Document", 
                                     JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, opts, opts[0]);
                             if(opt == 2) { replaceDoc = -1; }
                             if(opt == 3) { replaceDoc = 1; }
@@ -1127,17 +1162,19 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 }
             } catch (Exception x) {
                 x.printStackTrace();
-                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not add documents to corpus", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not add documents to corpus", JOptionPane.ERROR_MESSAGE);
             }
+            if(selectedFiles.length > 0) {
+                setMessage("All documents added");
+                setProgress(1.0f);
+            }
+            return null;
         }
-        jfc.setMultiSelectionEnabled(false);
-        jfc.resetChoosableFileFilters();
     }
 
     @Action
-    public void tagCorpus() {
-        Thread t = new Thread(new TagCorpusTask());
-        t.start();
+    public Task tagCorpus() {
+        return new TagCorpusTask();
     }
     
     public void enableSave() {
@@ -1150,22 +1187,23 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         jMenuItem1.setEnabled(false);
     }
 
-    private class TagCorpusTask implements Runnable {
+    private class TagCorpusTask extends Task implements mccrae.tools.process.ProgressMonitor {
 
         TagCorpusTask() {
+            super(SRLGUIApp.getApplication());
         }
 
-        public void run() {
+        public Object doInBackground() throws Exception {
             try {
                 LinkedList<Corpus.Overlap> overlaps = new LinkedList<Corpus.Overlap>();
-                SRLGUIApp.getApplication().proj.corpus.tagCorpus(SRLGUIApp.getApplication().proj.entityRulesets,overlaps);
+                SRLGUIApp.getApplication().proj.corpus.tagCorpus(SRLGUIApp.getApplication().proj.entityRulesets,overlaps, this);
                 if(overlaps.isEmpty())
                     JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Corpus tagging complete", "Corpus tagger", JOptionPane.INFORMATION_MESSAGE);
                 else {
                     StringBuffer message = new StringBuffer("Corpus tagging complete. A number of overlapping entity matches occurred:\n");
                     for(Corpus.Overlap overlap : overlaps) {
-                        message.append("\t" + overlap.r1.value + " as " + overlap.e1.entityType + "=" + overlap.e1.entityValue 
-                                + " and " + overlap.r2.value + " as " + overlap.e2.entityType + "=" + overlap.e2.entityValue + 
+                        message.append("\t" + overlap.r1.value + "[" + overlap.r1.beginRegion + "," + overlap.r1.endRegion + "] as " + overlap.e1.entityType + "=" + overlap.e1.entityValue 
+                                + " and " + overlap.r2.value + "[" + overlap.r2.beginRegion + "," + overlap.r2.endRegion + "] as " + overlap.e2.entityType + "=" + overlap.e2.entityValue + 
                                 "\n");
                     }
                     JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), message.toString(), "Corpus tagger", JOptionPane.INFORMATION_MESSAGE);
@@ -1174,26 +1212,51 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 x.printStackTrace();
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Corpus Tagging Failed", JOptionPane.ERROR_MESSAGE);
             }
+            return null;
         }
+
+        public void setMessageVal(String s) {
+            setMessage(s);
+        }
+
+        public void setProgressVal(float f) {
+            setProgress(f);
+        }
+        
+        
     }
 
     @Action
-    public void extractTemplates() {
-        Thread t = new Thread(new ExtractTemplatesTask());
-        t.start();
+    public Task extractTemplates() {
+        return new ExtractTemplatesTask();
     }
     
-    private class ExtractTemplatesTask implements Runnable {
+    private class ExtractTemplatesTask extends Task implements mccrae.tools.process.ProgressMonitor {
 
-        public void run() {
+        public ExtractTemplatesTask() {
+            super(SRLGUIApp.getApplication());
+        }
+        
+
+        public Object doInBackground() throws Exception {
             try {
-                SRLGUIApp.getApplication().proj.corpus.extractTemplates(SRLGUIApp.getApplication().proj.templateRulesets);
+                SRLGUIApp.getApplication().proj.corpus.extractTemplates(SRLGUIApp.getApplication().proj.templateRulesets, this);
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Template Extraction Complete", "Template Extraction", JOptionPane.INFORMATION_MESSAGE);
             } catch(IOException x) {
                 x.printStackTrace();
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Corpus Tagging Failed", JOptionPane.ERROR_MESSAGE);
             }
+            return null;
         }
+
+        public void setMessageVal(String s) {
+            setMessage(s);
+        }
+
+        public void setProgressVal(float f) {
+            setProgress(f);
+        }
+        
     }
 
     public static int searchCount = 1;

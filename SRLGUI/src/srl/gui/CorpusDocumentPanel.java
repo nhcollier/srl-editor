@@ -10,15 +10,21 @@
  */
 package srl.gui;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.List;
+import java.util.Stack;
+import java.util.Vector;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import mccrae.tools.strings.Strings;
 import org.apache.lucene.analysis.Token;
-import org.apache.lucene.document.Document;
 import srl.corpus.*;
 
 /**
@@ -385,16 +391,63 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         }
         String docName = (String) docList.getSelectedValue();
         try {
-            mainPane.setText(Strings.join("\n", corpus.getDocTaggedContents(docName)));
+            addTextStyled(Strings.join("\n", corpus.getDocTaggedContents(docName)));
         } catch (IOException x) {
             x.printStackTrace();
             mainPane.setText("<<<<IO Error>>>>");
+        } catch (BadLocationException x) {
+            x.printStackTrace();
         }
         mainPane.setEditable(false);
         textSelected = false;
         userChange = true;
     }//GEN-LAST:event_tagRadioActionPerformed
 
+    static final Color[] colors = { Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Color.ORANGE, Color.PINK, Color.MAGENTA,
+        new Color(0xda70d6), new Color(0x800080), new Color(0x00ffff), new Color(0xfa8072), new Color(0x6495ed),
+        new Color(0x808000), new Color(0x008080), new Color(0x00ff7f) };
+    
+    private void addTextStyled(String taggedContents) throws BadLocationException {
+        Vector<String> tagNames = new Vector<String>();
+        Stack<String> tagStack = new Stack<String>();
+        StyledDocument doc = mainPane.getStyledDocument();
+        mainPane.setText("");
+        int idx = -1;
+        int oldIdx = 0;
+        while((idx = taggedContents.indexOf("<",idx+1)) >= 0) {
+            int idx2 = taggedContents.indexOf(" ", idx);
+            String name = taggedContents.substring(idx+1, idx2);
+            if(tagStack.empty()) {
+                doc.insertString(oldIdx, taggedContents.substring(oldIdx, idx), null);
+            } else {
+                Style style = doc.getStyle(tagStack.peek());
+                if(style == null) {
+                    style = doc.addStyle(tagStack.peek(), null);
+                    StyleConstants.setBold(style, true);
+                    StyleConstants.setForeground(style, colors[tagNames.indexOf(tagStack.peek()) % colors.length]);
+                }
+                doc.insertString(oldIdx, taggedContents.substring(oldIdx, idx), style);
+            }
+            if(name.matches("/.*")) {
+                idx2 = taggedContents.indexOf(">", idx);
+                if(!tagStack.empty())
+                    doc.insertString(idx, taggedContents.substring(idx, idx2), doc.getStyle(tagStack.pop()));
+                else {
+                    System.err.println("Can't colour document");
+                    doc.insertString(idx, taggedContents.substring(idx), null);
+                    return;
+                }
+                oldIdx = idx2;
+            } else {
+                tagStack.push(name);
+                if(!tagNames.contains(name))
+                    tagNames.add(name);
+                oldIdx = idx;
+            }
+        }
+        doc.insertString(oldIdx, taggedContents.substring(oldIdx), null);
+    }
+    
     private void templatesRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_templatesRadioActionPerformed
         userChange = false;
         if(textSelected) {

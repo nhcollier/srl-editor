@@ -13,6 +13,7 @@ package srl.corpus;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
+import mccrae.tools.process.ProgressMonitor;
 import mccrae.tools.process.StopSignal;
 import mccrae.tools.strings.Strings;
 import org.apache.lucene.index.*;
@@ -257,7 +258,6 @@ public class Corpus {
                 queryStr = queryStr.append("taggedContents:\"<" + entity.first + " cl=\\\"" + entity.second +
                         "\\\">\" ");
             }
-            System.out.println(queryStr);
             Query q = qp.parse(queryStr.toString());
             if (q.toString().matches("\\s*")) {
                 nonLuceneQuery(query, collector, signal);
@@ -599,13 +599,23 @@ public class Corpus {
      * @param ruleSets The set of rules for named entity extraction
      */
     public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps) throws IOException {
+        tagCorpus(ruleSets, overlaps);
+    }
+    
+    public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps, ProgressMonitor monitor) throws IOException {
         if (isIndexOpen()) {
             closeIndex();
         }
         final HashMap<String, List<HashMap<Entity, SrlMatchRegion>>> allMatches =
                 new HashMap<String, List<HashMap<Entity, SrlMatchRegion>>>();
+        int i = 0;
         for (RuleSet ruleSet : ruleSets) {
+            int j = 0;
             for (final Pair<String, Rule> rulePair : ruleSet.rules) {
+                if(monitor != null) {
+                    monitor.setMessageVal("Matching rule " + rulePair.first);
+                    monitor.setProgressVal((float)(i * ruleSet.rules.size() + j) / (float)ruleSets.size() / (float)ruleSet.rules.size());
+                }
                 query(rulePair.second.getCorpusQuery(), new QueryHit() {
 
                     public void hit(Document d, StopSignal signal) {
@@ -617,9 +627,11 @@ public class Corpus {
                     }
                 });
             }
+            i++;
         }
         reopenIndex();
         IndexReader reader = IndexReader.open(indexWriter.getDirectory());
+        i=0;
         for (Map.Entry<String, List<HashMap<Entity, SrlMatchRegion>>> entry : allMatches.entrySet()) {
             Vector<Pair<Entity,SrlMatchRegion>> matches = findOverlapsAndKill(entry.getValue(),overlaps);
             Term t = new Term("name", entry.getKey().toLowerCase().split(" ")[0]);
@@ -635,19 +647,25 @@ public class Corpus {
                 if(dn.matches(".* .*") && Integer.parseInt(dn.split(" ")[1]) == docNo)
                         break;
             }
+            if(monitor != null) {
+                monitor.setMessageVal("Updating document " + old.getField("name").stringValue());
+                monitor.setProgressVal((float)i++ / allMatches.size());
+            }
             Document newDoc = new Document();
             newDoc.add(new Field("name", old.getField("name").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
             newDoc.add(new Field("contents", old.getField("contents").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
             newDoc.add(new Field("uid",  old.getField("uid").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
             String taggedContents = addEntities(new SrlDocument(old, processor, false), matches);
-            System.out.println(taggedContents);
             newDoc.add(new Field("taggedContents", taggedContents, Field.Store.YES, Field.Index.TOKENIZED));
             Term uidT = new Term("uid", old.getField("uid").stringValue());
             indexWriter.updateDocument(uidT, newDoc);
         }
         closeIndex();
         reader.close();
-
+        if(monitor != null) {
+            monitor.setMessageVal("Corpus tagging complete");
+            monitor.setProgressVal(1.0f);
+        }
     }
 
     private Vector<Pair<Entity,SrlMatchRegion>> findOverlapsAndKill(List<HashMap<Entity, SrlMatchRegion>> allMatches,
@@ -661,11 +679,19 @@ public class Corpus {
                 Pair<Entity,SrlMatchRegion> m2 = mIter2.next();
                 if(m2.second.beginRegion < m1.second.beginRegion && 
                         m2.second.endRegion < m1.second.endRegion &&
-                        m2.second.beginRegion < m1.second.endRegion) {
+                        m2.second.beginRegion < m1.second.endRegion &&
+                        m2.second.endRegion > m1.second.beginRegion) {
                     mIter2.remove();
                     mIter = matches.listIterator(matches.size());
                     if(overlaps != null)
                         overlaps.add(new Overlap(m1, m2));
+                    continue LOOP;
+                } else if(m2.second.beginRegion == m1.second.beginRegion &&
+                        m1.second.endRegion == m2.second.beginRegion &&
+                        m1.first.entityType.equals(m2.first.entityType) &&
+                        m1.first.entityValue.equals(m2.first.entityValue)) {
+                    mIter2.remove();
+                    mIter = matches.listIterator(matches.size());
                     continue LOOP;
                 }
             
@@ -739,37 +765,51 @@ public class Corpus {
             ends.add(new LinkedList<String>());
             begins.add(new LinkedList<String>());
         }
+        ends.add(new LinkedList<String>());
         for (Pair<Entity,SrlMatchRegion> entry : matches) {
                 begins.get(entry.second.beginRegion).add(0,"<" +
                         entry.first.entityType + " cl=\"" +
                         entry.first.entityValue + "\">");
-                ends.get(entry.second.endRegion + 1).add("</" +
-                        entry.first.entityType + ">");
+                try {
+                    ends.get(entry.second.endRegion).add("</" +
+                            entry.first.entityType + ">");
+                } catch(IndexOutOfBoundsException x) {
+                    System.out.println(sentence.getName());
+                    x.printStackTrace();
+                }
         }
         int offset = 0;
-        for (int i = 0; i < begins.size(); i++) {
-            for (String s : begins.get(i)) {
+        for (int i = 0; i < ends.size(); i++) {
+            for (String s : ends.get(i)) {
                 tokens.add(i + offset++, s);
             }
-        }
-        for (int i = 0; i < begins.size(); i++) {
-            int offset2 = offset - 1;
-            for (String s : ends.get(i)) {
-                tokens.add(i + offset2, s);
-                offset++;
+            if(i < begins.size()) {
+                for (String s : begins.get(i)) {
+                    tokens.add(i + offset++, s);
+                }
             }
         }
         return Strings.join(" ", tokens);
     }
     
     public void extractTemplates(Collection<RuleSet> ruleSets) throws IOException {
+        extractTemplates(ruleSets, null);
+    }
+    
+    public void extractTemplates(Collection<RuleSet> ruleSets, ProgressMonitor monitor) throws IOException {
         if (isIndexOpen()) {
             closeIndex();
         }
         final HashMap<String, List<String>> allMatches =
                 new HashMap<String, List<String>>();
+        int i = 0;
         for (RuleSet ruleSet : ruleSets) {
+            int j = 0;
             for (final Pair<String, Rule> rulePair : ruleSet.rules) {
+                if(monitor != null) {
+                    monitor.setMessageVal("Matching rule " + rulePair.first);
+                    monitor.setProgressVal((float)(i * ruleSet.rules.size() + j) / (float)ruleSets.size() / (float)ruleSet.rules.size());
+                }
                 query(rulePair.second.getCorpusQuery(), new QueryHit() {
 
                     public void hit(Document d, StopSignal signal) {
@@ -781,20 +821,31 @@ public class Corpus {
                     }
                 });
             }
+            i++;
         }
         reopenIndex();
         IndexReader reader = IndexReader.open(indexWriter.getDirectory());
+        i = 0;
         for(Map.Entry<String,List<String>> entry : allMatches.entrySet()) {
+            
             TermDocs td = reader.termDocs(new Term("uid", entry.getKey()));
             if(!td.next())
                 throw new RuntimeException("Lost Document!");
             Document d = reader.document(td.doc());
+            if(monitor != null) {
+                monitor.setMessageVal("Updating document " + d.getField("name").stringValue());
+                monitor.setProgressVal((float)i++ / allMatches.size());
+            }
             d.removeFields("extracted");
             d.add(new Field("extracted", Strings.join("\n", entry.getValue()), Field.Store.YES, Field.Index.NO));
             indexWriter.updateDocument(new Term("uid", entry.getKey()), d);
         }
         reader.close();
         closeIndex();
+        if(monitor != null) {
+            monitor.setMessageVal("Template Extraction complete");
+            monitor.setProgressVal(1.0f);
+        }
     }
 
     /** Is the corpus open for indexing */

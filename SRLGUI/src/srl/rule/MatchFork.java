@@ -10,6 +10,8 @@
 */
 package srl.rule;
 
+import java.util.Collection;
+
 /**
  * @author John McCrae, National Institute of Informatics
  */
@@ -41,6 +43,18 @@ public class MatchFork {
         } else
             return false;
     }
+
+    @Override
+    public String toString() {
+        return typeExpr + "@" + tokenNo + (used ? "*" : "");
+    }
     
+    public static MatchFork find(Collection<MatchFork> col, int tokenNo, TypeExpr typeExpr) {
+        for(MatchFork mf : col) {
+            if(mf.tokenNo == tokenNo && mf.typeExpr == typeExpr)
+                return mf;
+        }
+        return null;
+    }
     
 }

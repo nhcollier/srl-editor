@@ -73,17 +73,18 @@ public class StrMatchOrtho implements TypeExpr {
                fixed = m.group(3) == null || m.group(3).equals("");
             } else {
                fixed = false;
-               number = 1;
+               number = -1;
             }                
             String type = "\\p{" + m.group(4) + "}";
-            if(initial && !fixed) {
+            if(number == -1 && !initial && !fixed) {
+                rv[i] = type + "+";
+            } else if(initial && !fixed) {
                 rv[i] = type + ".*" + (number > 1 ? ("(" + type + ".*){" + (number-1) + ",}") : "");
             } else if(fixed) {
                 rv[i] = type + (number > 1 ? "{" + number + "}" : "");
             } else if(!initial) {
                 rv[i] = ".*(" + type + ".*)" + (number > 1 ? "{" + number + ",}" : "");
             }
-            System.out.println(rv[i]);
            /* if(exprs[i].length() >= 2) {
                 if(Character.isUpperCase(exprs[i].charAt(exprs[i].length()-1))) {
                     throw new IllegalArgumentException("Unrecognised ortho expression: " + exprs[i]);

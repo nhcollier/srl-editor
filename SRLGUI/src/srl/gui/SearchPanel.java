@@ -87,6 +87,13 @@ public class SearchPanel extends javax.swing.JPanel {
                 DefaultTableModel dtm = (DefaultTableModel)searchTable.getModel();
                 dtm.setRowCount(0);
                 
+                if(hits.length() == 0) {
+                    Object[] rowData = new Object[3];
+                    rowData[0] = rowData[1] = "";
+                    rowData[2] = "No matches";
+                    dtm.addRow(rowData);
+                    searchTable.setEnabled(false);
+                }
                 for(int i = 0; i < hits.length(); i++) {
                     Document d = hits.doc(i);
                     Object[] rowData = new Object[3];

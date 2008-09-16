@@ -165,7 +165,7 @@ public class Rule implements Expr {
                 // Check to see if we are caught in "words(1,) <EOL>" trap
                 if (typeExpr != null && typeExpr.canEnd()) {
                     if(typeExpr instanceof Entity) {
-                       ((Entity)typeExpr).match.endRegion = j+1;
+                       ((Entity)typeExpr).match.endRegion = j;
                     }   
                     onMatch(rval);
                     if (firstOnly) {

@@ -16,6 +16,7 @@ import mccrae.tools.struct.*;
  */
 public class EndTag implements TypeExpr {
     final String entityType;
+    TypeExpr next;
     
     public EndTag(String entityType) {
         this.entityType = entityType;
@@ -29,7 +30,7 @@ public class EndTag implements TypeExpr {
         if(token instanceof EndTagToken) {
             EndTagToken ett = (EndTagToken)token;
             if(ett.type.equals(entityType))
-                return Entity.successState;
+                return next;
             else
                 return null;
         } else {
@@ -42,8 +43,7 @@ public class EndTag implements TypeExpr {
     }
 
     public void setNext(TypeExpr te) {
-        if(te != Entity.successState)
-            throw new IllegalArgumentException();
+        next = te;
     }
 
     public void reset() {

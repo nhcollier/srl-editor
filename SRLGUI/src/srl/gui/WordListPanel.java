@@ -208,11 +208,17 @@ public class WordListPanel extends javax.swing.JPanel {
         if (listCombo.getSelectedItem().equals("New List...")) {
             String name = JOptionPane.showInputDialog(this, "List name ", "");
             if (name != null && name.length() > 0) {
-                if (!wl.addList(name)) {
-                    JOptionPane.showMessageDialog(this, "There is already a list named " + name, "Could not add list", JOptionPane.ERROR_MESSAGE);
+                if(!name.matches("[A-Za-z0-9_]+")) {
+                    JOptionPane.showMessageDialog(this, name + " is not a valid list name. Must contain only alphanumeric characters and underscores", "Could not add list", JOptionPane.WARNING_MESSAGE);
                     listCombo.setSelectedIndex(-1);
                     return;
                 }
+                if (!wl.addList(name)) {
+                    JOptionPane.showMessageDialog(this, "There is already a list named " + name, "Could not add list", JOptionPane.WARNING_MESSAGE);
+                    listCombo.setSelectedIndex(-1);
+                    return;
+                }
+                
                 listCombo.insertItemAt(name, listCombo.getItemCount() - 1);
                 listCombo.setSelectedItem(name);
                 SRLGUIApp.getApplication().setModified();
