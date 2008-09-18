@@ -1200,13 +1200,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 if(overlaps.isEmpty())
                     JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Corpus tagging complete", "Corpus tagger", JOptionPane.INFORMATION_MESSAGE);
                 else {
-                    StringBuffer message = new StringBuffer("Corpus tagging complete. A number of overlapping entity matches occurred:\n");
-                    for(Corpus.Overlap overlap : overlaps) {
-                        message.append("\t" + overlap.r1.value + "[" + overlap.r1.beginRegion + "," + overlap.r1.endRegion + "] as " + overlap.e1.entityType + "=" + overlap.e1.entityValue 
-                                + " and " + overlap.r2.value + "[" + overlap.r2.beginRegion + "," + overlap.r2.endRegion + "] as " + overlap.e2.entityType + "=" + overlap.e2.entityValue + 
-                                "\n");
-                    }
-                    JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), message.toString(), "Corpus tagger", JOptionPane.INFORMATION_MESSAGE);
+                    OverlapMessageDialog omd = new OverlapMessageDialog(SRLGUIApp.getApplication().getMainFrame(), true, overlaps);
+                    omd.setVisible(true);
                 }
             } catch (IOException x) {
                 x.printStackTrace();

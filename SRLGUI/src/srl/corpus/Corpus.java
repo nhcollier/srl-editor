@@ -614,7 +614,7 @@ public class Corpus {
             for (final Pair<String, Rule> rulePair : ruleSet.rules) {
                 if(monitor != null) {
                     monitor.setMessageVal("Matching rule " + rulePair.first);
-                    monitor.setProgressVal((float)(i * ruleSet.rules.size() + j) / (float)ruleSets.size() / (float)ruleSet.rules.size());
+                    monitor.setProgressVal((float)(i * ruleSet.rules.size() + j++) / (float)ruleSets.size() / (float)ruleSet.rules.size());
                 }
                 query(rulePair.second.getCorpusQuery(), new QueryHit() {
 
