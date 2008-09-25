@@ -47,9 +47,7 @@ public class SkipWords implements TypeExpr {
         }
         if(token instanceof EndTagToken) {
             tagDepth--;
-            if(tagDepth < 0)
-                return null;
-            else
+            if(tagDepth > 0)
                 return this;
         }
 	if(i < min) {
