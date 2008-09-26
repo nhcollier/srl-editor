@@ -36,37 +36,40 @@ public class JapaneseTokenizer extends Tokenizer {
     public Token next() throws IOException {
         if (currentSentence == null) {
             currentToken = preTokenizer.next();
-            currentSentence = preTokenizer.toString();
+            currentSentence = currentToken != null ? currentToken.termText() : null;
             offset = 0;
         }
         if (currentSentence == null) {
             return null;
         }
         int last = offset;
-        offset++;
-        for (int i = offset; i + 1 < currentSentence.length(); i++) {
-            String s = currentSentence.substring(offset - 1, offset + 1);
+        for (int i = last + 1; i + 1 < currentSentence.length(); i++) {
+            String s = currentSentence.substring(i - 1, i + 1);
             if (rules.containsKey(s)) {
                 if (rules.get(s) == Boolean.TRUE) {
-                    return new Token(s.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
+                    offset = i;
+                    return new Token(currentSentence.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
                 }
             } else {
                 String s2 = getForm(s, 1, 2);
                 if (rules.containsKey(s2)) {
                     if (rules.get(s2) == Boolean.TRUE) {
-                        return new Token(s.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
+                        offset = i;
+                        return new Token(currentSentence.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
                     }
                 }
                 s2 = getForm(s, 0, 1);
                 if (rules.containsKey(s2)) {
                     if (rules.get(s2) == Boolean.TRUE) {
-                        return new Token(s.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
+                        offset = i;
+                        return new Token(currentSentence.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
                     }
                 }
                 s2 = getForm(s, 0, 2);
                 if (rules.containsKey(s2)) {
                     if (rules.get(s2) == Boolean.TRUE) {
-                        return new Token(s.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
+                        offset = i;
+                        return new Token(currentSentence.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
                     }
                 }
             }
@@ -82,9 +85,10 @@ public class JapaneseTokenizer extends Tokenizer {
     public static void readRules() throws IOException {
         try {
             rules = new HashMap<String,Boolean>();
-            BufferedReader br = new BufferedReader(new FileReader(new File(JapaneseTokenizer.class.getResource("srl/corpus/jp/rules").toURI())));
+            
+            BufferedReader br = new BufferedReader(new FileReader(new File(ClassLoader.getSystemResource("srl/corpus/jp/rules").toURI())));
             for(String line = br.readLine(); line != null; line = br.readLine()) {
-                rules.put(line.substring(0,2), line.charAt(3) == '+' ? Boolean.TRUE : Boolean.FALSE);
+                rules.put(line.substring(0,2), line.charAt(2) == '+' ? Boolean.TRUE : Boolean.FALSE);
             }
         } catch(URISyntaxException x) {
             throw new RuntimeException("Unexpected Error: " + x.getMessage());
@@ -105,15 +109,21 @@ public class JapaneseTokenizer extends Tokenizer {
     }
 
     private static String getForm(String s, int st, int end) {
-        String rv = "";
+        StringBuffer rv = new StringBuffer();
+        for(int i = 0; i < st; i++) {
+            rv.append(s.charAt(i));
+        }
         for (int i = st; i < end; i++) {
             if (s.charAt(i) < '\u00ff') {
-                rv = rv + s.charAt(i);
+                rv.append(s.charAt(i));
             } else {
-                rv = rv + getType(s.charAt(i));
+                rv.append(getType(s.charAt(i)));
             }
         }
-        return rv;
+        for(int i = end; i < s.length(); i++) {
+            rv.append(s.charAt(i));
+        }
+        return rv.toString();
     }
 
     @Override

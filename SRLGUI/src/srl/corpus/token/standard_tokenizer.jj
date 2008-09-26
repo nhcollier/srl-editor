@@ -60,7 +60,7 @@ PARSER_END(StandardTokenizer)
 TOKEN : {					  // token patterns
 
   // basic word: a sequence of digits & letters
-  <ALPHANUM: (<LETTER>|<DIGIT>|<KOREAN>)+ >				  
+  <ALPHANUM: (<LETTER>|<DIGIT>|<KOREAN>|<CJ>)+ >				  
 | < BEGIN_TAG : "<" <ALPHANUM> " cl=\"" <ALPHANUM> "\">">
 | < END_TAG : "</" <ALPHANUM> ">" >
 
@@ -149,16 +149,6 @@ TOKEN : {					  // token patterns
        "\u4e00"-"\u9fff",
        "\uf900"-"\ufaff",
        "\uff65"-"\uff9f"
-
-// Otis: consider adding these, too
-//
-// 2E80-2EFF: CJK Radicals Supplement
-// 2F00-2FDF: Kangxi Radicals
-// 3190-319F: Kanbun
-// 31C0-31EF: CJK Strokes
-// 4E00-9FBF: CJK Unified
-// F900-FAFF: CJK Compatibility Ideographs
-
       ]
   >
 | < SPACE:
@@ -228,7 +218,6 @@ org.apache.lucene.analysis.Token next2() throws IOException :
     tk = <EMAIL> |
     tk = <HOST> |
     tk = <NUM> |
-    tk = <CJ> |
     tk = <KOREAN> |
     tk = <BEGIN_TAG> |
     tk = <END_TAG>

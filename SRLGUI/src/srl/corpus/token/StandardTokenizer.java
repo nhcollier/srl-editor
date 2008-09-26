@@ -55,7 +55,6 @@ public class StandardTokenizer extends org.apache.lucene.analysis.Tokenizer impl
     case HOST:
     case NUM:
     case PUNCTUATION:
-    case CJ:
     case KOREAN:
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case ALPHANUM:
@@ -81,9 +80,6 @@ public class StandardTokenizer extends org.apache.lucene.analysis.Tokenizer impl
         break;
       case NUM:
         tk = jj_consume_token(NUM);
-        break;
-      case CJ:
-        tk = jj_consume_token(CJ);
         break;
       case KOREAN:
         tk = jj_consume_token(KOREAN);
@@ -131,7 +127,7 @@ public class StandardTokenizer extends org.apache.lucene.analysis.Tokenizer impl
       jj_la1_0();
    }
    private static void jj_la1_0() {
-      jj_la1_0 = new int[] {0x507fe,0x707ff,};
+      jj_la1_0 = new int[] {0x407fe,0x607ff,};
    }
 
   public StandardTokenizer(CharStream stream) {
