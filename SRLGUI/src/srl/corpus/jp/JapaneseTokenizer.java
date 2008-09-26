@@ -29,6 +29,7 @@ public class JapaneseTokenizer extends Tokenizer {
     public JapaneseTokenizer(Reader r) throws IOException {
         if(rules == null) 
             readRules();
+        preTokenizer = new srl.corpus.token.StandardTokenizer(r);
     }
     
     @Override

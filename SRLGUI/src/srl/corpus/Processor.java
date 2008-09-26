@@ -34,7 +34,8 @@ public class Processor {
       "German", 
       "Greek", 
       "Russian",
-      "Thai"
+      "Thai",
+      "Japanese"
     };
     
     static final String[] analyzers = {
@@ -48,7 +49,9 @@ public class Processor {
         "org.apache.lucene.analysis.de.GermanAnalyzer", 
         "org.apache.lucene.analysis.el.GreekAnalyzer",
         "org.apache.lucene.analysis.ru.RussianAnalyzer", 
-        "org.apache.lucene.analysis.th.ThaiAnalyzer" };
+        "org.apache.lucene.analysis.th.ThaiAnalyzer",
+        "srl.corpus.jp.JapaneseAnalyzer"
+    };
     
     static final String[] tokenizers = {
         "srl.corpus.token.StandardTokenizer",
@@ -61,10 +64,12 @@ public class Processor {
         "srl.corpus.token.StandardTokenizer",
         "srl.corpus.token.StandardTokenizer",
         "srl.corpus.token.StandardTokenizer",
-        "srl.corpus.th.ThaiTokenizer"
+        "srl.corpus.th.ThaiTokenizer",
+        "srl.corpus.jp.JapaneseTokenizer"
     };
     
     static final String[] splitters = {
+        "srl.corpus.StandardSplitter",
         "srl.corpus.StandardSplitter",
         "srl.corpus.StandardSplitter",
         "srl.corpus.StandardSplitter",

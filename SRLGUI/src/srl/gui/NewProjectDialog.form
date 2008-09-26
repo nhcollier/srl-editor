@@ -106,7 +106,7 @@
     <Component class="javax.swing.JComboBox" name="analyzerCombo">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="11">
+          <StringArray count="12">
             <StringItem index="0" value="English"/>
             <StringItem index="1" value="Brazilian"/>
             <StringItem index="2" value="Chinese"/>
@@ -118,6 +118,7 @@
             <StringItem index="8" value="Greek"/>
             <StringItem index="9" value="Russian"/>
             <StringItem index="10" value="Thai"/>
+            <StringItem index="11" value="Japanese"/>
           </StringArray>
         </Property>
         <Property name="name" type="java.lang.String" value="analyzerCombo" noResource="true"/>

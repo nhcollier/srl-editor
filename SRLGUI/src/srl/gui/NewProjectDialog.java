@@ -69,7 +69,7 @@ public class NewProjectDialog extends javax.swing.JDialog {
         projectPathField.setText(resourceMap.getString("projectPathField.text")); // NOI18N
         projectPathField.setName("projectPathField"); // NOI18N
 
-        analyzerCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "English", "Brazilian", "Chinese", "CJK", "Czech", "Dutch", "French", "German", "Greek", "Russian", "Thai" }));
+        analyzerCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "English", "Brazilian", "Chinese", "CJK", "Czech", "Dutch", "French", "German", "Greek", "Russian", "Thai", "Japanese" }));
         analyzerCombo.setName("analyzerCombo"); // NOI18N
 
         projectPathBrowseButton.setText(resourceMap.getString("projectPathBrowseButton.text")); // NOI18N
