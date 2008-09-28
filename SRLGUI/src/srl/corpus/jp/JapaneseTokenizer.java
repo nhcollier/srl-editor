@@ -49,21 +49,24 @@ public class JapaneseTokenizer extends Tokenizer {
                 if (rules.get(s) == Boolean.TRUE) {
                     offset = i;
                     return new Token(currentSentence.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
-                }
+                } else
+                    continue;
             } else {
                 String s2 = getForm(s, 1, 2);
                 if (rules.containsKey(s2)) {
                     if (rules.get(s2) == Boolean.TRUE) {
                         offset = i;
                         return new Token(currentSentence.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
-                    }
+                    } else
+                        continue;
                 }
                 s2 = getForm(s, 0, 1);
                 if (rules.containsKey(s2)) {
                     if (rules.get(s2) == Boolean.TRUE) {
                         offset = i;
                         return new Token(currentSentence.substring(last, offset), currentToken.startOffset() + last, currentToken.startOffset() + offset);
-                    }
+                    } else
+                        continue;
                 }
                 s2 = getForm(s, 0, 2);
                 if (rules.containsKey(s2)) {
@@ -86,7 +89,8 @@ public class JapaneseTokenizer extends Tokenizer {
         try {
             rules = new HashMap<String,Boolean>();
             
-            BufferedReader br = new BufferedReader(new FileReader(new File(ClassLoader.getSystemResource("srl/corpus/jp/rules").toURI())));
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(
+                        new File(ClassLoader.getSystemResource("srl/corpus/jp/rules").toURI())), "UTF-8"));
             for(String line = br.readLine(); line != null; line = br.readLine()) {
                 rules.put(line.substring(0,2), line.charAt(2) == '+' ? Boolean.TRUE : Boolean.FALSE);
             }
