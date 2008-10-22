@@ -64,7 +64,7 @@ public class Processor {
         "srl.corpus.token.StandardTokenizer",
         "srl.corpus.token.StandardTokenizer",
         "srl.corpus.token.StandardTokenizer",
-        "srl.corpus.th.ThaiTokenizer",
+        "srl.corpus.th.LexToTokenizer",
         "srl.corpus.jp.JapaneseTokenizer"
     };
     
