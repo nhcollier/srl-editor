@@ -13,11 +13,19 @@ import org.apache.lucene.analysis.*;
 import java.util.*;
 
 /**
- *
+ * This interface represents a sentence splitter and the functions it
+ * is supposed to provide
  * @author john
  */
 public interface Splitter {
-
+    /** Split a document into sentences
+     * @param doc The document
+     * @param docName Documents like to have names, like dogs
+     */
     public List<SrlDocument> split(Collection<Token> doc, String docName);
+    /** Split a document into sentences
+     * @param doc The document
+     * @param docName Documents like to have names, like dogs
+     */
     public List<SrlDocument> split(String doc, String docName);
 }

@@ -12,6 +12,7 @@ package srl.corpus;
 
 import java.util.regex.*;
 
+/** Represents the opening tag of an entity */
 public class BeginTagToken extends SrlToken {
     public String type, val;
 

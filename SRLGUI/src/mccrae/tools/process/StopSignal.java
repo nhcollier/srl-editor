@@ -22,7 +22,7 @@ public class StopSignal {
     /**
      * The process should frequently query this function to see if the stop has been
      * completed
-     * @return
+     * @return True if it is stopped
      */
     public boolean isStopped() { return stop; }
     

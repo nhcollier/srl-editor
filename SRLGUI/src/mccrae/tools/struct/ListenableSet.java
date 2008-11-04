@@ -12,7 +12,11 @@ package mccrae.tools.struct;
 
 import java.util.*;
 /**
- *
+ * A set which can be listened to for changes. Whenever an object is added or
+ * removed from the set a CollectionChangeEvent is fired to all listeners. For
+ * the purpose of CollectionChangeEvents there is no reference value
+ * @see CollectionChangeEvent
+ * @see CollectionChangeListener
  * @author John McCrae
  */
 public class ListenableSet<E> extends AbstractSet<E> {

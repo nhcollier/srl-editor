@@ -12,7 +12,11 @@ package mccrae.tools.struct;
 import java.util.*;
 
 /**
- *
+ * A list which can be listened to for changes. Whenever an object is added or
+ * removed from the list a CollectionChangeEvent is fired to all listeners. For
+ * the purpose of CollectionChangeEvents the reference is the index of the list
+ * @see CollectionChangeEvent
+ * @see CollectionChangeListener
  * @author John McCrae
  */
 public class ListenableList<E> extends AbstractList<E> {
@@ -30,6 +34,7 @@ public class ListenableList<E> extends AbstractList<E> {
             listener.collectionChanged(e);
         }
     }
+    
     
     public void addCollectionChangeListener(CollectionChangeListener<E> listener) {
         listeners.add(listener);

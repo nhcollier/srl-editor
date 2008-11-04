@@ -28,25 +28,39 @@ import org.xml.sax.helpers.*;
 import srl.rule.parser.ParseException;
 
 /**
+ * The Srl Project is used to group together all data used by SRL system
+ *
  * @author John McCrae, National Institute of Informatics
  */
 public class SrlProject {
+    /** A list of the sets of rules used for entity extraction */
     public List<RuleSet> entityRulesets;
+    /** A list of the sets of rules used for template extraction */
     public List<RuleSet> templateRulesets;
+    /** A list of the sets of wordlist */
     public ListenableList<WordList> wordlists;
+    /** The project name */
     public final StringBuffer name = new StringBuffer();
+    /** The project description */
     public final StringBuffer description = new StringBuffer();
+    /** The tools used for linguistic processing, i.e., tokenizer, splitter */
     public Processor processor;
+    /** The types of entities used in the project. eg <u>name</u>ed entities
+     * for <u>disease</u>s may be represented as a pair <code>[ "name", 
+     * "disease" ]</code>*/
     public ListenableList<Pair<String,String>> entities = 
             new ListenableList<Pair<String, String>>(new LinkedList<Pair<String, String>>());
+    /** The corpus object. This is null if the project was created with
+     * openCorpus=false
+     */
     public Corpus corpus;
     File path;
     boolean modified;
 
     /**
-     * Create a new SrlProject object with a new SrlProject
+     * Create a new (empty) SRL project
      * @param path The path where this is located
-     * @param analyzer The analyzer used for this corpus
+     * @param processor The analyzer used for this corpus
      * @throws java.lang.IllegalArgumentException If path exists and is not an empty directory
      * @throws IOException If a disk error occurred
      */
@@ -54,6 +68,14 @@ public class SrlProject {
         this(path,processor,true);
     }
     
+    /**
+     * Create a new (empty) SRL project
+     * @param path The path where this is located
+     * @param processor The analyzer used for this corpus
+     * @param openCorpus If this is false no corpus is created
+     * @throws java.lang.IllegalArgumentException If path exists and is not an empty directory
+     * @throws IOException If a disk error occurred
+     */
     public SrlProject(File path, Processor processor, boolean openCorpus) throws IllegalArgumentException, IOException {
         if (path.exists()) {
             if (!path.isDirectory()) {
@@ -90,10 +112,19 @@ public class SrlProject {
         wordlists = new ListenableList<WordList>(new LinkedList<WordList>());
     }
 
+    /**
+     * Open an existing SRL project
+     * @param path The directory containing all the project files
+     */
     public static SrlProject openSrlProject(File path) throws IllegalArgumentException, IOException, SAXException {
         return openSrlProject(path,true);
     }
     
+    /**
+     * Open a existing SRL project
+     * @param path The directory containing all the project files
+     * @param openCorpus Set to false to supress opening the corpus
+     */
     public static SrlProject openSrlProject(File path, boolean openCorpus) throws IllegalArgumentException, IOException, SAXException {
         SrlProject proj = new SrlProject();
         proj.path = path;
@@ -108,15 +139,32 @@ public class SrlProject {
         return proj;
     }
 
+    /**
+     * Create a new corpus
+     * @param processor The linguistic processor, if null SrlProject.processor is used
+     */
     public void openCorpus(Processor processor) throws IOException {
+	if(processor == null)
+	    processor = this.processor;
         corpus = Corpus.openCorpus(new File(path, "corpus"), processor, false);
     }
 
+    /**
+     * Create a new wordlist and add it to the word list set list
+     * @param wordList The word list name
+     */
     public void openWordList(String wordList) throws IOException {
         wordlists.add(WordList.loadFromFile(new File(new File(path.getPath(), "wordlists"), wordList + ".wordlist.srl"), corpus.getProcessor()));
         modified = true;
     }
 
+    /**
+     * Create a new rule set and add it to the rule set list
+     * @param ruleSet The rule set name
+     * @param ruleType The rule type 
+     * @see Rule#ENTITY_RULE
+     * @see Rule#TEMPLATE_RULE
+     */
     public void openRuleSet(String ruleSet, int ruleType) throws IOException, ParseException {
         if(ruleType == Rule.ENTITY_RULE)
             entityRulesets.add(RuleSet.loadFromFile(new File(new File(path, "entity_rules"), ruleSet + ".rule.srl"),ruleType));
@@ -127,6 +175,9 @@ public class SrlProject {
         modified = true;
     }
 
+    /**
+     * Write the project to disk
+     */
     public void writeProject() throws IOException {
         for (WordList wl : wordlists) {
             File f = new File(new File(path, "wordlists"), wl.name + ".wordlist.srl");
@@ -210,6 +261,9 @@ public class SrlProject {
         return modified;
     }
 
+    /**
+     * Set the project to be modified
+     */
     public void setModified() {
         modified = true;
     }

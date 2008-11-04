@@ -13,6 +13,9 @@ package mccrae.tools.struct;
 import java.io.Serializable;
 
 /**
+ * A pair of objects. This is often cleaner than using Object[] or List, as the
+ * objects can both keep their original types
+ * 
  * @author John McCrae, National Institute of Informatics
  */
 public class Pair<E,F> implements Serializable {

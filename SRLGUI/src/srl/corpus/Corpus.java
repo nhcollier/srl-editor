@@ -114,7 +114,6 @@ public class Corpus {
     /** Add a new document to corpus
      * @param name The name of the document
      * @param contents The text of the new document
-     * @throws IllegalStateException if {@link #openIndex(boolean)} has not been called
      * @throws IOException The document couldn't be added
      * @throws IllegalArgumentException If the document name already exits
      */
@@ -219,8 +218,14 @@ public class Corpus {
         }
     }
 
-    public interface QueryHit {
 
+    /** Derive an object from this class to provide a callback on
+     * query success */
+    public interface QueryHit {
+	/** The callback function
+	 * @param d The document hit
+	 * @param signal Allows premature halt of the query. (If you don't
+	 * know what this is ignore it, it's really not that important) */
         public void hit(Document d, StopSignal signal);
     }
 
@@ -308,7 +313,8 @@ public class Corpus {
         return docNames.contains(docName);
     }
     
-    /** Query the corpus */
+    /** Query the corpus for a single string
+     */
     public Hits query(String query) throws IOException {
         if (query.equals("")) {
             return null;
@@ -463,6 +469,9 @@ public class Corpus {
         return rval;
     }
 
+    /** Get the tagged contents (as stored) of the document.
+     * @return The tagged contents of the document as a sentence-by-sentence list
+     */
     public List<String> getDocTaggedContents(String name) throws IOException {
         QueryParser qp = new QueryParser("name", processor.getAnalyzer());
         Vector<String> rval = new Vector<String>();
@@ -494,6 +503,10 @@ public class Corpus {
         return rval;
     }
     
+    /**
+     * The extracted templates as stored for a document.
+     * @return The extracted templates of the document as a sentence-by-sentence list
+     */
     public List<String> getDocTemplateExtractions(String name) throws IOException {
         QueryParser qp = new QueryParser("name", processor.getAnalyzer());
         Vector<String> rval = new Vector<String>();
@@ -560,6 +573,13 @@ public class Corpus {
         addDoc(name, contents);
     }
 
+    /** Apply the tagging algorithm.
+     * @param sents The document as a list of sentences
+     * @param ruleSets The rulesets to apply
+     * @param p The linguistic processor
+     * @return The document as a list (tags are added as BeginTagToken and 
+     * EndTagToken objects
+     */
     public static List<SrlDocument> tagSentences(List<SrlDocument> sents, Collection<RuleSet> ruleSets, Processor p) throws IOException {
         final Vector<List<HashMap<Entity, SrlMatchRegion>>> allMatches =
                 new Vector<List<HashMap<Entity, SrlMatchRegion>>>(sents.size());
@@ -580,6 +600,7 @@ public class Corpus {
         return rval;
     }
     
+    /** Used to represent an overlap in tagging */
     public class Overlap {
         public Entity e1,e2;
         public SrlMatchRegion r1,r2;
@@ -602,6 +623,13 @@ public class Corpus {
         tagCorpus(ruleSets, overlaps);
     }
     
+    /**
+     * Tag the corpus
+     * @param overlaps A collection, which this function will add any overlaps it detects to (an overlap is a pair of matches
+     * where both matches hit the same token and both matches have one token not matched by the other e.g., [0,4] &amp; [1,5])
+     * @param ruleSets The set of rules for named entity extraction
+     * @param monitor Monitors the progress surprisingly
+     */
     public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps, ProgressMonitor monitor) throws IOException {
         if (isIndexOpen()) {
             closeIndex();
@@ -700,7 +728,9 @@ public class Corpus {
         return matches;
     }
     
-    /** Reinitialize the corpus support
+    /** Reinitialize the corpus support. This is actually research for word 
+     * list entry matches, sometimes they get out of sync, I don't know why,
+     * hopefully they are fixed now and I just forgot to remove this comment.
      * @throws java.io.IOException
      */
     public void resupport() throws IOException {
@@ -713,6 +743,7 @@ public class Corpus {
         support = newSupport;
     }
 
+    /** Sort a selection of matches in order of appearance */
     public static Vector<Pair<Entity,SrlMatchRegion>> sortMatches(List<HashMap<Entity,SrlMatchRegion>> matches) {
         Vector<Pair<Entity,SrlMatchRegion>> rv = new Vector<Pair<Entity, SrlMatchRegion>>(matches.size());
         for (HashMap<Entity, SrlMatchRegion> match : matches) {
@@ -792,10 +823,12 @@ public class Corpus {
         return Strings.join(" ", tokens);
     }
     
+    /** Extract all the templates from this corpus */
     public void extractTemplates(Collection<RuleSet> ruleSets) throws IOException {
         extractTemplates(ruleSets, null);
     }
     
+    /** Extract all the templates from this corpus */
     public void extractTemplates(Collection<RuleSet> ruleSets, ProgressMonitor monitor) throws IOException {
         if (isIndexOpen()) {
             closeIndex();
@@ -952,6 +985,7 @@ public class Corpus {
     }
 
     // DELETE BEFORE RELEASE
+    /*
     public static void main(String[] args) {
         try {
             CorpusSupport s = new CorpusSupport();
@@ -961,7 +995,7 @@ public class Corpus {
         } catch (Exception x) {
             x.printStackTrace();
         }
-    }
+	}*/
 }
 
 class CorpusSupport implements Serializable {

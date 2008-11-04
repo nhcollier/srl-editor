@@ -16,6 +16,10 @@ import org.apache.lucene.analysis.*;
 import org.apache.lucene.document.Document;
 
 /**
+ * This object is used to represent a tokenized document or sentence. As such
+ * it can also be used with normal List methods from the Java API however it 
+ * may be read-only and some methods don't like to be called until after 
+ * the document has been iterated over once.
  * @author John McCrae, National Institute of Informatics
  */
 public class SrlDocument extends AbstractList<Token> {
@@ -27,7 +31,8 @@ public class SrlDocument extends AbstractList<Token> {
 
     /**
      * Create an empty SrlDocument. Use this constructor only if you wish
-     * to add the contents one word at a time
+     * to add the contents one word at a time. (SRL documents created this
+     * way are modifiable)
      * @param name The document name
      */
     public SrlDocument(String name) {
@@ -37,6 +42,12 @@ public class SrlDocument extends AbstractList<Token> {
         readPoint = -1;
     }
     
+    /**
+     * Create an SRL Document from a Lucene object and a processor. The 
+     * documents data should be in the field taggedContents if tagged is true
+     * and contents if tagged is false. (SRL documents created this way are not
+     * modifiable)
+     */
     public SrlDocument(Document doc, Processor processor, boolean tagged) {
         try {
             init(doc.getField(tagged ? "taggedContents" : "contents").stringValue(), processor);
@@ -51,12 +62,16 @@ public class SrlDocument extends AbstractList<Token> {
         name = doc.getField("name").stringValue();
     }
 
+    /** Create an SRL document from raw text. (SRL documents created this way are not
+     * modifiable) */
     public SrlDocument(String name, String contents, Processor processor) {
         init(contents, processor);
         this.name = name;
     }
 
     @Override
+	/** Add a token to a modifiable document
+	 * @throws IllegalStateException If the document is not modifiable */
     public boolean add(Token arg0) {
         if(stream != null)
             throw new IllegalStateException("Attempting to add to stream based document");
@@ -64,8 +79,7 @@ public class SrlDocument extends AbstractList<Token> {
         return tokensRead.add(arg0);   
     }
 
-    
-    
+        
     public String getName() {
         return name;
     }
@@ -194,6 +208,9 @@ public class SrlDocument extends AbstractList<Token> {
     }
 
     @Override
+	/**
+	 * @throws IllegalStateException If we haven't got there yet on the token stream). If this is a problem  for(Token t : srlDoc) {} first fixes it
+	 */
     public Token get(int index) {
         if(tokensRead.size() > index)
             return tokensRead.get(index);
@@ -204,6 +221,9 @@ public class SrlDocument extends AbstractList<Token> {
     }
 
     @Override
+	/**
+	 * @throws IllegalStateException If we haven't completed the stream yet.  If this is a problem  for(Token t : srlDoc) {} first fixes it
+	 */
     public int size() {
         if(stream == null)
             return tokensRead.size();

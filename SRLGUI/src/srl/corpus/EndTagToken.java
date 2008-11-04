@@ -10,6 +10,7 @@
  */
 package srl.corpus;
 
+/** Represents the closing tag of the entity */
 public class EndTagToken extends SrlToken {
     public String type;
 

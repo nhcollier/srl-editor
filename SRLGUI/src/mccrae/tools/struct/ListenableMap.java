@@ -14,7 +14,12 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- *
+ * A map which can be listened to for changes. Whenever a key is added or
+ * removed from the map or the value of a key is changed a CollectionChangeEvent 
+ * is fired to all listeners. For
+ * the purpose of CollectionChangeEvents the reference is the key
+ * @see CollectionChangeEvent
+ * @see CollectionChangeListener
  * @author John McCrae
  */
 public class ListenableMap<K, V> extends AbstractMap<K, V> {

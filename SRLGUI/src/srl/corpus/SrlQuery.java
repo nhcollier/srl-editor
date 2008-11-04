@@ -15,6 +15,8 @@ import java.util.Set;
 import mccrae.tools.struct.Pair;
 
 /**
+ * This represents a query on the Corpus object. Corpus can be queried on 3
+ * indices, the raw text, matches to any word list and any tagged entities
  * @author John McCrae, National Institute of Informatics
  */
 public class SrlQuery {

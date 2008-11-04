@@ -11,7 +11,10 @@
 package mccrae.tools.struct;
 
 /**
- * The event for when a collection changes
+ * The event for when a collection changes. This event stores the previous value,
+ * the new value and an (optional) reference. In general when a new value is added
+ * to a collection the event has a null old value and when an object is removed the
+ * the event has a null new value. 
  * 
  * @see CollectionChangeListener
  * @author John McCrae

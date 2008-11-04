@@ -37,7 +37,7 @@ public interface TypeExpr {
      */
     public void setNext(TypeExpr te);
     /** Inform the TypeExpr of skipped tokens (i.e., whitespace)
-     * @param s The skipped token;
+     * @param token The skipped token;
      */
     public void skip(Token token);
     /** Is it possible to progress from here to the end of the automata

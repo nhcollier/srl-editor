@@ -16,7 +16,9 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 
 /**
- * Wraps the language processor, for easy interaction
+ * Wraps the language processor, for easy interaction. That is the tokenizer
+ * splitter and search indexer analyzer (essentially the tokenizer plus a stop
+ * words list)
  * 
  * @author John McCrae, National Institute of Informatics
  */

@@ -15,26 +15,43 @@ import srl.rule.parser.*;
 import mccrae.tools.struct.*;
 
 /**
- *
+ * Rule sets represents sets of rules. This is essentially a list
+ * of rules stored with an ID. The rules must be all of the same
+ * type (entity or template) and the rule set has a name
  * @author john
  */
 public class RuleSet {
-
+    /** The list of rules, stored as pairs (id, ruleObject) */
     public ListenableList<Pair<String,Rule>> rules;
+    /** The rule set name */
     public String name;
+    /** The rule set type */
     public int ruleType;
     
+    /** Create a new rule set.
+     * @param ruleType The rule set type
+     * @param name The rule set name
+     */
     public RuleSet(int ruleType, String name) {
         this.name = name;
         this.ruleType = ruleType;
         rules = new ListenableList<Pair<String,Rule>>(new LinkedList<Pair<String,Rule>>());
     }
     
+    /** Create a new rule set.
+     * @param ruleType The rule set type
+     */
     private RuleSet(int ruleType) {
         this.ruleType = ruleType;
         rules = new ListenableList<Pair<String,Rule>>(new LinkedList<Pair<String,Rule>>());
     }
-    
+
+    /** Load a rule set from a file.
+     * @param patternFile The file
+     * @param ruleType The rule type
+     * @throws ParseException If the rules are not properly formatted
+     * (this may occur when attempting to load a file of the wrong type)
+     */
     public static RuleSet loadFromFile(File patternFile, int ruleType) throws IOException, ParseException {
         System.out.println("Loading: " + patternFile);
         SrlParser parse = new SrlParser(new FileInputStream(patternFile),"UTF-8");

@@ -16,6 +16,8 @@ import org.apache.lucene.analysis.*;
 import srl.corpus.token.StandardTokenizer;
 
 /**
+ * Sentence splitter implementation. This is loosely based on the one
+ * used in GATE only with some common sense applied.
  * @author John McCrae, National Institute of Informatics
  */
 public class StandardSplitter implements Splitter {
@@ -31,6 +33,8 @@ public class StandardSplitter implements Splitter {
     
     HashSet<String> knownAbbreviations; 
     
+    /** A list of abbreviations commonly found with full stops after them
+     * like "Prof." */
     public static final String[] englishAbbrevs = { "AG", "APR", "AUG", "Adm", "Brig", "CO", "CORP", "Capt", "Cmdr", 
         "Co", "Col", "Comdr", "DEC", "DR", "Dr", "FEB", "Fig", "FRI", "GMBH", "Gen", "Gov", "INC",
         "JAN", "JUL", "JUN", "LTD", "Lt", "Ltd", "MAR", "MON", "MP", "Maj", "Mr", "Mrs", "Ms", "NA",
@@ -40,10 +44,12 @@ public class StandardSplitter implements Splitter {
     
     DFSMState initial, terminating;
     
+    /** Create a splitter using default splitting rules */
     public StandardSplitter() {
         this(englishAbbrevs);
     }
     
+    /** Create a splitter with your custom abbreviation list */
     public StandardSplitter(String[] knownAbbreviations) {
        this.knownAbbreviations = new HashSet<String>();
        for(String s : knownAbbreviations) {
@@ -100,9 +106,8 @@ public class StandardSplitter implements Splitter {
      /** 
       * Split a string into sentences. Uses srl.corpus.token.StandardTokenizer for
       * tokenization but includes whitespace as is.
-      * @param tokens A list of tokens, see Tokeniser
       * @return The tokens split into sentences
-      * @see Tokeniser.tokenise(String)
+      * @see StandardTokenizer#tokenize(String)
       */
      public List<SrlDocument> split(String string, String docName) {
          DFSMState currentState = initial;
@@ -135,9 +140,8 @@ public class StandardSplitter implements Splitter {
      
      /**
       * Split a list of tokens into sentences.
-      * @param tokens A list of tokens, see Tokeniser
+      * @param doc A list of tokens, see Tokeniser
       * @return The tokens split into sentences
-      * @see Tokeniser.tokenise(String)
       */
      public List<SrlDocument> split(Collection<Token> doc, String docName) {
          DFSMState currentState = initial;

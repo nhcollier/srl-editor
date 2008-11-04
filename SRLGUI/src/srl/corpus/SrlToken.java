@@ -12,6 +12,9 @@ package srl.corpus;
 
 import srl.corpus.token.*;
 
+/**
+ * Identical to a Lucene token.
+ */
 public class SrlToken extends org.apache.lucene.analysis.Token {
     
     protected SrlToken(String s, int begin, int end) { super(s,begin,end); }

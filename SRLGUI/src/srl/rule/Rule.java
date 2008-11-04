@@ -26,18 +26,24 @@ import srl.corpus.EndTagToken;
 import srl.corpus.SrlQuery;
 
 /**
- *
+ * Represents a rule. The rule object allows for creation modification and
+ * matching of rules
  * @author john
  */
 public class Rule implements Expr {
-
+    /** A list of the heads of the rules. That is everything before the ":-" */
     public ListenableList<Head> heads;
+    /** A list of the body elements of the rules. That is everything
+     * after the ":-" */
     public ListenableList<TypeExpr> body;
     static TypeExpr successState;
+    /** The rule comment */
     public String comment = "";
     public final int ruleType;
-    public static int ENTITY_RULE = 0;
-    public static int TEMPLATE_RULE = 1;
+    /** Constant used to signify the rule is an entity rule */
+    public static final int ENTITY_RULE = 0;
+    /** Constant used to signify the rule is a template rule */
+    public static final int TEMPLATE_RULE = 1;
     
 
     static {
@@ -46,6 +52,7 @@ public class Rule implements Expr {
 
     /**
      * Create a new rule
+     * @param ruleType The rule's type. (entity or template)
      */
     public Rule(int ruleType) {
         body = new ListenableList<TypeExpr>(new LinkedList<TypeExpr>());
@@ -57,7 +64,9 @@ public class Rule implements Expr {
     }
 
     /**
-     * Create a new rule, defined by a string
+     * Create a new rule from its string representation
+     * @param s The rule as a string
+     * @param ruleType The rule's type. (entity or template)
      */
     public static Rule ruleFromString(String s, int ruleType)
             throws ParseException {
@@ -93,10 +102,13 @@ public class Rule implements Expr {
     }
 
     /**
-     * Find the matches
+     * Find the matches. This function matches multiple times and so a list
+     * of match results are returned in order of first matched element.
+     * This function returns where every entity matched, giving the result
+     * for each entity in the rule as an SrlMatchRegion object.
      * @param sentence A tokenizer
      * @param firstOnly Only look for the first match
-     * @return The list of matches
+     * @return The list of matches.
      */
     public List<HashMap<Entity, SrlMatchRegion>> getMatch(SrlDocument sentence, boolean firstOnly) {
         TypeExpr typeExpr;
@@ -197,6 +209,11 @@ public class Rule implements Expr {
         }
     }
 
+    /** Match the rule and output on the heads. The output is given by
+     * replacing each head's variable by the region of the sentence matched
+     * @param sentence The sentence to match
+     * @return The matches
+     */
     public List<String> getHeads(SrlDocument sentence) {
         List<String> rv = new LinkedList<String>();
         List<HashMap<Entity, SrlMatchRegion>> ents = getMatch(sentence, false);
@@ -212,11 +229,18 @@ public class Rule implements Expr {
         return rv;
     }
 
+    /** Add a head to the rule
+     * @param clasz The identifier of the output template
+     * @param var The variable to match in the body
+     */
     public void addHead(String clasz,
             String var) {
         heads.add(new Head(clasz, var));
     }
 
+    /** Add a type expresstion to the end of the body
+     * @param typeExpr The typeExpr
+     */
     public void addTypeExpr(TypeExpr typeExpr) {
         if (!body.isEmpty()) {
             body.get(body.size() - 1).setNext(typeExpr);
@@ -230,6 +254,7 @@ public class Rule implements Expr {
         return Strings.join(";", heads) + " :- " + Strings.join(" ", body);
     }
 
+    /** Get the rule's type */
     public int getRuleType() {
         return ruleType;
     }

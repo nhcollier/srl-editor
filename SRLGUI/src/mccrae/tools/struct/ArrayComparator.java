@@ -12,7 +12,8 @@ package mccrae.tools.struct;
 import java.util.*;
 
 /**
- *
+ * A Comparator for arrays by alphabetic order
+ * 
  * @author John McCrae
  */
 public class ArrayComparator<E extends Comparable> implements Comparator<E[]> {
