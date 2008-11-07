@@ -1,0 +1,12 @@
+mccrae.tools.process
+mccrae.tools.strings
+mccrae.tools.struct
+srl.corpus
+srl.corpus.jp
+srl.corpus.th
+srl.corpus.token
+srl.gui
+srl.project
+srl.rule
+srl.rule.parser
+srl.wordlist
