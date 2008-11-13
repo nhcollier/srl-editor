@@ -36,3 +36,23 @@ The supported languages are
  * Thai
  * Japanese
 (Here Brazilian means Brazilian Portugese and CJK is generic support for Chinese, Japanese and Korean, which tokenizes every character as a single word)
+
+= Rules =
+Rules are organised into rule sets, individual rules can be accessed through the `rules` field. The key function for matching rules is `getMatch(SrlDocument,boolean)`. This requires an instantiated `SrlDocument` object and a second parameter turns on and off multiple matching. This returns the matches to each variable in the rule. The function `getHeads` applies the template rule and outputs the result in standard form.
+
+= Word lists =
+Word list are stored as sets of wordlists. Each set has an identifier and each list has itself a unique identifier. A wordlist can be found directly by calling the static function `getWordList`. A wordlist is then returned as a list of `WordList.Entry`. If (for some reason) you need to instantiate a WordList.Entry, use `WordList.getEntry()`.
+
+= Corpus =
+Corpus is a wrapper for Lucene and contains many functions. Any particular Document can be manipulated by `addDoc` and `removeDoc` and obtained by `getDoc`. Once a document is added it is stored in the Lucene database as multiple fields, a root document and for each sentence a sentence entry. A root document has the following fields
+ * name: The document name (this is a sequence of alphanumeric characters)
+ * uid: A Unique identifier for this database entry
+ * originalContents: The full unmodified contents of the document
+ * sentCount: _Partially implemented feature, please ignore_
+Each sentence record has the following fields
+ * name: The document name, a single whitespace then the sentence number
+ * uid: A unique identifier for this database entry
+ * contents: The tokenized and lowercase version of the sentence
+ * taggedContents: If corpus tagging has been applied this represents the tags
+ * extracted: If template extraction has been applied the extracted templates.
+For more on corpus see the API documentation.
