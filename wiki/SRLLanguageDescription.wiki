@@ -29,7 +29,9 @@ _† An entity expression's body is not allowed to contain another entity expres
 ===Example:===
 
 {{{disease(D) :- “tested” “positive” “for” name(disease,D) { strmatches(@disease) } }}}
+
 This is a template rule matching any sequence starting with “tested positive for” and then a named entity from the list of diseases {{{@disease}}}, outputting the matching result as filling the slot `disease(...)`. The entity rule to find an entity from the same pattern would look like
+
 {{{ :- "tested" "positive" "for" name(disease,D) { strmatches(@disease) } }}}
 ==strmatches:==
 Matches a sequence of words from a word list.
@@ -71,7 +73,7 @@ Ortho classes are the same as Unicode categories
   * Pf: any kind of closing quote. 
   * Pc: a punctuation character such as an underscore that connects words. 
   * Po: any kind of punctuation character that is not a dash, bracket, quote or connector.
-  * In<Block>: a character from a specific Unicode block
+  * In_Block_: a character from a specific Unicode block
   * InBasicLatin: An ASCII character
   * InHiragana
   * InKatakana
@@ -110,8 +112,8 @@ A literal matches only exactly its value, it must be enclosed in quotation marks
 ==Entities:==
 Entities are defined as {{{entityType(entityVal,var) { body } }}}. An entity matches if its body matches. The body may be omitted for entity rules an omitted body is equivalent to {{{ { words(1,1) } }}} for template rules it is equivalent to {{{ { words(1,) } }}}.
 
-e.g., {{{ name(disease,D) }}} matches “<name cl=”disease”>dengue fever</name>” in a template rule, variable D is then bound to “dengue fever” for outputting in the head.
+e.g., {{{ name(disease,D) }}} matches “{{{<name cl=”disease”>dengue fever</name>}}}” in a template rule, variable D is then bound to “dengue fever” for outputting in the head.
 
-{{{ time(date,D) { strmatches(@month) ortho(“2Nd”) ortho(“4Nd”) } }}} matches “April 17 1984” and tags it as “<time cl=”date”>April 17 1984</name>”
+{{{ time(date,D) { strmatches(@month) ortho(“2Nd”) ortho(“4Nd”) } }}} matches “April 17 1984” and tags it as “{{{<time cl=”date”>April 17 1984</name>}}}”
 ==Other notes==
 Please avoid rules do not have literals, {{{ strmatches }}} or entities (only for template rules). These can be significantly slower to search as matching sentences/documents can not be found quickly by the search algorithm. Searching speed can be vastly improved by including more literals. Entities are only indexed for template rules, so including entities does not improve the performance of entity rules. 
