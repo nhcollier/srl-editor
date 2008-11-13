@@ -1,7 +1,9 @@
+#summary A description of the language used by SRL
+
 =SRL Rule Language=
 
 ==Rules:==
-SRL consists of two types of rules entity and template rules. Entity rules are used for detecting named entities in text, then they simply add XML tags to the texts. Template rules are applied after entity rules and are used for completing slots, for example a rule to detect the perpetrator of a crime would look like perpetrator(P) :- ... name(person,P) ...
+SRL consists of two types of rules entity and template rules. Entity rules are used for detecting named entities in text, then they simply add XML tags to the texts. Template rules are applied after entity rules and are used for completing slots, for example a rule to detect the perpetrator of a crime would look like perpetrator(P) :- ... name(person,P) ... The primary syntactic difference between entity rules and template rules is that template rules have a head that specifies the slots to be filled.
 It is important to note that the text is first tokenized into words and that most operators in the rule apply to only a single token.
 
 ===Rule language:===
@@ -25,8 +27,10 @@ entity_expression := <id> “(“ <id> “,” <var> “)” ( “{“ <body_exp
 }}}
 _† An entity expression's body is not allowed to contain another entity expression_
 ===Example:===
+
 {{{disease(D) :- “tested” “positive” “for” name(disease,D) { strmatches(@disease) } }}}
-Matches any sequence starting with “tested positive for” and then a named entity from the list of diseases {{{@disease}}}.
+This is a template rule matching any sequence starting with “tested positive for” and then a named entity from the list of diseases {{{@disease}}}, outputting the matching result as filling the slot `disease(...)`. The entity rule to find an entity from the same pattern would look like
+{{{ :- "tested" "positive" "for" name(disease,D) { strmatches(@disease) } }}}
 ==strmatches:==
 Matches a sequence of words from a word list.
 
