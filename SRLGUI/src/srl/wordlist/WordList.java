@@ -19,21 +19,36 @@ import org.apache.lucene.analysis.*;
 import srl.corpus.Processor;
 
 /**
- *
+ * A set of word lists. The individual values are stored in as 
+ * WordList.Entry objects. All wordlists are indexed globally and may
+ * be accessed through functions on this list (this is so that a wordlist
+ * may be found by its identifier alone without knowing its set)
  * @author john
  */
 public class WordList {
+    /** This represents the wordlists. It is a map indexed by the wordlist names */
     public ListenableMap<String,ListenableSet<Entry>> wordLists;
+    /** The name of this word list set */
     public final String name;
+    /** The linguistic processor */
     private final Processor processor;
+    /** A comment for each wordlist. Indexed by wordlist name */
     public Map<String,String> comment = new HashMap<String,String>();
     
+    /** Create a new wordlist set
+     * @param name The wordlist set name
+     * @param processor The linguistic processor 
+     */
     public WordList(String name, Processor processor) {
         this.name = name;
         this.processor = processor;
         wordLists = new ListenableMap<String,ListenableSet<Entry>>(new HashMap<String,ListenableSet<Entry>>());
     }
     
+    /** Load a word list set from a file 
+     * @param file The file
+     * @param processor The linguistic processor used
+     */
     public static WordList loadFromFile(File file, Processor processor) throws IOException {
         System.out.println("Loading: " + file);
         String wlName = file.getName();
@@ -95,7 +110,9 @@ public class WordList {
         return wl;
     }
    
-    
+    /** Write the word list set to disk
+     * @param file The file to write to
+     */
     public void write(File file) throws IOException {
         PrintStream ps = new PrintStream(file,"UTF-8");
         for(Map.Entry<String,ListenableSet<Entry>> entry : wordLists.entrySet()) {
@@ -134,18 +151,25 @@ public class WordList {
     static Map<String,ListenableSet<Entry>> allWordLists = new HashMap<String,ListenableSet<Entry>>();
     static Map<String,WordList> allWordSets = new HashMap<String,WordList>();
     
+    /** Get a specific word list by name */
     public static ListenableSet<Entry> getWordList(String wordListName) {
         return allWordLists.get(wordListName);
     }
     
+    /** Get all word list identifiers */
     public static Set<String> getAllWordListNames() {
         return allWordLists.keySet();
     }
     
+    /** Get a word list set by name */
     public static WordList getWordListSet(String wordListName) {
         return allWordSets.get(wordListName);
     }
     
+    /** (EXPERT) For a word list find all terms in it which token. This matches
+     * not only those that exactly match but also those that may match
+     * as more tokens are read.
+     */
     public static SortedSet<WordList.Entry> getMatchSet(String name, String token) {
         SortedSet<WordList.Entry> set = ((SortedSet<WordList.Entry>)allWordLists.get(name).getSet());
         WordList wl = getWordListSet(name);
@@ -157,24 +181,32 @@ public class WordList {
         return set.subSet(wl.getEntry(l1), wl.getEntry(l2));
     }
     
+    /** Clear the list */
     public static void reset() {
         allWordLists = new HashMap<String,ListenableSet<Entry>>();
         allWordSets = new HashMap<String,WordList>();
     }
     
+    /** Create a new Entry object attached to this word list set */
     public Entry getEntry(String s) {
         return new Entry(s);
     }
     
+    /** Create a new Entry object attached to this word list set 
+     * @param The (tokenized) word list entry
+     */
     private Entry getEntry(List<String> s) {
         return new Entry(s);
     }
     
+    /** The class wraps a single entry in a word list. These can
+     * be instantied by calling getEntry
+     */
     public class Entry implements Comparable<Entry> {
         List<String> words;
         String originalVal;
         
-        public Entry(String val) {
+        Entry(String val) {
             words = new LinkedList<String>();
             originalVal = val;
             TokenStream ts = processor.getTokenStream(val.toLowerCase());
@@ -200,6 +232,10 @@ public class WordList {
             words.add(s.toLowerCase());
         }
         
+	
+	/** Check if this entry could match the parameter dependent on following
+	 *   tokens. I.e., Is this entry as least as long and matching up until
+	 * current tokens */
         public boolean matchable(Entry e) {
             if(e.words.size() > words.size())
                 return false;
