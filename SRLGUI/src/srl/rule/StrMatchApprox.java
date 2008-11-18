@@ -86,4 +86,17 @@ public class StrMatchApprox implements TypeExpr {
     public boolean canEnd() {
         return false;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof StrMatchApprox) {
+            StrMatchApprox sma = (StrMatchApprox)obj;
+            return sma.matchAmount == matchAmount && sma.wordListName.equals(wordListName);
+        }
+        return false;
+    }
+
+    public TypeExpr copy() {
+        return new StrMatchApprox(wordListName, matchAmount);
+    }
 }

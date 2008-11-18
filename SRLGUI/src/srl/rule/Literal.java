@@ -66,5 +66,16 @@ public class Literal implements TypeExpr {
     public boolean canEnd() {
         return false;
     }
-    
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof Literal) {
+            return literal.equals(((Literal)obj).literal);
+        }
+        return false;
+    }
+
+    public TypeExpr copy() {
+        return new Literal(literal);
+    }
 }

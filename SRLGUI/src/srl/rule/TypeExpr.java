@@ -43,4 +43,7 @@ public interface TypeExpr {
     /** Is it possible to progress from here to the end of the automata
      */
     public boolean canEnd();
+    /** Create a functional copy of this node
+     */
+    public TypeExpr copy();
 }

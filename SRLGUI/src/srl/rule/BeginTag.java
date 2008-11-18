@@ -59,5 +59,18 @@ public class BeginTag implements TypeExpr {
 
     public boolean canEnd() {
         return false;
-    }           
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof BeginTag) {
+            BeginTag bt = (BeginTag)obj;
+            return entityType.equals(bt.entityType) && entityValue.equals(bt.entityValue);
+        }
+        return false;
+    }
+
+    public TypeExpr copy() {
+        return new BeginTag(entityType,entityValue);
+    }
 }

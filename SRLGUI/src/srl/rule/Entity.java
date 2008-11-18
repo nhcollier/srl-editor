@@ -25,7 +25,7 @@ import mccrae.tools.struct.*;
  */
 public class Entity implements TypeExpr, Expr, Comparable<Entity> {
 
-    List<TypeExpr> body;
+    public List<TypeExpr> body;
     
     public final String entityType, entityValue, var;
     
@@ -192,6 +192,18 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
             return entityType + "(" + entityValue + "," + var + ") { " + Strings.join(" ", body.subList(skip, body.size()-skip)) + " }";
         }
     }
+
+    public List<TypeExpr> getBody() {
+        return body;
+    }
+
+    /**
+     * Copy this type expr. Note this implementation does not copy the body
+     * @return
+     */
+    public TypeExpr copy() {
+        return new Entity(entityType, entityValue, var, ruleType);
+    }
 }
 class EntitySuccessState implements TypeExpr {
     TypeExpr next;
@@ -223,5 +235,9 @@ class EntitySuccessState implements TypeExpr {
 
     public boolean canEnd() {
         return true;
+    }
+
+    public TypeExpr copy() {
+        return new EntitySuccessState(next);
     }
 }

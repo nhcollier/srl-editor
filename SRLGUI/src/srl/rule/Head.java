@@ -14,7 +14,7 @@ package srl.rule;
  *
  * @author john
  */
-public class Head {
+public class Head implements Comparable<Head> {
 
     public final String name, var;
     
@@ -26,5 +26,12 @@ public class Head {
     @Override
     public String toString() {
         return name + "(" + var + ")";
+    }
+
+    public int compareTo(Head o) {
+        if(o instanceof Head) {
+            return name.compareTo(((Head)o).name);
+        }
+        return new Integer(o.hashCode()).compareTo(this.hashCode());
     }
 }

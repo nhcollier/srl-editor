@@ -25,6 +25,7 @@ import srl.corpus.BeginTagToken;
 import srl.corpus.EndTagToken;
 import srl.corpus.SrlQuery;
 
+
 /**
  * Represents a rule. The rule object allows for creation modification and
  * matching of rules
@@ -32,10 +33,15 @@ import srl.corpus.SrlQuery;
  */
 public class Rule implements Expr {
     /** A list of the heads of the rules. That is everything before the ":-" */
-    public ListenableList<Head> heads;
+    public ListenableSet<Head> heads;
     /** A list of the body elements of the rules. That is everything
      * after the ":-" */
     public ListenableList<TypeExpr> body;
+    /**
+     * The map from the variables to the entities. If the rule is not created from
+     * a string this will be null
+     */
+    public Map<String,Entity> variableEntityMap;
     static TypeExpr successState;
     /** The rule comment */
     public String comment = "";
@@ -56,7 +62,7 @@ public class Rule implements Expr {
      */
     public Rule(int ruleType) {
         body = new ListenableList<TypeExpr>(new LinkedList<TypeExpr>());
-        heads = new ListenableList<Head>(new LinkedList<Head>());
+        heads = new ListenableSet<Head>(new TreeSet<Head>());
         this.ruleType = ruleType;
         if (ruleType != ENTITY_RULE && ruleType != TEMPLATE_RULE) {
             throw new IllegalArgumentException();
@@ -72,12 +78,42 @@ public class Rule implements Expr {
             throws ParseException {
         SrlParser parser = new SrlParser(new StringReader(s));
         if (ruleType == ENTITY_RULE) {
-            return parser.readNERule();
+            Rule r = parser.readNERule();
+            if(!r.validateRule())
+                throw new ParseException("Rule is not valid (repeated variables in head or body or head variable not in body)");
+            return r;
         } else if (ruleType == TEMPLATE_RULE) {
-            return parser.readTRRule();
+            Rule r = parser.readTRRule();
+            if(!r.validateRule())
+                throw new ParseException("Rule is not valid (repeated variables in head or body or head variable not in body)");
+            return r;
         } else {
             throw new IllegalArgumentException();
         }
+    }
+    
+    /**
+     * Check the rule is sound. This means that it has a unique variable for every head, 
+     * and each is represented by exactly one entity in the body
+     * @return True if the rule is valid
+     */
+    public boolean validateRule() {
+        Set<String> headVars = new HashSet<String>();
+        for(Head head : heads) {
+            if(!headVars.add(head.var))
+                return false;
+        }
+        variableEntityMap = new HashMap<String,Entity>();
+        for(TypeExpr te : body) {
+            if(te instanceof Entity) {
+                Entity e = (Entity)te;
+                if(variableEntityMap.put(e.var, e) != null)
+                    return false;
+            }
+        }
+        if(!variableEntityMap.keySet().containsAll(headVars))
+            return false;
+        return true;
     }
 
     /**
@@ -258,8 +294,13 @@ public class Rule implements Expr {
     public int getRuleType() {
         return ruleType;
     }
-}
 
+    public List<TypeExpr> getBody() {
+        return body;
+    }
+    
+    
+}
 class SuccessState implements TypeExpr {
 
     public void getQuery(SrlQuery query) {
@@ -282,6 +323,10 @@ class SuccessState implements TypeExpr {
 
     public boolean canEnd() {
         return true;
+    }
+
+    public TypeExpr copy() {
+        return new SuccessState();
     }
 }
 

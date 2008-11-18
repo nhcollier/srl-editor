@@ -53,4 +53,17 @@ public class EndTag implements TypeExpr {
     public boolean canEnd() {
         return false;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof EndTag) {
+            EndTag bt = (EndTag)obj;
+            return entityType.equals(bt.entityType);
+        }
+        return false;
+    }
+
+    public TypeExpr copy() {
+        return new EndTag(entityType);
+    }
 }

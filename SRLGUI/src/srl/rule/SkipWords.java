@@ -20,8 +20,10 @@ import srl.corpus.EndTagToken;
  * @author John McCrae, National Institute of Informatics
  */
 public class SkipWords implements TypeExpr {
-
-    final int min,max;
+    /** The min number of tokens to match */
+    final public int min;
+    /** The max number of tokens to match */        
+    final public int max;
     int i;
     TypeExpr next;
     int tagDepth = 0;
@@ -67,7 +69,8 @@ public class SkipWords implements TypeExpr {
         TypeExpr te = next.matches(token,no,stack);
         if(te != null) {
             if((stack.empty() || stack.peek().tokenNo < no) &&
-                    !(te == Rule.successState))
+                    !(te == Rule.successState) &&
+                    !(next instanceof EndTag))
                 stack.push(new MatchFork(no,this));
             // We have already matched to our next state, so we go straight on
             return te;
@@ -103,5 +106,18 @@ public class SkipWords implements TypeExpr {
             return next.canEnd();
         else
             return false;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof SkipWords) {
+            SkipWords l = (SkipWords)obj;
+            return min == l.min && max == l.max;
+        }
+        return false;
+    }
+
+    public TypeExpr copy() {
+        return new SkipWords(min, max);
     }
 }

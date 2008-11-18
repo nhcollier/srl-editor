@@ -166,6 +166,32 @@ public class WordList {
         return allWordSets.get(wordListName);
     }
     
+    /**
+     * Add a list of terms to a wordlist
+     * @param wordListName The word list ID
+     * @param entries The new entries
+     */
+    public static void addToList(String wordListName, Collection<String> entries) {
+        Set<Entry> wordList = getWordList(wordListName);
+        WordList wl = getWordListSet(wordListName);
+        for(String entry : entries) {
+            wordList.add(wl.getEntry(entry));
+        }
+    }
+    
+    /**
+     * Add a list of terms to a wordlist
+     * @param wordListName The word list ID
+     * @param entries The new entries
+     */
+    public static void addToList(String wordListName, String[] entries) {
+        Set<Entry> wordList = getWordList(wordListName);
+        WordList wl = getWordListSet(wordListName);
+        for(String entry : entries) {
+            wordList.add(wl.getEntry(entry));
+        }
+    }
+    
     /** (EXPERT) For a word list find all terms in it which token. This matches
      * not only those that exactly match but also those that may match
      * as more tokens are read.

@@ -60,4 +60,16 @@ public class StrMatchRegex implements TypeExpr {
     public boolean canEnd() {
         return false;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof StrMatchRegex) {
+            return ((StrMatchRegex)obj).expression.equals(expression);
+        }
+        return false;
+    }
+
+    public TypeExpr copy() {
+        return new StrMatchRegex(expression);
+    }
 }

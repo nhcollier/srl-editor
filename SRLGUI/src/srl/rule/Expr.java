@@ -10,10 +10,13 @@
 */
 package srl.rule;
 
+import java.util.List;
+
 /**
  * @author John McCrae, National Institute of Informatics
  */
 public interface Expr {
     public void addTypeExpr(TypeExpr typeExpr);
     public int getRuleType();
+    public List<TypeExpr> getBody();
 }

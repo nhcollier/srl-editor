@@ -85,4 +85,16 @@ public class StrMatch implements TypeExpr {
     public boolean canEnd() {
         return false;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof StrMatch) {
+            return ((StrMatch)obj).wordListName.equals(wordListName);
+        }
+        return false;
+    }
+
+    public TypeExpr copy() {
+        return new StrMatch(wordListName);
+    }
 }

@@ -143,6 +143,16 @@ public class StrMatchOrtho implements TypeExpr {
     public boolean canEnd() {
         return false;
     }
-    
-    
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof StrMatchOrtho) {
+            return ((StrMatchOrtho)obj).baseExpr.equals(baseExpr);
+        }
+        return false;
+    }
+
+    public TypeExpr copy() {
+        return new StrMatchOrtho(baseExpr);
+    }
 }
