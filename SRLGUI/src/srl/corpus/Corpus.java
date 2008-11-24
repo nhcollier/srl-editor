@@ -159,7 +159,7 @@ public class Corpus {
     private String generateUID() {
         String s;
         do {
-            s = random.nextLong() + "";
+            s = Math.abs(random.nextLong()) + "";
         } while (uids.contains(s));
         uids.add(s);
         return s;
@@ -257,7 +257,8 @@ public class Corpus {
         if (indexSearcher == null) {
             closeIndex();
         }
-        if (query.query.toString().matches("\\s*")) {
+        if (query.query.toString().matches("\\s*") &&
+                query.entities.isEmpty()) {
             nonLuceneQuery(query, collector, signal);
             return;
         }
