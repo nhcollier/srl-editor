@@ -80,7 +80,7 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
                 match.value.deleteCharAt(match.value.length()-1);
 	    return current;
         } else if(!body.contains(current)) { // Change this if nesting occurs
-            match.endRegion = tokenNo - 1;
+            match.endRegion = tokenNo;
             return current;
         } else {
             if(token.termText().length() > 1)

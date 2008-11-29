@@ -282,6 +282,11 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         if (ruleID == null) {
             return;
         }
+        if(!isRuleID(ruleID)) {
+            JOptionPane.showMessageDialog(this, "Rule ID must start with an uppercase letter and contain only word characters", "Invalid Rule ID", 
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         if (ruleLookup.containsKey(ruleID)) {
             JOptionPane.showMessageDialog(this, "ID already exists");
             return;
@@ -364,13 +369,26 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         }
     }//GEN-LAST:event_ruleIDListValueChanged
 
+    private boolean isRuleID(String s) {
+        if(!s.matches("\\w+") || 
+                !Character.isUpperCase(s.charAt(0))) {
+            return false;
+        } 
+        return true;
+    }
+    
 private void idEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_idEditorActionPerformed
     if (ruleIDList.getSelectedIndex() == -1) {
         return;
     }
-    ruleSet.rules.get(ruleIDList.getSelectedIndex()).first = idEditor.getText();
+    String ruleID = idEditor.getText();
+    if(!isRuleID(ruleID)) {
+        JOptionPane.showMessageDialog(this, "Rule ID must start with an uppercase letter and contain only word characters", "Invalid Rule ID", 
+                JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+    ruleSet.rules.get(ruleIDList.getSelectedIndex()).first = ruleID;
     DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
-    String ruleID = ruleSet.rules.get(ruleIDList.getSelectedIndex()).first;
     dlm.setElementAt(ruleID + ": " + ruleEditor.getText(), ruleIDList.getSelectedIndex());
     SRLGUIApp.getApplication().setModified();
 }//GEN-LAST:event_idEditorActionPerformed

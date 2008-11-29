@@ -309,6 +309,8 @@ public class Corpus {
             while (wlIter.hasNext()) {
                 docs.retainAll(support.wordListToDoc.get(wlIter.next()));
             }
+            if(docs == null)
+                return;
             for (String docName : docs) {
                 collector.hit(getDoc(docName), signal);
                 if (signal != null && signal.isStopped()) {
@@ -334,7 +336,7 @@ public class Corpus {
         try {
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
             qp.setDefaultOperator(QueryParser.Operator.AND);
-            Query q = qp.parse(cleanQuery(query));
+            Query q = qp.parse(QueryParser.escape(query));
             return indexSearcher.search(q);
         } catch (Exception x) {
             x.printStackTrace();
@@ -345,13 +347,29 @@ public class Corpus {
     /** Make a literal string not cause problems for the indexer, i.e., Put to lower case and bs all reserved terms */
     public static String cleanQuery(String s) {
         s = s.toLowerCase();
-        s = s.replaceAll("([\\+\\-\\!\\(\\)\\[\\]\\^\\\"\\~\\?\\:\\\\\\{\\}\\|\\*]|\\&\\&)", "\\\\$1");
+        //s = s.replaceAll("([\\+\\-\\!\\(\\)\\[\\]\\^\\~\\?\\:\\\\\\{\\}\\|\\*]|\\&\\&)", "\\\\$1");
+        s = s.replaceAll("\\\\", "\\\\\\\\");
         return s;
     }
 
     /** Get the names of all the documents in the corpus */
     public Set<String> getDocNames() {
         return new TreeSet<String>(docNames);
+    }
+    
+    /** Get all the context names */
+    public Set<String> getContextNames() throws IOException {
+        if (indexSearcher == null) {
+            closeIndex();
+        }
+        Set<String> rv = new HashSet<String>();
+        for (int i = 0; i < indexSearcher.maxDoc(); i++) {
+            String docName = indexSearcher.doc(i).getField("name").stringValue();
+            String uid = indexSearcher.doc(i).getField("uid").stringValue();
+            rv.add(docName);
+            uids.add(uid);
+        }
+        return rv;
     }
 
     private List<String> extractDocNames() throws IOException, IllegalStateException {

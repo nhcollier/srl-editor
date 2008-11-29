@@ -32,6 +32,7 @@ public class StrMatch implements TypeExpr {
     }
 
     public void getQuery(SrlQuery query) {
+        query.query.append("\" \"");
         query.wordLists.add(wordListName);
     }
 

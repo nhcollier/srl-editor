@@ -21,9 +21,9 @@ import srl.corpus.EndTagToken;
  */
 public class SkipWords implements TypeExpr {
     /** The min number of tokens to match */
-    final public int min;
+    public int min;
     /** The max number of tokens to match */        
-    final public int max;
+    public int max;
     int i;
     TypeExpr next;
     int tagDepth = 0;
@@ -34,6 +34,7 @@ public class SkipWords implements TypeExpr {
     }
     
     public void getQuery(SrlQuery query) {
+        query.query.append("\" \"");
     }
 
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {

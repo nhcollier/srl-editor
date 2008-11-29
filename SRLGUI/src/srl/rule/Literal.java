@@ -30,8 +30,9 @@ public class Literal implements TypeExpr {
     }
     
     public void getQuery(SrlQuery query) {
-        query.query.append(" ");
-        query.query.append(literal);
+        if(query.query.charAt(query.query.length()-1) != '\"')
+            query.query.append(" ");
+        query.query.append(literal.replaceAll("([\\\"\\\'])", "\\$1"));
     }
 
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {

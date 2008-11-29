@@ -30,6 +30,7 @@ public class StrMatchRegex implements TypeExpr {
     }
     
     public void getQuery(SrlQuery query) {
+        query.query.append("\" \"");
     }
 
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {

@@ -15,6 +15,8 @@ import java.util.*;
 
 
 // A dummy state to denote the end of the rule
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import mccrae.tools.strings.Strings;
 import srl.corpus.SrlDocument;
 import srl.rule.parser.ParseException;
@@ -122,9 +124,14 @@ public class Rule implements Expr {
      */
     public SrlQuery getCorpusQuery() {
         SrlQuery query = new SrlQuery();
+        query.query.append("\"");
         for (TypeExpr te : body) {
             te.getQuery(query);
         }
+        query.query.append("\"");
+        Pattern p = Pattern.compile("(?<!\\\\)\"\"");
+        Matcher m = p.matcher(query.query);
+        query.query = new StringBuffer(m.replaceAll(""));
         return query;
     }
 
