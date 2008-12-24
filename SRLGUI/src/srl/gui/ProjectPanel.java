@@ -152,6 +152,7 @@ public class ProjectPanel extends javax.swing.JPanel {
         jScrollPane2.setViewportView(entityTable);
 
         removeEntityButton.setText(resourceMap.getString("removeEntityButton.text")); // NOI18N
+        removeEntityButton.setToolTipText(resourceMap.getString("removeEntityButton.toolTipText")); // NOI18N
         removeEntityButton.setName("removeEntityButton"); // NOI18N
         removeEntityButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -160,6 +161,7 @@ public class ProjectPanel extends javax.swing.JPanel {
         });
 
         addEntityButton.setText(resourceMap.getString("addEntityButton.text")); // NOI18N
+        addEntityButton.setToolTipText(resourceMap.getString("addEntityButton.toolTipText")); // NOI18N
         addEntityButton.setName("addEntityButton"); // NOI18N
         addEntityButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -174,15 +176,15 @@ public class ProjectPanel extends javax.swing.JPanel {
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel1)
                             .add(jLabel2))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 273, Short.MAX_VALUE)
-                            .add(projectNameField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 273, Short.MAX_VALUE)))
+                            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 304, Short.MAX_VALUE)
+                            .add(projectNameField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 304, Short.MAX_VALUE)))
                     .add(layout.createSequentialGroup()
                         .add(addEntityButton)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)

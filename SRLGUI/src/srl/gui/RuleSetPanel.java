@@ -13,6 +13,7 @@ package srl.gui;
 import java.io.IOException;
 import javax.swing.event.DocumentEvent;
 import org.apache.lucene.document.Document;
+import org.jdesktop.application.Action;
 import srl.rule.*;
 import javax.swing.table.*;
 import java.util.*;
@@ -79,6 +80,8 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         }
     }
 
+    private boolean dontMatch = false;
+    
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -102,6 +105,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         jScrollPane1 = new javax.swing.JScrollPane();
         ruleIDList = new javax.swing.JList();
         ruleEditor = new srl.gui.AutoCompleteTextField();
+        jButton1 = new javax.swing.JButton();
 
         setName("Form"); // NOI18N
 
@@ -202,7 +206,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
-                .add(jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 232, Short.MAX_VALUE)
+                .add(jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(addButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -222,6 +226,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         );
 
         ruleEditor.setText(resourceMap.getString("ruleEditor.text")); // NOI18N
+        ruleEditor.setToolTipText(resourceMap.getString("ruleEditor.toolTipText")); // NOI18N
         ruleEditor.setEnabled(false);
         ruleEditor.setName("ruleEditor"); // NOI18N
         ruleEditor.addActionListener(new java.awt.event.ActionListener() {
@@ -229,6 +234,11 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                 ruleEditorActionPerformed(evt);
             }
         });
+
+        javax.swing.ActionMap actionMap = org.jdesktop.application.Application.getInstance(srl.gui.SRLGUIApp.class).getContext().getActionMap(RuleSetPanel.class, this);
+        jButton1.setAction(actionMap.get("acceptRule")); // NOI18N
+        jButton1.setText(resourceMap.getString("jButton1.text")); // NOI18N
+        jButton1.setName("jButton1"); // NOI18N
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -239,8 +249,8 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 461, Short.MAX_VALUE)
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 461, Short.MAX_VALUE)
+                    .add(jScrollPane3)
+                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 464, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                             .add(idEditor, 0, 0, Short.MAX_VALUE)
@@ -248,7 +258,9 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel4)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(ruleEditor, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE))
+                        .add(ruleEditor, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jButton1))
                     .add(jLabel3))
                 .addContainerGap())
         );
@@ -266,13 +278,15 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                                     .add(jLabel4))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(matchesLabel))
-                            .add(ruleEditor, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                .add(jButton1)
+                                .add(ruleEditor, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 330, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel3)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)))
+                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 75, Short.MAX_VALUE)))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -291,6 +305,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             JOptionPane.showMessageDialog(this, "ID already exists");
             return;
         }
+        dontMatch = true;
         Rule rule = new Rule(ruleSet.ruleType);
         if (ruleSet.ruleType == Rule.TEMPLATE_RULE) {
             rule.addHead("head", "X");
@@ -299,6 +314,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         ruleLookup.put(ruleID, rule);
         dlm.addElement(ruleID + ": " + rule.toString());
         SRLGUIApp.getApplication().setModified();
+        dontMatch = false;
     }//GEN-LAST:event_addButtonActionPerformed
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
@@ -311,6 +327,13 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
         dlm.removeElementAt(idx);
         ruleSet.rules.remove(idx);
+        idEditor.setText("");
+        idEditor.setEditable(false);
+        ruleEditor.setText("");
+        ruleEditor.setEditable(false);
+        matchesLabel.setText("Matches");
+        DefaultTableModel dtm = (DefaultTableModel) matchesTable.getModel();
+        dtm.setRowCount(0);
         SRLGUIApp.getApplication().setModified();
         userChangeFlag = true;
         oldSelectIndex = -1;
@@ -475,10 +498,12 @@ private Thread matcherThread;
         if (matcherThread != null && matcherThread.isAlive()) {
             matchFinder.sig.stop();
         }
-        matcherThread = new Thread(matchFinder = new RuleMatchFinder(r));
-        matchesLabel.setText("Matching...");
-        if (!r.body.isEmpty()) {
-            matcherThread.start();
+        if(!dontMatch) {
+            matcherThread = new Thread(matchFinder = new RuleMatchFinder(r));
+            if (!r.body.isEmpty()) {
+                matchesLabel.setText("Matching...");
+                matcherThread.start();
+            }
         }
         oldSelectIndex = ruleIDList.getSelectedIndex();
             ruleEditor.setEnabled(true);
@@ -550,10 +575,16 @@ private Thread matcherThread;
         }
     }
 
+    @Action
+    public void acceptRule() {
+        ruleEditorActionPerformed(null);
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
     private javax.swing.JEditorPane commentField;
     private javax.swing.JTextField idEditor;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

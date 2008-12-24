@@ -104,11 +104,9 @@ public class Corpus {
      * @param file The path to save the corpus to
      * @throws IOException If a disk error occurred
      */
-    public void saveCorpus(File file) throws IOException {
-        if (isIndexOpen()) {
-            closeIndex();
-        }
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(file, "support")));
+    public void saveCorpus() throws IOException {
+        optimizeIndex();
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(indexFile, "support")));
         oos.writeObject(support);
         oos.close();
     }
@@ -123,6 +121,7 @@ public class Corpus {
         if (indexWriter == null) {
             reopenIndex();
         }
+        name = name.toLowerCase();
         if (docNames.contains(name)) {
             throw new IllegalArgumentException(name + " already exists in corpus");
         }
@@ -178,16 +177,25 @@ public class Corpus {
         return rval;
     }
     Directory dir;
+    
+    /** Optimize the index. Call this only after significant changes to the corpus. It may take several
+     * seconds, but will improve search speed afterwards (YMMV).
+     */
+    public void optimizeIndex() throws IOException {
+        if(indexWriter == null)
+            reopenIndex();
+        indexWriter.optimize();
+        closeIndex();
+    }
 
     /** Close the corpus, after which no more documents can be added. Also commits the corpus to disk */
     public void closeIndex() throws IOException {
-        indexWriter.optimize();
         dir = indexWriter.getDirectory();
         indexWriter.close();
 
 
         if (dir instanceof RAMDirectory) {
-            dir = new RAMDirectory();
+            dir = new RAMDirectory(indexFile);
         } else {
             dir = FSDirectory.getDirectory(indexFile);
         }
@@ -202,6 +210,28 @@ public class Corpus {
         indexWriter = new IndexWriter(dir, processor.getAnalyzer(), false);
         indexSearcher = null;
     }
+    
+    /** (expert) Switch corpus to RAM. If this option is set to true, the corpus will
+     * be loaded into system memory, this can significantly improve performance but is
+     * likely to cause out of memory exceptions.
+     * @param value True for use RAM, false for use disk
+     */
+    public void setUseRAM(boolean value) throws IOException {
+        closeIndex();
+        if(value && !(dir instanceof RAMDirectory)) {
+            dir = new RAMDirectory(dir);
+        } else {
+            dir = FSDirectory.getDirectory(indexFile);
+        }
+    }
+    
+    /** (expert) See if the corpus is in RAM or disk.
+     * 
+     */
+    public boolean getUseRAM() {
+        return dir instanceof RAMDirectory;
+    }
+            
 
     private class SrlHitCollector extends HitCollector {
 
@@ -336,7 +366,7 @@ public class Corpus {
         try {
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
             qp.setDefaultOperator(QueryParser.Operator.AND);
-            Query q = qp.parse(QueryParser.escape(query));
+            Query q = qp.parse(QueryParser.escape(query.toLowerCase()));
             return indexSearcher.search(q);
         } catch (Exception x) {
             x.printStackTrace();
@@ -378,7 +408,13 @@ public class Corpus {
         }
         List<String> rv = new Vector<String>();
         for (int i = 0; i < indexSearcher.maxDoc(); i++) {
-            String docName = indexSearcher.doc(i).getField("name").stringValue();
+            String docName;
+            try {
+                docName = indexSearcher.doc(i).getField("name").stringValue();
+            } catch(IllegalArgumentException x) {
+                System.err.println("WARNING: Access to deleted document");
+                continue;
+            }
             String uid = indexSearcher.doc(i).getField("uid").stringValue();
             if (docName.matches("\\w+")) {
                 rv.add(docName);
@@ -483,11 +519,11 @@ public class Corpus {
                 if (docName.equals(name)) { // Not necessary, but it's nice to set the vector to the correct size
                     rval.setSize(Integer.parseInt(hits.doc(i).getField("sentCount").stringValue()));
                 } else {
-                    Matcher m = Pattern.compile(".* (\\d+)").matcher(docName);
-                    if (!m.matches()) {
-                        throw new RuntimeException("Invalid document name in corpus: " + docName);
+                    Matcher m = Pattern.compile("(.*) (\\d+)").matcher(docName);
+                    if (!m.matches() || !m.group(1).equals(name)) {
+                        continue;
                     }
-                    rval.set(Integer.parseInt(m.group(1)),
+                    rval.set(Integer.parseInt(m.group(2)),
                             hits.doc(i).getField("contents").stringValue());
                 }
             }
@@ -502,6 +538,8 @@ public class Corpus {
      * @return The tagged contents of the document as a sentence-by-sentence list
      */
     public List<String> getDocTaggedContents(String name) throws IOException {
+        if(indexSearcher == null)
+            closeIndex();
         QueryParser qp = new QueryParser("name", processor.getAnalyzer());
         Vector<String> rval = new Vector<String>();
         try {
@@ -698,7 +736,7 @@ public class Corpus {
                 monitor.setProgressVal((float) i++ / allMatches.size());
             }
         }
-        closeIndex();
+        optimizeIndex();
         reader.close();
         if (monitor != null) {
             monitor.setMessageVal("Corpus tagging complete");
@@ -727,7 +765,8 @@ public class Corpus {
 
     private void addTagsToDocument(String docName, Vector<Pair<Entity, SrlMatchRegion>> matches, IndexReader reader, ProgressMonitor monitor)
             throws IOException, CorruptIndexException {
-        Term t = new Term("name", docName.toLowerCase().split(" ")[0]);
+        String docNameProper = docName.toLowerCase().split(" ")[0];
+        Term t = new Term("name", docNameProper);
         int docNo = Integer.parseInt(docName.split(" ")[1]);
         TermDocs td = reader.termDocs(t);
         Document old;
@@ -737,7 +776,9 @@ public class Corpus {
             }
             old = reader.document(td.doc());
             String dn = old.getField("name").stringValue();
-            if (dn.matches(".* .*") && Integer.parseInt(dn.split(" ")[1]) == docNo) {
+            String[] ss = dn.split(" ");
+            if (dn.matches(".* .*") && ss[0].equals(docNameProper) &&
+                    Integer.parseInt(ss[1]) == docNo) {
                 break;
             }
         }
@@ -852,7 +893,7 @@ public class Corpus {
         }
         List<List<String>> begins = new LinkedList<List<String>>();
         List<List<String>> ends = new LinkedList<List<String>>();
-        for (int i = 0; i <= tokens.size(); i++) {
+        for (int i = 0; i <= tokens.size()+1; i++) {
             ends.add(new LinkedList<String>());
             begins.add(new LinkedList<String>());
         }
@@ -935,7 +976,7 @@ public class Corpus {
             indexWriter.updateDocument(new Term("uid", entry.getKey()), d);
         }
         reader.close();
-        closeIndex();
+        optimizeIndex();
         if (monitor != null) {
             monitor.setMessageVal("Template Extraction complete");
             monitor.setProgressVal(1.0f);

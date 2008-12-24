@@ -107,6 +107,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         org.jdesktop.application.ResourceMap resourceMap = org.jdesktop.application.Application.getInstance(srl.gui.SRLGUIApp.class).getContext().getResourceMap(CorpusDocumentPanel.class);
         saveButton.setIcon(resourceMap.getIcon("saveButton.icon")); // NOI18N
         saveButton.setText(resourceMap.getString("saveButton.text")); // NOI18N
+        saveButton.setToolTipText(resourceMap.getString("saveButton.toolTipText")); // NOI18N
         saveButton.setName("saveButton"); // NOI18N
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -133,6 +134,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
 
         deleteButton.setIcon(resourceMap.getIcon("deleteButton.icon")); // NOI18N
         deleteButton.setText(resourceMap.getString("deleteButton.text")); // NOI18N
+        deleteButton.setToolTipText(resourceMap.getString("deleteButton.toolTipText")); // NOI18N
         deleteButton.setName("deleteButton"); // NOI18N
         deleteButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -142,6 +144,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
 
         addButton.setIcon(resourceMap.getIcon("addButton.icon")); // NOI18N
         addButton.setText(resourceMap.getString("addButton.text")); // NOI18N
+        addButton.setToolTipText(resourceMap.getString("addButton.toolTipText")); // NOI18N
         addButton.setName("addButton"); // NOI18N
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -152,6 +155,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         buttonGroup1.add(textRadio);
         textRadio.setSelected(true);
         textRadio.setText(resourceMap.getString("textRadio.text")); // NOI18N
+        textRadio.setToolTipText(resourceMap.getString("textRadio.toolTipText")); // NOI18N
         textRadio.setName("textRadio"); // NOI18N
         textRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -161,6 +165,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
 
         buttonGroup1.add(tokenRadio);
         tokenRadio.setText(resourceMap.getString("tokenRadio.text")); // NOI18N
+        tokenRadio.setToolTipText(resourceMap.getString("tokenRadio.toolTipText")); // NOI18N
         tokenRadio.setName("tokenRadio"); // NOI18N
         tokenRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -170,6 +175,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
 
         buttonGroup1.add(tagRadio);
         tagRadio.setText(resourceMap.getString("tagRadio.text")); // NOI18N
+        tagRadio.setToolTipText(resourceMap.getString("tagRadio.toolTipText")); // NOI18N
         tagRadio.setName("tagRadio"); // NOI18N
         tagRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -184,6 +190,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
 
         buttonGroup1.add(templatesRadio);
         templatesRadio.setText(resourceMap.getString("templatesRadio.text")); // NOI18N
+        templatesRadio.setToolTipText(resourceMap.getString("templatesRadio.toolTipText")); // NOI18N
         templatesRadio.setName("templatesRadio"); // NOI18N
         templatesRadio.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -207,7 +214,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                         .add(tagRadio)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(templatesRadio)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 227, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 241, Short.MAX_VALUE)
                         .add(addButton)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(deleteButton)
@@ -245,6 +252,8 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
         try {
+            if(docList.getSelectedIndex() == -1)
+                return;
             corpus.updateDoc((String) docList.getSelectedValue(), mainPane.getText());
             modified = false;
         } catch (IOException x) {
@@ -256,6 +265,8 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
         try {
+            if(docList.getSelectedIndex() == -1)
+                return;
             corpus.removeDoc((String) docList.getSelectedValue());
             ((DefaultListModel) docList.getModel()).remove(docList.getSelectedIndex());
             mainPane.setText("");
@@ -339,14 +350,16 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
     private void textRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textRadioActionPerformed
         userChange = false;
         String docName = (String) docList.getSelectedValue();
-        try {
-            mainPane.setText(corpus.getPlainDocContents(docName));
-        } catch (IOException x) {
-            x.printStackTrace();
-            mainPane.setText("<<<<IO Error>>>>");
-            return;
+        if(docName != null) {
+            try {
+                mainPane.setText(corpus.getPlainDocContents(docName));
+            } catch (IOException x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<IO Error>>>>");
+                return;
+            }
+            mainPane.setEditable(true);
         }
-        mainPane.setEditable(true);
         textSelected = true;
         userChange = true;
     }//GEN-LAST:event_textRadioActionPerformed
@@ -356,29 +369,30 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         if(textSelected) {
             saveButtonActionPerformed(evt);
         }
-        List<String> docTexts;
-        try {
-        
-            docTexts = corpus.getDocSentences((String)docList.getSelectedValue());
-        } catch (IOException x) {
-            x.printStackTrace();
-            mainPane.setText("<<<<IO Error>>>>");
-            return;
-        }
-        StringBuffer s = new StringBuffer();
-        for(String docText : docTexts) {
-            SrlDocument doc = new SrlDocument("", docText, corpus.getProcessor());
-            for (Token t : doc) {
-                s.append(t.termText());
-                s.append("\u00b7");
+        if(docList.getSelectedIndex() != -1) {
+            List<String> docTexts;
+            try {
+                docTexts = corpus.getDocSentences((String)docList.getSelectedValue());
+            } catch (IOException x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<IO Error>>>>");
+                return;
+            }   
+            StringBuffer s = new StringBuffer();
+            for(String docText : docTexts) {
+                SrlDocument doc = new SrlDocument("", docText, corpus.getProcessor());
+                for (Token t : doc) {
+                    s.append(t.termText());
+                    s.append("\u00b7");
+                }
+                if(s.length() > 0)
+                    s.deleteCharAt(s.length() - 1);
+                s.append("\u00b6\n");
             }
             if(s.length() > 0)
                 s.deleteCharAt(s.length() - 1);
-            s.append("\u01c1");
+            mainPane.setText(s.toString());
         }
-        if(s.length() > 0)
-            s.deleteCharAt(s.length() - 1);
-        mainPane.setText(s.toString());
         mainPane.setEditable(false);
         textSelected = false;
         userChange = true;
@@ -390,13 +404,15 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             saveButtonActionPerformed(evt);
         }
         String docName = (String) docList.getSelectedValue();
-        try {
-            addTextStyled(Strings.join("\n", corpus.getDocTaggedContents(docName)));
-        } catch (IOException x) {
-            x.printStackTrace();
-            mainPane.setText("<<<<IO Error>>>>");
-        } catch (BadLocationException x) {
-            x.printStackTrace();
+        if(docName != null) {
+            try {
+                addTextStyled(Strings.join("\n", corpus.getDocTaggedContents(docName)));
+            } catch (IOException x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<IO Error>>>>");
+            } catch (BadLocationException x) {
+                x.printStackTrace();
+            }
         }
         mainPane.setEditable(false);
         textSelected = false;
@@ -454,11 +470,13 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             saveButtonActionPerformed(evt);
         }
         String docName = (String) docList.getSelectedValue();
-        try {
-            mainPane.setText(Strings.join("\n", corpus.getDocTemplateExtractions(docName)));
-        } catch(IOException x) {
-            x.printStackTrace();
-            mainPane.setText("<<<<IO Error>>>>");
+        if(docName != null) {
+            try {
+                mainPane.setText(Strings.join("\n", corpus.getDocTemplateExtractions(docName)));
+            } catch(IOException x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<IO Error>>>>");
+            }
         }
         mainPane.setEditable(false);
         textSelected = false;

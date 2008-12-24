@@ -22,6 +22,7 @@ import org.jdesktop.application.TaskMonitor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.List;
@@ -142,6 +143,8 @@ public class SRLGUIView extends FrameView {
         jSeparator4 = new javax.swing.JToolBar.Separator();
         jButton7 = new javax.swing.JButton();
         jButton8 = new javax.swing.JButton();
+        jSeparator6 = new javax.swing.JToolBar.Separator();
+        jButton9 = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         newProjectMenuItem = new javax.swing.JMenuItem();
@@ -159,6 +162,8 @@ public class SRLGUIView extends FrameView {
         jSeparator5 = new javax.swing.JSeparator();
         jMenuItem8 = new javax.swing.JMenuItem();
         javax.swing.JMenu helpMenu = new javax.swing.JMenu();
+        jMenuItem9 = new javax.swing.JMenuItem();
+        jSeparator7 = new javax.swing.JSeparator();
         javax.swing.JMenuItem aboutMenuItem = new javax.swing.JMenuItem();
         statusPanel = new javax.swing.JPanel();
         javax.swing.JSeparator statusPanelSeparator = new javax.swing.JSeparator();
@@ -211,6 +216,7 @@ public class SRLGUIView extends FrameView {
 
         jButton3.setAction(actionMap.get("saveProject")); // NOI18N
         jButton3.setText(resourceMap.getString("jButton3.text")); // NOI18N
+        jButton3.setEnabled(false);
         jButton3.setFocusable(false);
         jButton3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton3.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -224,6 +230,7 @@ public class SRLGUIView extends FrameView {
 
         jButton4.setAction(actionMap.get("addRuleSet")); // NOI18N
         jButton4.setText(resourceMap.getString("jButton4.text")); // NOI18N
+        jButton4.setEnabled(false);
         jButton4.setFocusable(false);
         jButton4.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton4.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -234,6 +241,7 @@ public class SRLGUIView extends FrameView {
 
         jButton5.setAction(actionMap.get("addWordList")); // NOI18N
         jButton5.setText(resourceMap.getString("jButton5.text")); // NOI18N
+        jButton5.setEnabled(false);
         jButton5.setFocusable(false);
         jButton5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton5.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -243,6 +251,7 @@ public class SRLGUIView extends FrameView {
         jToolBar1.add(jButton5);
 
         jButton6.setAction(actionMap.get("addCorpusDoc")); // NOI18N
+        jButton6.setEnabled(false);
         jButton6.setFocusable(false);
         jButton6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton6.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -256,6 +265,7 @@ public class SRLGUIView extends FrameView {
 
         jButton7.setAction(actionMap.get("tagCorpus")); // NOI18N
         jButton7.setText(resourceMap.getString("jButton7.text")); // NOI18N
+        jButton7.setEnabled(false);
         jButton7.setFocusable(false);
         jButton7.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton7.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -265,11 +275,24 @@ public class SRLGUIView extends FrameView {
 
         jButton8.setAction(actionMap.get("extractTemplates")); // NOI18N
         jButton8.setText(resourceMap.getString("jButton8.text")); // NOI18N
+        jButton8.setEnabled(false);
         jButton8.setFocusable(false);
         jButton8.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton8.setName("jButton8"); // NOI18N
         jButton8.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         jToolBar1.add(jButton8);
+
+        jSeparator6.setName("jSeparator6"); // NOI18N
+        jToolBar1.add(jSeparator6);
+
+        jButton9.setAction(actionMap.get("searchCorpus")); // NOI18N
+        jButton9.setText(resourceMap.getString("jButton9.text")); // NOI18N
+        jButton9.setEnabled(false);
+        jButton9.setFocusable(false);
+        jButton9.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton9.setName("jButton9"); // NOI18N
+        jButton9.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButton9);
 
         org.jdesktop.layout.GroupLayout mainPanelLayout = new org.jdesktop.layout.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
@@ -289,8 +312,8 @@ public class SRLGUIView extends FrameView {
                 .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, rightPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, rightPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -311,6 +334,7 @@ public class SRLGUIView extends FrameView {
 
         jMenuItem1.setAction(actionMap.get("saveProject")); // NOI18N
         jMenuItem1.setText(resourceMap.getString("jMenuItem1.text")); // NOI18N
+        jMenuItem1.setEnabled(false);
         jMenuItem1.setName("jMenuItem1"); // NOI18N
         fileMenu.add(jMenuItem1);
 
@@ -332,7 +356,6 @@ public class SRLGUIView extends FrameView {
         jMenu1.add(jMenuItem3);
 
         jMenuItem4.setAction(actionMap.get("addWordList")); // NOI18N
-        jMenuItem4.setText(resourceMap.getString("jMenuItem4.text")); // NOI18N
         jMenuItem4.setName("jMenuItem4"); // NOI18N
         jMenu1.add(jMenuItem4);
 
@@ -364,6 +387,13 @@ public class SRLGUIView extends FrameView {
         helpMenu.setText(resourceMap.getString("helpMenu.text")); // NOI18N
         helpMenu.setName("helpMenu"); // NOI18N
 
+        jMenuItem9.setAction(actionMap.get("openWiki")); // NOI18N
+        jMenuItem9.setName("jMenuItem9"); // NOI18N
+        helpMenu.add(jMenuItem9);
+
+        jSeparator7.setName("jSeparator7"); // NOI18N
+        helpMenu.add(jSeparator7);
+
         aboutMenuItem.setAction(actionMap.get("showAboutBox")); // NOI18N
         aboutMenuItem.setName("aboutMenuItem"); // NOI18N
         helpMenu.add(aboutMenuItem);
@@ -389,7 +419,7 @@ public class SRLGUIView extends FrameView {
             .add(statusPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(statusMessageLabel)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 554, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 556, Short.MAX_VALUE)
                 .add(progressBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(statusAnimationLabel)
@@ -856,6 +886,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         jButton5.setEnabled(true);
         jButton6.setEnabled(true);
         jButton7.setEnabled(true);
+        jButton8.setEnabled(true);
+        jButton9.setEnabled(true);
         jMenu1.setEnabled(true);
         rightPane.setEnabled(true);
         rightPane.add(new ProjectPanel(proj));
@@ -949,6 +981,13 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         if (name == null) {
             return;
         }
+        if(name.matches(".*[<>:\"/\\\\\\|\\?\\*].*") ||
+                name.matches(".*\\s.*") ||
+                name.equals("")) {
+            JOptionPane.showMessageDialog(getFrame(), "Rule set name cannot contain whitespace or the following characters: < > : \" \\ | ? *", 
+                    "Invalid rule set name", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         SrlProject proj = SRLGUIApp.getApplication().proj;
         for(RuleSet rs : ruleType == Rule.ENTITY_RULE ? proj.entityRulesets : proj.templateRulesets) {
             if(rs.name.equals(name)) {
@@ -1001,6 +1040,13 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     public void addWordList() {
         String name = JOptionPane.showInputDialog(this.getFrame(), "Word List Set Name: ");
         if (name == null) {
+            return;
+        }
+        if(name.matches(".*[<>:\"/\\\\\\|\\?\\*].*") ||
+                name.matches(".*\\s.*") ||
+                name.equals("")) {
+            JOptionPane.showMessageDialog(getFrame(), "Word list name cannot contain whitespace or the following characters: < > : \" \\ | ? *", 
+                    "Invalid word list name", JOptionPane.WARNING_MESSAGE);
             return;
         }
         SrlProject proj = SRLGUIApp.getApplication().proj;
@@ -1102,6 +1148,25 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         jfc.resetChoosableFileFilters();
         return new DocumentLoadThread(encoding, sf);
     }
+
+    private class AddCorpusDocTask extends org.jdesktop.application.Task<Object, Void> {
+        AddCorpusDocTask(org.jdesktop.application.Application app) {
+            // Runs on the EDT.  Copy GUI state that
+            // doInBackground() depends on from parameters
+            // to AddCorpusDocTask fields, here.
+            super(app);
+        }
+        @Override protected Object doInBackground() {
+            // Your Task's code here.  This method runs
+            // on a background thread, so don't reference
+            // the Swing GUI from here.
+            return null;  // return your result
+        }
+        @Override protected void succeeded(Object result) {
+            // Runs on the EDT.  Update the GUI based on
+            // the result computed by doInBackground().
+        }
+    }
     
     private class DocumentLoadThread extends Task {
         String encoding;
@@ -1160,6 +1225,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                         ((CorpusDocumentPanel) p).addDoc(fName);
                     }
                 }
+                corpus.optimizeIndex();
             } catch (Exception x) {
                 x.printStackTrace();
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not add documents to corpus", JOptionPane.ERROR_MESSAGE);
@@ -1272,6 +1338,15 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             rightPane.setSelectedComponent(c);
         }
     }
+
+    @Action
+    public void openWiki() {
+        try {
+            Desktop.getDesktop().browse(new URI("http://code.google.com/p/srl-editor/w/list"));
+        } catch(Exception x) {
+            JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open external browser", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1283,6 +1358,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
+    private javax.swing.JButton jButton9;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
@@ -1292,12 +1368,15 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JMenuItem jMenuItem6;
     private javax.swing.JMenuItem jMenuItem7;
     private javax.swing.JMenuItem jMenuItem8;
+    private javax.swing.JMenuItem jMenuItem9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JToolBar.Separator jSeparator3;
     private javax.swing.JToolBar.Separator jSeparator4;
     private javax.swing.JSeparator jSeparator5;
+    private javax.swing.JToolBar.Separator jSeparator6;
+    private javax.swing.JSeparator jSeparator7;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JTree mainTree;

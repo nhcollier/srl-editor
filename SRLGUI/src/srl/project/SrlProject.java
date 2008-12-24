@@ -22,7 +22,6 @@ import javax.xml.transform.stream.*;
 import mccrae.tools.strings.Strings;
 import mccrae.tools.struct.ListenableList;
 import mccrae.tools.struct.Pair;
-import org.apache.lucene.analysis.Analyzer;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 import srl.rule.parser.ParseException;
@@ -200,7 +199,7 @@ public class SrlProject {
             }
             rs.write(f);
         }
-        corpus.saveCorpus(new File(path, "corpus"));
+        corpus.saveCorpus();
         writeXML();
         modified = false;
     }

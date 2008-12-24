@@ -137,6 +137,7 @@
     <Component class="javax.swing.JButton" name="removeEntityButton">
       <Properties>
         <Property name="text" type="java.lang.String" resourceKey="removeEntityButton.text"/>
+        <Property name="toolTipText" type="java.lang.String" resourceKey="removeEntityButton.toolTipText"/>
         <Property name="name" type="java.lang.String" value="removeEntityButton" noResource="true"/>
       </Properties>
       <Events>
@@ -146,6 +147,7 @@
     <Component class="javax.swing.JButton" name="addEntityButton">
       <Properties>
         <Property name="text" type="java.lang.String" resourceKey="addEntityButton.text"/>
+        <Property name="toolTipText" type="java.lang.String" resourceKey="addEntityButton.toolTipText"/>
         <Property name="name" type="java.lang.String" value="addEntityButton" noResource="true"/>
       </Properties>
       <Events>

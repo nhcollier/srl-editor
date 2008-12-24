@@ -93,6 +93,8 @@ public class WordListPanel extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         commentField = new javax.swing.JTextArea();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
 
         setName("Form"); // NOI18N
 
@@ -135,6 +137,7 @@ public class WordListPanel extends javax.swing.JPanel {
                 return types [columnIndex];
             }
         });
+        mainList.setToolTipText(resourceMap.getString("mainList.toolTipText")); // NOI18N
         mainList.setName("mainList"); // NOI18N
         mainList.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -153,6 +156,16 @@ public class WordListPanel extends javax.swing.JPanel {
         commentField.setName("commentField"); // NOI18N
         jScrollPane2.setViewportView(commentField);
 
+        javax.swing.ActionMap actionMap = org.jdesktop.application.Application.getInstance(srl.gui.SRLGUIApp.class).getContext().getActionMap(WordListPanel.class, this);
+        jButton1.setAction(actionMap.get("removeElem")); // NOI18N
+        jButton1.setText(resourceMap.getString("jButton1.text")); // NOI18N
+        jButton1.setName("jButton1"); // NOI18N
+
+        jButton2.setAction(actionMap.get("addElem")); // NOI18N
+        jButton2.setText(resourceMap.getString("jButton2.text")); // NOI18N
+        jButton2.setEnabled(false);
+        jButton2.setName("jButton2"); // NOI18N
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -160,17 +173,21 @@ public class WordListPanel extends javax.swing.JPanel {
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 767, Short.MAX_VALUE)
-                    .add(layout.createSequentialGroup()
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 890, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
                         .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(listCombo, 0, 656, Short.MAX_VALUE)
+                        .add(listCombo, 0, 781, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(deleteList))
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
+                    .add(layout.createSequentialGroup()
                         .add(jLabel2)
+                        .add(18, 18, 18)
+                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 808, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(jButton2)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 691, Short.MAX_VALUE)))
+                        .add(jButton1)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -184,10 +201,14 @@ public class WordListPanel extends javax.swing.JPanel {
                     .add(deleteList))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel2)
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 53, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 53, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel2))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 511, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jButton1)
+                    .add(jButton2))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -195,6 +216,11 @@ public class WordListPanel extends javax.swing.JPanel {
         String list = (String) listCombo.getSelectedItem();
         if (!wl.wordLists.containsKey(list)) {
             return;
+        }
+        if(listCombo.getItemCount() == 2) {
+            userChangeFlag = false;
+            listCombo.setSelectedIndex(-1);
+            userChangeFlag = true;
         }
         DefaultComboBoxModel dcbm = (DefaultComboBoxModel) listCombo.getModel();
         dcbm.removeElement(list);
@@ -205,10 +231,12 @@ public class WordListPanel extends javax.swing.JPanel {
     int lastSelectedListIndex = -1;
 
     private void listComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listComboActionPerformed
+        if(!userChangeFlag || listCombo.getSelectedIndex() == -1)
+            return;
         if (listCombo.getSelectedItem().equals("New List...")) {
             String name = JOptionPane.showInputDialog(this, "List name ", "");
             if (name != null && name.length() > 0) {
-                if(!name.matches("[A-Za-z0-9_]+")) {
+                if (!name.matches("[A-Za-z0-9_]+")) {
                     JOptionPane.showMessageDialog(this, name + " is not a valid list name. Must contain only alphanumeric characters and underscores", "Could not add list", JOptionPane.WARNING_MESSAGE);
                     listCombo.setSelectedIndex(-1);
                     return;
@@ -218,9 +246,11 @@ public class WordListPanel extends javax.swing.JPanel {
                     listCombo.setSelectedIndex(-1);
                     return;
                 }
-                
+
                 listCombo.insertItemAt(name, listCombo.getItemCount() - 1);
                 listCombo.setSelectedItem(name);
+                jButton1.setEnabled(true);
+                jButton2.setEnabled(true);
                 SRLGUIApp.getApplication().setModified();
                 SRLGUIApp.getApplication().proj.corpus.listenToWordList(name, wl.wordLists.get(name));
             } else {
@@ -261,8 +291,14 @@ public class WordListPanel extends javax.swing.JPanel {
         lastSelectedListIndex = listCombo.getSelectedIndex();
         String list = (String) listCombo.getSelectedItem();
         if (!wl.wordLists.containsKey(list)) {
+            if(list.equals("")) {
+                jButton1.setEnabled(false);
+                jButton2.setEnabled(false);
+            }
             return;
         }
+        jButton1.setEnabled(true);
+        jButton2.setEnabled(true);
         DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
         dlm.setRowCount(0);
         oldTable.clear();
@@ -314,7 +350,7 @@ public class WordListPanel extends javax.swing.JPanel {
             } else {
                 userChangeFlag = false;
                 DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
-                if(!oldTable.get(oldTable.size()-1).equals("") || oldTable.size()-1 == idx) {
+                if (!oldTable.get(oldTable.size() - 1).equals("") || oldTable.size() - 1 == idx) {
                     String[] rowData = {""};
                     dlm.addRow(rowData);
                     oldTable.add("");
@@ -329,9 +365,56 @@ public class WordListPanel extends javax.swing.JPanel {
         oldTable.set(idx, newVal);
         SRLGUIApp.getApplication().setModified();
     }
+
+    @org.jdesktop.application.Action
+    public void addElem() {
+        String s = JOptionPane.showInputDialog(this, "Element", "");
+        if (s != null && !s.equals("")) {
+            String list = (String) listCombo.getSelectedItem();
+            if (!wl.wordLists.containsKey(list)) {
+                return;
+            }
+            userChangeFlag = false;
+            DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
+            int idx = dlm.getRowCount() - 1;
+            String[] rowData = {""};
+            dlm.addRow(rowData);
+            oldTable.add("");
+            dlm.setValueAt(s, idx, 0);
+            userChangeFlag = true;
+            wl.wordLists.get(list).add(wl.getEntry(s));
+            oldTable.set(idx, s);
+        }
+    }
+
+    @org.jdesktop.application.Action
+    public void removeElem() {
+        DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
+        String list = (String) listCombo.getSelectedItem();
+        if (!wl.wordLists.containsKey(list)) {
+            return;
+        }
+        int idx = mainList.getSelectedRow();
+        if (idx == -1 || idx == mainList.getRowCount() - 1) {
+            return;
+        }
+        Set<WordList.Entry> wordList = wl.wordLists.get(list);
+        WordList.Entry oldWle = wl.getEntry((String) mainList.getValueAt(idx, 0));
+        if (!wordList.contains(oldWle)) {
+            return;
+        }
+        userChangeFlag = false;
+        ((DefaultTableModel) mainList.getModel()).removeRow(idx);
+        wordList.remove(oldWle);
+        oldTable.remove(idx);
+        SRLGUIApp.getApplication().setModified();
+        userChangeFlag = true;
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextArea commentField;
     private javax.swing.JButton deleteList;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
