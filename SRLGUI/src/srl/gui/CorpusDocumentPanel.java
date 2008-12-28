@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Stack;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
@@ -49,6 +51,8 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                 try {
                     mainPane.setText(corpus.getPlainDocContents(doc));
                 } catch (IOException x) {
+                    x.printStackTrace();
+                } catch (CorpusConcurrencyException x) {
                     x.printStackTrace();
                 }
 
@@ -259,6 +263,9 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         } catch (IOException x) {
             x.printStackTrace();
             JOptionPane.showMessageDialog(this, x.getMessage(), "Could not save to corpus", JOptionPane.ERROR_MESSAGE);
+        } catch (CorpusConcurrencyException x) {
+            x.printStackTrace();
+            JOptionPane.showMessageDialog(this, x.getMessage(), "Could not save to corpus", JOptionPane.ERROR_MESSAGE);
         }
          
 }//GEN-LAST:event_saveButtonActionPerformed
@@ -296,6 +303,11 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                     JOptionPane.showMessageDialog(this, x.getMessage(), "Could not save to corpus", JOptionPane.ERROR_MESSAGE);
                     docList.setSelectedValue(currentDoc, false);
                     return;
+                } catch (CorpusConcurrencyException x) {
+                    x.printStackTrace();
+                    JOptionPane.showMessageDialog(this, x.getMessage(), "Could not save to corpus", JOptionPane.ERROR_MESSAGE);
+                    docList.setSelectedValue(currentDoc, false);
+                    return;
                 }
             }
         }
@@ -318,6 +330,11 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                     corpus.updateDoc((String) docList.getSelectedValue(), mainPane.getText());
                     modified = false;
                 } catch (IOException x) {
+                    x.printStackTrace();
+                    JOptionPane.showMessageDialog(this, x.getMessage(), "Could not save to corpus", JOptionPane.ERROR_MESSAGE);
+                    docList.setSelectedValue(currentDoc, false);
+                    return;
+                } catch (CorpusConcurrencyException x) {
                     x.printStackTrace();
                     JOptionPane.showMessageDialog(this, x.getMessage(), "Could not save to corpus", JOptionPane.ERROR_MESSAGE);
                     docList.setSelectedValue(currentDoc, false);
@@ -357,6 +374,10 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                 x.printStackTrace();
                 mainPane.setText("<<<<IO Error>>>>");
                 return;
+            } catch (CorpusConcurrencyException x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<Corpus Locked: Document contents currently unavailable>>>>");
+                return;
             }
             mainPane.setEditable(true);
         }
@@ -376,6 +397,10 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             } catch (IOException x) {
                 x.printStackTrace();
                 mainPane.setText("<<<<IO Error>>>>");
+                return;
+            } catch (CorpusConcurrencyException x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<Corpus Locked: Document contents currently unavailable>>>>");
                 return;
             }   
             StringBuffer s = new StringBuffer();
@@ -412,7 +437,11 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                 mainPane.setText("<<<<IO Error>>>>");
             } catch (BadLocationException x) {
                 x.printStackTrace();
-            }
+            } catch (CorpusConcurrencyException x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<Corpus Locked: Document contents currently unavailable>>>>");
+                return;
+            }   
         }
         mainPane.setEditable(false);
         textSelected = false;
@@ -426,38 +455,51 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
     private void addTextStyled(String taggedContents) throws BadLocationException {
         Vector<String> tagNames = new Vector<String>();
         Stack<String> tagStack = new Stack<String>();
+        Stack<String> valStack = new Stack<String>();
         StyledDocument doc = mainPane.getStyledDocument();
         mainPane.setText("");
         int idx = -1;
         int oldIdx = 0;
         while((idx = taggedContents.indexOf("<",idx+1)) >= 0) {
-            int idx2 = taggedContents.indexOf(" ", idx);
-            String name = taggedContents.substring(idx+1, idx2);
+            int idx2 = taggedContents.indexOf(">", idx);
+            String tag = taggedContents.substring(idx, idx2+1);
+            Matcher m = Pattern.compile("</?(\\w+) ?(cl=\"\\w+\")?>").matcher(tag);
+            if(!m.matches())
+                continue;
+            String name = m.group(1);
+            String val = m.group(2);
             if(tagStack.empty()) {
                 doc.insertString(oldIdx, taggedContents.substring(oldIdx, idx), null);
             } else {
-                Style style = doc.getStyle(tagStack.peek());
+                if(val == null)
+                    val = valStack.peek();
+                Style style = doc.getStyle(name + " " + val);
                 if(style == null) {
-                    style = doc.addStyle(tagStack.peek(), null);
+                    style = doc.addStyle(name + " " + val, null);
                     StyleConstants.setBold(style, true);
-                    StyleConstants.setForeground(style, colors[tagNames.indexOf(tagStack.peek()) % colors.length]);
+                    StyleConstants.setForeground(style, colors[tagNames.indexOf(name + " " + val) % colors.length]);
                 }
                 doc.insertString(oldIdx, taggedContents.substring(oldIdx, idx), style);
             }
-            if(name.matches("/.*")) {
+            if(m.group(2) == null) {
                 idx2 = taggedContents.indexOf(">", idx);
+                if(!tagStack.peek().split(" ")[0].equals(name))
+                    continue;
                 if(!tagStack.empty())
-                    doc.insertString(idx, taggedContents.substring(idx, idx2), doc.getStyle(tagStack.pop()));
+                    doc.insertString(idx, taggedContents.substring(idx, idx2+1), doc.getStyle(tagStack.pop() + " " + valStack.pop()));
                 else {
                     System.err.println("Can't colour document");
                     doc.insertString(idx, taggedContents.substring(idx), null);
                     return;
                 }
-                oldIdx = idx2;
+                oldIdx = idx2+1;
             } else {
                 tagStack.push(name);
-                if(!tagNames.contains(name))
-                    tagNames.add(name);
+                if(val != null) {
+                    valStack.push(val);
+                    if(!tagNames.contains(name + " " + val))
+                        tagNames.add(name + " " + val);
+                }
                 oldIdx = idx;
             }
         }
@@ -476,7 +518,11 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             } catch(IOException x) {
                 x.printStackTrace();
                 mainPane.setText("<<<<IO Error>>>>");
-            }
+            } catch (CorpusConcurrencyException x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<Corpus Locked: Document contents currently unavailable>>>>");
+                return;
+            }   
         }
         mainPane.setEditable(false);
         textSelected = false;

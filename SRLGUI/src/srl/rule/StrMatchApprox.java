@@ -38,8 +38,8 @@ public class StrMatchApprox implements TypeExpr {
     }
 
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
-        Set<WordList.Entry> list = WordList.getWordList(wordListName);
-        for(WordList.Entry wle : list) {
+        Set<WordListEntry> list = WordList.getWordList(wordListName);
+        for(WordListEntry wle : list) {
             String s = wle.toString();
             if(1.0 - (double)levenshteinDistance(token.termText().toCharArray(),s.toCharArray()) / 
 	       (double)Math.max(s.length(), token.termText().length())

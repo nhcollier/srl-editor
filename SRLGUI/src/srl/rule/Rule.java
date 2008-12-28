@@ -183,16 +183,16 @@ public class Rule implements Expr {
             resetSearch();
             // Match first token
             if ((typeExpr = typeExpr.matches(tk, i, stack)) != null) {
+                // Otherwise carry on matching
+                int j = i+1;
                 // Check for single token match
                 if (typeExpr == successState) {
-                    onMatch(rval);
+                    onMatch(rval,i,j);
                     if (firstOnly) {
                         return rval;
                     }
                     continue;
                 }
-                // Otherwise carry on matching
-                int j = i+1;
                 Iterator<Token> iter2 = sentence.listIterator(iter1.nextIndex());
                 while (iter2.hasNext()) {
                     Token tk2 = iter2.next();
@@ -210,7 +210,7 @@ public class Rule implements Expr {
                     // Check next token
                     typeExpr = typeExpr.matches(tk2, j++,stack);
                     if (typeExpr == successState) {
-                        onMatch(rval);
+                        onMatch(rval,i,j);
                         if (firstOnly) {
                             return rval;
                         }
@@ -222,7 +222,7 @@ public class Rule implements Expr {
                     if(typeExpr instanceof Entity) {
                        ((Entity)typeExpr).match.endRegion = j;
                     }   
-                    onMatch(rval);
+                    onMatch(rval,i,j);
                     if (firstOnly) {
                         return rval;
                     }
@@ -233,12 +233,15 @@ public class Rule implements Expr {
         return rval;
     }
 
-    private void onMatch(LinkedList<HashMap<Entity, SrlMatchRegion>> rval) {
+    private void onMatch(LinkedList<HashMap<Entity, SrlMatchRegion>> rval, int ruleBegin, int ruleEnd) {
         HashMap<Entity, SrlMatchRegion> match = new HashMap<Entity, SrlMatchRegion>();
         
         for (TypeExpr te : body) {
             if (te instanceof Entity) {
-                match.put((Entity) te, ((Entity) te).match);
+                SrlMatchRegion smr = ((Entity) te).match;
+                smr.ruleBegin = ruleBegin;
+                smr.ruleEnd = ruleEnd;
+                match.put((Entity) te, smr);
                 ((Entity)te).match.sourceRule = this;
             }
         }

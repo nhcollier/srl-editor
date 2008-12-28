@@ -271,9 +271,9 @@ public class WordListPanel extends javax.swing.JPanel {
                 return;
             }
             String oldVal = oldTable.get(idx);
-            WordList.Entry oldWle = wl.getEntry(oldVal);
+            WordListEntry oldWle = wl.getEntry(oldVal);
 
-            Set<WordList.Entry> wordList = wl.wordLists.get(list);
+            Set<WordListEntry> wordList = wl.wordLists.get(list);
             if (!wordList.contains(oldWle)) {
                 return;
             }
@@ -303,8 +303,8 @@ public class WordListPanel extends javax.swing.JPanel {
         dlm.setRowCount(0);
         oldTable.clear();
         int i = 0;
-        TreeSet<WordList.Entry> l = new TreeSet<WordList.Entry>(wl.wordLists.get(list));
-        for (WordList.Entry s : l) {
+        TreeSet<WordListEntry> l = new TreeSet<WordListEntry>(wl.wordLists.get(list));
+        for (WordListEntry s : l) {
             String[] rowData = {s.toString()};
             dlm.insertRow(i++, rowData);
             oldTable.add(s.toString());
@@ -328,12 +328,12 @@ public class WordListPanel extends javax.swing.JPanel {
         int idx = e.getFirstRow();
         String oldVal, newVal = (String) mainList.getValueAt(idx, 0);
 
-        WordList.Entry oldWle;
+        WordListEntry oldWle;
         try {
             oldVal = oldTable.get(idx);
             oldWle = wl.getEntry(oldVal);
             if (newVal.length() == 0) {
-                Set<WordList.Entry> wordList = wl.wordLists.get(list);
+                Set<WordListEntry> wordList = wl.wordLists.get(list);
                 if (!wordList.contains(oldWle)) {
                     return;
                 }
@@ -361,6 +361,8 @@ public class WordListPanel extends javax.swing.JPanel {
             x.printStackTrace();
             return;
         }
+        if(wl.getEntry(newVal).equals(""))
+            throw new RuntimeException();
         wl.wordLists.get(list).add(wl.getEntry(newVal));
         oldTable.set(idx, newVal);
         SRLGUIApp.getApplication().setModified();
@@ -382,6 +384,8 @@ public class WordListPanel extends javax.swing.JPanel {
             oldTable.add("");
             dlm.setValueAt(s, idx, 0);
             userChangeFlag = true;
+            if(s.equals(""))
+                throw new RuntimeException();
             wl.wordLists.get(list).add(wl.getEntry(s));
             oldTable.set(idx, s);
         }
@@ -398,8 +402,8 @@ public class WordListPanel extends javax.swing.JPanel {
         if (idx == -1 || idx == mainList.getRowCount() - 1) {
             return;
         }
-        Set<WordList.Entry> wordList = wl.wordLists.get(list);
-        WordList.Entry oldWle = wl.getEntry((String) mainList.getValueAt(idx, 0));
+        Set<WordListEntry> wordList = wl.wordLists.get(list);
+        WordListEntry oldWle = wl.getEntry((String) mainList.getValueAt(idx, 0));
         if (!wordList.contains(oldWle)) {
             return;
         }

@@ -177,7 +177,7 @@ public class SrlProject {
     /**
      * Write the project to disk
      */
-    public void writeProject() throws IOException {
+    public void writeProject() throws IOException, CorpusConcurrencyException {
         for (WordList wl : wordlists) {
             File f = new File(new File(path, "wordlists"), wl.name + ".wordlist.srl");
             if (!f.exists()) {

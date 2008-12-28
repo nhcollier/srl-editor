@@ -24,8 +24,8 @@ public class StrMatch implements TypeExpr {
 
     TypeExpr next;
     String wordListName;
-    SortedSet<WordList.Entry> matches = null;
-    WordList.Entry currentMatch = null;
+    SortedSet<WordListEntry> matches = null;
+    WordListEntry currentMatch = null;
 
     public StrMatch(String wordListName) {
         this.wordListName = wordListName;
@@ -38,7 +38,7 @@ public class StrMatch implements TypeExpr {
 
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
         if(matches == null) {
-            matches = WordList.getMatchSet(wordListName, token.termText().toLowerCase());
+            matches = new TreeSet<WordListEntry>(WordList.getMatchSet(wordListName, token.termText().toLowerCase()));
             currentMatch = WordList.getWordListSet(wordListName).getEntry(token.termText().toLowerCase());
         } else {
             currentMatch.addWord(token.termText());
@@ -48,9 +48,9 @@ public class StrMatch implements TypeExpr {
             stack.peek().split(no, this);
             return this;
         }
-        Iterator<WordList.Entry> wleIter = matches.iterator();
+        Iterator<WordListEntry> wleIter = matches.iterator();
         while(wleIter.hasNext()) {
-            WordList.Entry wle = wleIter.next();
+            WordListEntry wle = wleIter.next();
             if(wle.equals(currentMatch)) {
                 if(matches.size() > 1 && (stack.empty() || stack.peek().tokenNo < no))
                     stack.push(new MatchFork(no,this));

@@ -17,6 +17,7 @@ import java.util.*;
 import java.io.*;
 import javax.swing.JOptionPane;
 import javax.swing.tree.*;
+import srl.corpus.CorpusConcurrencyException;
 import srl.project.SrlProject;
 import srl.rule.*;
 import srl.wordlist.*;
@@ -37,6 +38,7 @@ public class SRLGUIApp extends SingleFrameApplication {
     public static final int SRL_CORPUS = 4;
     public static final int SRL_PROJECT = 5;
     public static final int SRL_SEARCH = 6;
+    public static final int SRL_SHOW_DOC = 7;
     
     /**
      * At startup create and show the main frame of the application.
@@ -57,6 +59,11 @@ public class SRLGUIApp extends SingleFrameApplication {
                             proj.writeProject();
                     SRLGUIApp.getApplication().clearModified();
                         } catch(IOException x) {
+                            x.printStackTrace();
+                            JOptionPane.showMessageDialog(SRLGUIApp.this.getMainFrame(), 
+                                    x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                            return false;
+                        } catch(CorpusConcurrencyException x) {
                             x.printStackTrace();
                             JOptionPane.showMessageDialog(SRLGUIApp.this.getMainFrame(), 
                                     x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);

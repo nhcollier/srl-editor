@@ -10,8 +10,11 @@
  */
 package srl.gui;
 
+import java.awt.Color;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.ListSelectionEvent;
 import org.apache.lucene.document.Document;
 import org.jdesktop.application.Action;
 import srl.rule.*;
@@ -20,6 +23,7 @@ import java.util.*;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionListener;
 import mccrae.tools.process.StopSignal;
 import mccrae.tools.strings.Strings;
 import mccrae.tools.struct.Pair;
@@ -78,6 +82,16 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             commentField.setEnabled(true);
             onRuleSelect();
         }
+        
+        matchesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+            public void valueChanged(ListSelectionEvent e) {
+                if(e.getFirstIndex() == -1)
+                    showMatchButton.setEnabled(false);
+                else 
+                    showMatchButton.setEnabled(true);
+            }
+        });
     }
 
     private boolean dontMatch = false;
@@ -106,6 +120,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         ruleIDList = new javax.swing.JList();
         ruleEditor = new srl.gui.AutoCompleteTextField();
         jButton1 = new javax.swing.JButton();
+        showMatchButton = new javax.swing.JButton();
 
         setName("Form"); // NOI18N
 
@@ -136,6 +151,11 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             }
         });
         matchesTable.setName("matchesTable"); // NOI18N
+        matchesTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                matchesTableMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(matchesTable);
 
         org.jdesktop.application.ResourceMap resourceMap = org.jdesktop.application.Application.getInstance(srl.gui.SRLGUIApp.class).getContext().getResourceMap(RuleSetPanel.class);
@@ -148,7 +168,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         jScrollPane3.setName("jScrollPane3"); // NOI18N
 
         commentField.setEnabled(false);
-        commentField.setMaximumSize(new java.awt.Dimension(2147483647, 120));
+        commentField.setMaximumSize(new java.awt.Dimension(120, 120));
         commentField.setName("commentField"); // NOI18N
         jScrollPane3.setViewportView(commentField);
 
@@ -240,6 +260,10 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         jButton1.setText(resourceMap.getString("jButton1.text")); // NOI18N
         jButton1.setName("jButton1"); // NOI18N
 
+        showMatchButton.setAction(actionMap.get("showMatch")); // NOI18N
+        showMatchButton.setText(resourceMap.getString("showMatchButton.text")); // NOI18N
+        showMatchButton.setName("showMatchButton"); // NOI18N
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -258,9 +282,12 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel4)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(ruleEditor, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jButton1))
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(showMatchButton)
+                            .add(layout.createSequentialGroup()
+                                .add(ruleEditor, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jButton1))))
                     .add(jLabel3))
                 .addContainerGap())
         );
@@ -277,16 +304,18 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                                     .add(idEditor, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                     .add(jLabel4))
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(matchesLabel))
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(matchesLabel)
+                                    .add(showMatchButton)))
                             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                 .add(jButton1)
                                 .add(ruleEditor, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 330, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 320, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel3)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 75, Short.MAX_VALUE)))
+                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -445,6 +474,67 @@ private void ruleEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     
 }//GEN-LAST:event_ruleEditorActionPerformed
 
+@Action
+public void showMatch() {
+    int selectedRow = matchesTable.getSelectedRow();
+        if(selectedRow == -1)
+            return;
+        HashMap<Entity,SrlMatchRegion> match = results.get(selectedRow);
+        String[] ss = ((String)matchesTable.getValueAt(selectedRow, 0)).split(" ");
+        TreeSet<DocHighlight> highlights = getHighlights(match, 
+                Integer.parseInt(ss[1]));
+        ((SRLGUIView)SRLGUIApp.getApplication().getMainView()).openShowDocPane(
+                ss[0], highlights, 
+                ruleSet.ruleType == Rule.ENTITY_RULE ? ShowDocPanel.TEXT : ShowDocPanel.TAGGED,
+                "Match " + idEditor.getText());
+}
+
+private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_matchesTableMouseClicked
+    if(evt.getClickCount() == 2 &&
+            evt.getButton() == MouseEvent.BUTTON1) {
+        
+    }
+           
+}//GEN-LAST:event_matchesTableMouseClicked
+
+static final Color[] colors = { Color.BLUE, Color.RED, Color.YELLOW, Color.ORANGE, Color.PINK, Color.MAGENTA, Color.GREEN,
+        new Color(0xda70d6), new Color(0x800080), new Color(0x00ffff), new Color(0xfa8072), new Color(0x6495ed),
+        new Color(0x008080), new Color(0x00ff7f) };
+
+    private TreeSet<DocHighlight> getHighlights(HashMap<Entity,SrlMatchRegion> match, int sentence) {
+        HashMap<Entity,SrlMatchRegion> match2 = new HashMap<Entity,SrlMatchRegion>(match);
+        TreeSet<DocHighlight> rv = new TreeSet<DocHighlight>();
+        if(match.size() == 0)
+            return rv;
+        int begin = match.values().iterator().next().ruleBegin;
+        int end = match.values().iterator().next().ruleEnd;
+        Color base = new Color(0x808000);
+        Vector<String> entityNames = new Vector<String>();
+        while(!match2.isEmpty()) {
+            Entity e = null;
+            SrlMatchRegion r = null;
+            int token = Integer.MAX_VALUE;
+            for(Map.Entry<Entity,SrlMatchRegion> entry : match2.entrySet()) {
+                if(entry.getValue().beginRegion < token) {
+                    e = entry.getKey();
+                    r = entry.getValue();
+                    token = entry.getValue().beginRegion;
+                }
+            }
+            
+            if(begin != token)
+                rv.add(new DocHighlight(sentence, begin, token, base));
+            entityNames.add(e.entityType + " " + e.entityValue);
+            rv.add(new DocHighlight(sentence, r.beginRegion, r.endRegion, 
+                    colors[entityNames.indexOf(e.entityType + " " + e.entityValue) % colors.length]));
+            begin = r.endRegion;
+            match2.remove(e);
+        }
+        if(begin != end)
+            rv.add(new DocHighlight(sentence, begin, end, base));
+        return rv;
+    }
+
     private void validateRule(Rule rule) {
         for(TypeExpr te : rule.body) {
             if(te instanceof Literal) {
@@ -518,6 +608,8 @@ private Thread matcherThread;
                 commentField.getText();
     }
 
+    public List<HashMap<Entity, SrlMatchRegion>> results = new Vector<HashMap<Entity,SrlMatchRegion>>();
+    
     private class RuleMatchFinder implements Runnable {
 
         Rule rule;
@@ -531,6 +623,7 @@ private Thread matcherThread;
         public void run() {
             final Corpus corpus = SRLGUIApp.getApplication().proj.corpus;
             try {
+                showMatchButton.setEnabled(false);
                 final List<String> docs = new LinkedList<String>();
                 final List<String> vars = new LinkedList<String>();
                 sig = new StopSignal();
@@ -542,6 +635,7 @@ private Thread matcherThread;
                         }
                         SrlDocument doc = new SrlDocument(d, corpus.getProcessor(), ruleSet.ruleType == Rule.TEMPLATE_RULE);
                         List<HashMap<Entity, SrlMatchRegion>> results = rule.getMatch(doc, false);
+                        RuleSetPanel.this.results.addAll(results);
                         if (results != null) {
                             for (HashMap<Entity, SrlMatchRegion> result : results) {
                                 docs.add(doc.getName());
@@ -569,8 +663,11 @@ private Thread matcherThread;
                     dtm.addRow(rowData);
                 }
                 matchesLabel.setText("Matches: " + docs.size());
+                
             } catch (IOException x) {
                 JOptionPane.showMessageDialog(RuleSetPanel.this, x.getMessage(), "Disk Error", JOptionPane.ERROR_MESSAGE);
+            } catch (CorpusConcurrencyException x) {
+                JOptionPane.showMessageDialog(RuleSetPanel.this, x.getMessage(), "Concurrency Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -597,5 +694,6 @@ private Thread matcherThread;
     private javax.swing.JButton removeButton;
     private srl.gui.AutoCompleteTextField ruleEditor;
     private javax.swing.JList ruleIDList;
+    private javax.swing.JButton showMatchButton;
     // End of variables declaration//GEN-END:variables
 }

@@ -20,14 +20,14 @@ import srl.corpus.Processor;
 
 /**
  * A set of word lists. The individual values are stored in as 
- * WordList.Entry objects. All wordlists are indexed globally and may
+ * WordListEntry objects. All wordlists are indexed globally and may
  * be accessed through functions on this list (this is so that a wordlist
  * may be found by its identifier alone without knowing its set)
  * @author john
  */
 public class WordList {
     /** This represents the wordlists. It is a map indexed by the wordlist names */
-    public ListenableMap<String,ListenableSet<Entry>> wordLists;
+    public ListenableMap<String,ListenableSet<WordListEntry>> wordLists;
     /** The name of this word list set */
     public final String name;
     /** The linguistic processor */
@@ -42,7 +42,7 @@ public class WordList {
     public WordList(String name, Processor processor) {
         this.name = name;
         this.processor = processor;
-        wordLists = new ListenableMap<String,ListenableSet<Entry>>(new HashMap<String,ListenableSet<Entry>>());
+        wordLists = new ListenableMap<String,ListenableSet<WordListEntry>>(new HashMap<String,ListenableSet<WordListEntry>>());
     }
     
     /** Load a word list set from a file 
@@ -72,7 +72,7 @@ public class WordList {
                 throw new RuntimeException("Syntax Error at " + in);
             String listName = m.group(1);
             if(m.matches()) {
-                ListenableSet<Entry> set = new ListenableSet<Entry>(new TreeSet<Entry>());
+                ListenableSet<WordListEntry> set = new ListenableSet<WordListEntry>(new TreeSet<WordListEntry>());
                 char[] list = m.group(2).toCharArray();
                 StringBuffer name = new StringBuffer();
                 boolean inLiteral = false;
@@ -115,7 +115,7 @@ public class WordList {
      */
     public void write(File file) throws IOException {
         PrintStream ps = new PrintStream(file,"UTF-8");
-        for(Map.Entry<String,ListenableSet<Entry>> entry : wordLists.entrySet()) {
+        for(Map.Entry<String,ListenableSet<WordListEntry>> entry : wordLists.entrySet()) {
             String cmt;
             if(comment.get(entry.getKey()) != null && 
                     comment.get(entry.getKey()).length() > 0) {
@@ -141,18 +141,18 @@ public class WordList {
     public boolean addList(String name) {
         if(allWordLists.get(name) != null) 
             return false;
-        ListenableSet<Entry> set = new ListenableSet<Entry>(new TreeSet<Entry>());
+        ListenableSet<WordListEntry> set = new ListenableSet<WordListEntry>(new TreeSet<WordListEntry>());
         wordLists.put(name, set);
         allWordLists.put(name, set);
         allWordSets.put(name, this);
         return true;
     }
     
-    static Map<String,ListenableSet<Entry>> allWordLists = new HashMap<String,ListenableSet<Entry>>();
+    static Map<String,ListenableSet<WordListEntry>> allWordLists = new HashMap<String,ListenableSet<WordListEntry>>();
     static Map<String,WordList> allWordSets = new HashMap<String,WordList>();
     
     /** Get a specific word list by name */
-    public static ListenableSet<Entry> getWordList(String wordListName) {
+    public static ListenableSet<WordListEntry> getWordList(String wordListName) {
         return allWordLists.get(wordListName);
     }
     
@@ -172,7 +172,7 @@ public class WordList {
      * @param entries The new entries
      */
     public static void addToList(String wordListName, Collection<String> entries) {
-        Set<Entry> wordList = getWordList(wordListName);
+        Set<WordListEntry> wordList = getWordList(wordListName);
         WordList wl = getWordListSet(wordListName);
         for(String entry : entries) {
             wordList.add(wl.getEntry(entry));
@@ -185,7 +185,7 @@ public class WordList {
      * @param entries The new entries
      */
     public static void addToList(String wordListName, String[] entries) {
-        Set<Entry> wordList = getWordList(wordListName);
+        Set<WordListEntry> wordList = getWordList(wordListName);
         WordList wl = getWordListSet(wordListName);
         for(String entry : entries) {
             wordList.add(wl.getEntry(entry));
@@ -196,8 +196,8 @@ public class WordList {
      * not only those that exactly match but also those that may match
      * as more tokens are read.
      */
-    public static SortedSet<WordList.Entry> getMatchSet(String name, String token) {
-        SortedSet<WordList.Entry> set = ((SortedSet<WordList.Entry>)allWordLists.get(name).getSet());
+    public static SortedSet<WordListEntry> getMatchSet(String name, String token) {
+        SortedSet<WordListEntry> set = ((SortedSet<WordListEntry>)allWordLists.get(name).getSet());
         WordList wl = getWordListSet(name);
         LinkedList<String> l1 = new LinkedList<String>();
         LinkedList<String> l2 = new LinkedList<String>();
@@ -209,96 +209,22 @@ public class WordList {
     
     /** Clear the list */
     public static void reset() {
-        allWordLists = new HashMap<String,ListenableSet<Entry>>();
+        allWordLists = new HashMap<String,ListenableSet<WordListEntry>>();
         allWordSets = new HashMap<String,WordList>();
     }
     
-    /** Create a new Entry object attached to this word list set */
-    public Entry getEntry(String s) {
-        return new Entry(s);
+    /**
+ * @author John McCrae, National Institute of Informatics
+ */
+/** Create a new Entry object attached to this word list set */
+    public WordListEntry getEntry(String s) {
+        return new WordListEntry(s, processor);
     }
     
     /** Create a new Entry object attached to this word list set 
      * @param The (tokenized) word list entry
      */
-    private Entry getEntry(List<String> s) {
-        return new Entry(s);
-    }
-    
-    /** The class wraps a single entry in a word list. These can
-     * be instantied by calling getEntry
-     */
-    public class Entry implements Comparable<Entry> {
-        List<String> words;
-        String originalVal;
-        
-        Entry(String val) {
-            words = new LinkedList<String>();
-            originalVal = val;
-            TokenStream ts = processor.getTokenStream(val.toLowerCase());
-            try {
-                for(Token s = ts.next(); s != null; s = ts.next()) {
-                    words.add(s.termText());
-                }
-            } catch(IOException x) {
-                x.printStackTrace();
-                throw new RuntimeException();
-            }
-        }
-        
-        Entry(List<String> words) {
-            this.words = words;
-            this.originalVal = "";
-        }
-        
-        /** (expert) This function is used for constructing an Entry step by step
-         * @param s The next token
-         */
-        public void addWord(String s) {
-            words.add(s.toLowerCase());
-        }
-        
-	
-	/** Check if this entry could match the parameter dependent on following
-	 *   tokens. I.e., Is this entry as least as long and matching up until
-	 * current tokens */
-        public boolean matchable(Entry e) {
-            if(e.words.size() > words.size())
-                return false;
-            for(int i = 0; i < e.words.size(); i++) {
-                if(!e.words.get(i).equals(words.get(i)))
-                    return false;
-            }
-            return true;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if(obj instanceof Entry)
-                return compareTo((Entry)obj) == 0;
-            else
-                return false;
-        }
-
-        public int compareTo(WordList.Entry o) {
-            int n = Math.min(words.size(), o.words.size());
-            for(int i = 0; i < n; i++) {
-                int t = words.get(i).compareTo(o.words.get(i));
-                if(t != 0)
-                    return t;
-            }
-            if(words.size() < o.words.size()) {
-                return -1;
-            } else if(words.size() > o.words.size()) {
-                return 1;
-            } else {
-                return 0;
-            }
-        }
-
-        @Override
-        public String toString() {
-            return originalVal;
-        }
+    private WordListEntry getEntry(List<String> s) {
+        return new WordListEntry(s);
     }
 }

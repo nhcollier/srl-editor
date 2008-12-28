@@ -12,7 +12,6 @@ package srl.gui;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeListener;
 import org.jdesktop.application.Action;
 import org.jdesktop.application.ResourceMap;
 import org.jdesktop.application.SingleFrameApplication;
@@ -28,13 +27,17 @@ import java.util.Map;
 import java.util.List;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.swing.*;
 import javax.swing.tree.*;
 import mccrae.tools.struct.ListenableSet;
 import srl.corpus.Corpus;
+import srl.corpus.CorpusConcurrencyException;
 import srl.project.SrlProject;
 import srl.rule.*;
 import srl.wordlist.WordList;
+import srl.wordlist.WordListEntry;
 
 /**
  * The application's main frame.
@@ -161,6 +164,9 @@ public class SRLGUIView extends FrameView {
         jMenuItem7 = new javax.swing.JMenuItem();
         jSeparator5 = new javax.swing.JSeparator();
         jMenuItem8 = new javax.swing.JMenuItem();
+        jSeparator8 = new javax.swing.JSeparator();
+        jMenuItem11 = new javax.swing.JMenuItem();
+        jMenuItem10 = new javax.swing.JMenuItem();
         javax.swing.JMenu helpMenu = new javax.swing.JMenu();
         jMenuItem9 = new javax.swing.JMenuItem();
         jSeparator7 = new javax.swing.JSeparator();
@@ -381,6 +387,17 @@ public class SRLGUIView extends FrameView {
         jMenuItem8.setAction(actionMap.get("searchCorpus")); // NOI18N
         jMenuItem8.setName("jMenuItem8"); // NOI18N
         jMenu1.add(jMenuItem8);
+
+        jSeparator8.setName("jSeparator8"); // NOI18N
+        jMenu1.add(jSeparator8);
+
+        jMenuItem11.setAction(actionMap.get("writeTagged")); // NOI18N
+        jMenuItem11.setName("jMenuItem11"); // NOI18N
+        jMenu1.add(jMenuItem11);
+
+        jMenuItem10.setAction(actionMap.get("writeTemplates")); // NOI18N
+        jMenuItem10.setName("jMenuItem10"); // NOI18N
+        jMenu1.add(jMenuItem10);
 
         menuBar.add(jMenu1);
 
@@ -715,6 +732,18 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             rightPane.setSelectedComponent(c);
         }
     }
+    
+    void openShowDocPane(String docName, TreeSet<DocHighlight> highlights, int mode, String msg) {
+        ShowDocPanel p = new ShowDocPanel(docName, highlights, mode, msg);
+        rightPane.addTab(docName + " (" + msg + ")", p);
+        try {
+            rightPane.setTabComponentAt(rightPane.getTabCount() - 1, new CloseTabButton(SRLGUIApp.SRL_SHOW_DOC, p.name,corpusIcon));
+        } catch(NoSuchMethodError e) {
+            // Java 1.5 compatibility
+            rightPane.setIconAt(rightPane.getTabCount() - 1, new CloseTabIcon());
+        }
+        rightPane.setSelectedComponent(p);
+    }
 
     private void error(Exception x, String title) {
         x.printStackTrace();
@@ -752,6 +781,11 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                     break;
                 case SRLGUIApp.SRL_SEARCH:
                     if (c instanceof SearchPanel && ((SearchPanel)c).name.equals(name)) {
+                        return (JPanel) c;
+                    }
+                    break;
+                case SRLGUIApp.SRL_SHOW_DOC:
+                    if (c instanceof ShowDocPanel && ((ShowDocPanel)c).name.equals(name)) {
                         return (JPanel) c;
                     }
                     break;
@@ -818,6 +852,10 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                     proj.writeProject();
                     SRLGUIApp.getApplication().clearModified();
                 } catch (IOException x) {
+                    x.printStackTrace();
+                    JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                    return;
+                } catch (CorpusConcurrencyException x) {
                     x.printStackTrace();
                     JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
                     return;
@@ -907,6 +945,10 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                     x.printStackTrace();
                     JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
                     return;
+                } catch (CorpusConcurrencyException x) {
+                    x.printStackTrace();
+                    JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
             } else if (option == JOptionPane.CANCEL_OPTION) {
                 return;
@@ -924,13 +966,14 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             jfc = new JFileChooser();
         }
         jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        try {
         if (jfc.showOpenDialog(this.getFrame()) == JFileChooser.APPROVE_OPTION) {
             try {
                 SRLGUIApp.getApplication().proj = SrlProject.openSrlProject(jfc.getSelectedFile());
                 proj = SRLGUIApp.getApplication().proj;
                 for (WordList wl : proj.wordlists) {
                     proj.corpus.listenToWordListSet(wl);
-                    for (Map.Entry<String, ListenableSet<WordList.Entry>> l : wl.wordLists.entrySet()) {
+                    for (Map.Entry<String, ListenableSet<WordListEntry>> l : wl.wordLists.entrySet()) {
                         proj.corpus.listenToWordList(l.getKey(), l.getValue());
                     }
                 }
@@ -948,7 +991,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open project", JOptionPane.ERROR_MESSAGE);
             }
         }
-        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        } finally {
+            jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        }
     }
 
     @Action
@@ -959,6 +1004,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 proj.writeProject();
                     SRLGUIApp.getApplication().clearModified();
             } catch (IOException x) {
+                x.printStackTrace();
+                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+            } catch (CorpusConcurrencyException x) {
                 x.printStackTrace();
                 JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
             }
@@ -1183,47 +1231,49 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         public Object doInBackground() throws Exception {
             try {
                 Corpus corpus = SRLGUIApp.getApplication().proj.corpus;
-                if (!corpus.isIndexOpen()) {
-                    corpus.reopenIndex();
-                }
-                int replaceDoc = 0; // 0=? 1=YES -1=NO
-                JPanel p = getPanel(SRLGUIApp.getApplication().SRL_CORPUS, "");
-                int i = 0;
-                for (File file : selectedFiles) {
-                    String fName = file.getName().replaceAll("[^A-Za-z0-9]", "");
-                    setMessage("Adding " + fName);
-                    setProgress((float)i++ / (float)selectedFiles.length);
-                    BufferedReader br;
-                    if(encoding == null) {
-                        br= new BufferedReader(new FileReader(file));
-                    } else {
-                        br = new BufferedReader(new InputStreamReader(new FileInputStream(file),encoding));
-                    }
-                    StringBuffer contents = new StringBuffer();
-                    String in = br.readLine();
-                    while (in != null) {
-                        contents.append(in + "\n");
-                        in = br.readLine();
-                    }
-                    br.close();
-                    if(corpus.containsDoc(fName)) {
-                        if(replaceDoc == 0) {
-                            String[] opts = { "Skip", "Replace", "Skip All", "Replace All" };
-                            int opt = JOptionPane.showOptionDialog(SRLGUIApp.getApplication().getMainFrame(), "Document called "+fName+" already exists", "Duplicate Document", 
+                long lockID = corpus.reopenIndex(true);
+                try {
+                    int replaceDoc = 0; // 0=? 1=YES -1=NO
+                    JPanel p = getPanel(SRLGUIApp.getApplication().SRL_CORPUS, "");
+                    int i = 0;
+                    for (File file : selectedFiles) {
+                        String fName = file.getName().replaceAll("[^A-Za-z0-9]", "");
+                        setMessage("Adding " + fName);
+                        setProgress((float)i++ / (float)selectedFiles.length);
+                        BufferedReader br;
+                        if(encoding == null) {
+                            br= new BufferedReader(new FileReader(file));
+                        } else {
+                            br = new BufferedReader(new InputStreamReader(new FileInputStream(file),encoding));
+                        }
+                        StringBuffer contents = new StringBuffer();
+                        String in = br.readLine();
+                        while (in != null) {
+                            contents.append(in + "\n");
+                            in = br.readLine();
+                        }
+                        br.close();
+                        if(corpus.containsDoc(fName)) {
+                            if(replaceDoc == 0) {
+                                String[] opts = { "Skip", "Replace", "Skip All", "Replace All" };
+                                int opt = JOptionPane.showOptionDialog(SRLGUIApp.getApplication().getMainFrame(), "Document called "+fName+" already exists", "Duplicate Document", 
                                     JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, opts, opts[0]);
-                            if(opt == 2) { replaceDoc = -1; }
-                            if(opt == 3) { replaceDoc = 1; }
-                            if(opt == 0 || opt == 2) {
+                                if(opt == 2) { replaceDoc = -1; }
+                                if(opt == 3) { replaceDoc = 1; }
+                                if(opt == 0 || opt == 2) {
+                                    corpus.updateDoc(fName, contents.toString());
+                                }
+                            } else if(replaceDoc == 1) {
                                 corpus.updateDoc(fName, contents.toString());
                             }
-                        } else if(replaceDoc == 1) {
-                            corpus.updateDoc(fName, contents.toString());
+                        } else
+                            corpus.addDoc(fName, contents.toString());
+                        if (p != null) {
+                            ((CorpusDocumentPanel) p).addDoc(fName);
                         }
-                    } else
-                        corpus.addDoc(fName, contents.toString());
-                    if (p != null) {
-                        ((CorpusDocumentPanel) p).addDoc(fName);
                     }
+                } finally {
+                    corpus.closeIndex(lockID);
                 }
                 corpus.optimizeIndex();
             } catch (Exception x) {
@@ -1347,6 +1397,115 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open external browser", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    @Action
+    public Task writeTagged() {
+        return new WriteTaggedTask(getApplication());
+    }
+
+    private class WriteTaggedTask extends org.jdesktop.application.Task<Object, Void> {
+        WriteTaggedTask(org.jdesktop.application.Application app) {
+            // Runs on the EDT.  Copy GUI state that
+            // doInBackground() depends on from parameters
+            // to WriteTaggedTask fields, here.
+            super(app);
+        }
+        @Override protected Object doInBackground() {
+            jfc.setFileSelectionMode(jfc.DIRECTORIES_ONLY);
+            try {
+                if(jfc.showOpenDialog(SRLGUIApp.getApplication().getMainFrame()) !=
+                        jfc.APPROVE_OPTION)
+                    return null;
+                File directory = jfc.getSelectedFile();
+                Corpus corpus = SRLGUIApp.getApplication().proj.corpus;
+                Set<String> docNames = corpus.getDocNames();
+                float i = 0;
+                for(String docName : docNames) {
+                    setMessage("Writing tagged: " + docName);
+                    setProgress((float)i++ / (float)docNames.size());
+                    List<String> cont = corpus.getDocTaggedContents(docName);
+                    PrintStream out = new PrintStream(new File(directory, docName + ".tagged"));
+                    for(String c : cont) {
+                        out.println(c);
+                    }
+                    out.close();
+                }
+                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Tagged documents written", 
+                        "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch(IOException x) {
+                x.printStackTrace();
+                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not write document contents",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch(CorpusConcurrencyException x) {
+                
+                x.printStackTrace();
+                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not write document contents",
+                        JOptionPane.ERROR_MESSAGE);
+            } finally {
+                jfc.setFileSelectionMode(jfc.FILES_ONLY);
+            }
+            return null;  // return your result
+        }
+        @Override protected void succeeded(Object result) {
+            // Runs on the EDT.  Update the GUI based on
+            // the result computed by doInBackground().
+        }
+    }
+
+    @Action
+    public Task writeTemplates() {
+        return new WriteTemplatesTask(getApplication());
+    }
+
+    private class WriteTemplatesTask extends org.jdesktop.application.Task<Object, Void> {
+        WriteTemplatesTask(org.jdesktop.application.Application app) {
+            // Runs on the EDT.  Copy GUI state that
+            // doInBackground() depends on from parameters
+            // to WriteTemplatesTask fields, here.
+            super(app);
+        }
+        @Override protected Object doInBackground() {
+            jfc.setFileSelectionMode(jfc.DIRECTORIES_ONLY);
+            try {
+                if(jfc.showOpenDialog(SRLGUIApp.getApplication().getMainFrame()) !=
+                        jfc.APPROVE_OPTION)
+                    return null;
+                File directory = jfc.getSelectedFile();
+                Corpus corpus = SRLGUIApp.getApplication().proj.corpus;
+                Set<String> docNames = corpus.getDocNames();
+                float i = 0;
+                for(String docName : docNames) {
+                    setMessage("Writing template: " + docName);
+                    setProgress(i++ / (float)docNames.size());
+                    List<String> cont = corpus.getDocTemplateExtractions(docName);
+                    PrintStream out = new PrintStream(new File(directory, docName + ".templates"));
+                    for(String c : cont) {
+                        out.println(c);
+                    }
+                    out.close();
+                }
+                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Templates documents written", 
+                        "Success", JOptionPane.INFORMATION_MESSAGE);
+            } catch(IOException x) {
+                x.printStackTrace();
+                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not write document contents",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch(CorpusConcurrencyException x) {
+                
+                x.printStackTrace();
+                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not write document contents",
+                        JOptionPane.ERROR_MESSAGE);
+            } finally {
+                jfc.setFileSelectionMode(jfc.FILES_ONLY);
+            }
+            return null;  // return your result
+        }
+        @Override protected void succeeded(Object result) {
+            // Runs on the EDT.  Update the GUI based on
+            // the result computed by doInBackground().
+        }
+    }
+
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1361,6 +1520,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JButton jButton9;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuItem jMenuItem1;
+    private javax.swing.JMenuItem jMenuItem10;
+    private javax.swing.JMenuItem jMenuItem11;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
@@ -1377,6 +1538,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JSeparator jSeparator5;
     private javax.swing.JToolBar.Separator jSeparator6;
     private javax.swing.JSeparator jSeparator7;
+    private javax.swing.JSeparator jSeparator8;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JTree mainTree;

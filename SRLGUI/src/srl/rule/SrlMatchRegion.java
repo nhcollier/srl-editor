@@ -24,6 +24,10 @@ public class SrlMatchRegion {
     public StringBuffer value = new StringBuffer();
     /** The rule, which matched this region */
     public Rule sourceRule;
+    /** The rule's first matchedToken */
+    public int ruleBegin = -1;
+    /** The rule's last matchedToken */
+    public int ruleEnd = -1;
     
     /** Clear this match region */
     public void reset() {
