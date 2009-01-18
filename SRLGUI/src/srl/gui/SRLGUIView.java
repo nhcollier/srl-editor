@@ -165,6 +165,10 @@ public class SRLGUIView extends FrameView {
         jSeparator5 = new javax.swing.JSeparator();
         jMenuItem8 = new javax.swing.JMenuItem();
         jSeparator8 = new javax.swing.JSeparator();
+        jMenuItem12 = new javax.swing.JMenuItem();
+        jMenuItem13 = new javax.swing.JMenuItem();
+        jMenuItem14 = new javax.swing.JMenuItem();
+        jSeparator9 = new javax.swing.JSeparator();
         jMenuItem11 = new javax.swing.JMenuItem();
         jMenuItem10 = new javax.swing.JMenuItem();
         javax.swing.JMenu helpMenu = new javax.swing.JMenu();
@@ -390,6 +394,21 @@ public class SRLGUIView extends FrameView {
 
         jSeparator8.setName("jSeparator8"); // NOI18N
         jMenu1.add(jSeparator8);
+
+        jMenuItem12.setAction(actionMap.get("importRuleSet")); // NOI18N
+        jMenuItem12.setName("jMenuItem12"); // NOI18N
+        jMenu1.add(jMenuItem12);
+
+        jMenuItem13.setAction(actionMap.get("importWordList")); // NOI18N
+        jMenuItem13.setName("jMenuItem13"); // NOI18N
+        jMenu1.add(jMenuItem13);
+
+        jMenuItem14.setAction(actionMap.get("importTagged")); // NOI18N
+        jMenuItem14.setName("jMenuItem14"); // NOI18N
+        jMenu1.add(jMenuItem14);
+
+        jSeparator9.setName("jSeparator9"); // NOI18N
+        jMenu1.add(jSeparator9);
 
         jMenuItem11.setAction(actionMap.get("writeTagged")); // NOI18N
         jMenuItem11.setName("jMenuItem11"); // NOI18N
@@ -1155,17 +1174,19 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     
     @Action
     public Task addCorpusDoc() {
-        if (jfc == null) {
-            jfc = new JFileChooser();
-        }
-        jfc.setMultiSelectionEnabled(true);
-        jfc.addChoosableFileFilter(new CustomEncodingFilter());
-        jfc.addChoosableFileFilter(new javax.swing.filechooser.FileFilter() {
+        try {
+            if(jfc != null)
+                jfc = new JFileChooser(jfc.getSelectedFile());
+            else
+                jfc = new JFileChooser();
+            jfc.setMultiSelectionEnabled(true);
+            jfc.addChoosableFileFilter(new CustomEncodingFilter());
+            jfc.addChoosableFileFilter(new javax.swing.filechooser.FileFilter() {
 
-            @Override
-            public boolean accept(File f) {
-                return true;
-            }
+                 @Override
+                   public boolean accept(File f) {
+                         return true;
+                  }
 
             @Override
             public String getDescription() {
@@ -1192,9 +1213,12 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             }
         }
         File[] sf = jfc.getSelectedFiles();
-        jfc.setMultiSelectionEnabled(false);
+        return new DocumentLoadThread(encoding, sf, false);
+        } finally {
+            jfc.setMultiSelectionEnabled(false);
         jfc.resetChoosableFileFilters();
-        return new DocumentLoadThread(encoding, sf);
+
+        }
     }
 
     private class AddCorpusDocTask extends org.jdesktop.application.Task<Object, Void> {
@@ -1219,12 +1243,14 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private class DocumentLoadThread extends Task {
         String encoding;
         File[] selectedFiles;
+        boolean tagged;
         
-        public DocumentLoadThread(String encoding, File[] selectedFiles)
+        public DocumentLoadThread(String encoding, File[] selectedFiles, boolean tagged)
         {
             super(SRLGUIApp.getApplication());
             this.encoding = encoding;
             this.selectedFiles = selectedFiles;
+            this.tagged = tagged;
         }
 
         
@@ -1267,7 +1293,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                                 corpus.updateDoc(fName, contents.toString());
                             }
                         } else
-                            corpus.addDoc(fName, contents.toString());
+                            corpus.addDoc(fName, contents.toString(), tagged);
                         if (p != null) {
                             ((CorpusDocumentPanel) p).addDoc(fName);
                         }
@@ -1506,6 +1532,156 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         }
     }
 
+    @Action
+    public void importRuleSet() {
+        try {
+            jfc.addChoosableFileFilter(new javax.swing.filechooser.FileFilter() {
+
+                @Override
+                public boolean accept(File f) {
+                    return f.getName().matches(".*\\.rule\\.srl");
+                }
+
+                @Override
+                public String getDescription() {
+                    return "SRL rule files (*.rule.srl)";
+                }
+            });
+            if(jfc.showOpenDialog(getFrame()) != jfc.APPROVE_OPTION)
+                return;
+            String[] opts = {"Entity", "Template"};
+            int ruleType = JOptionPane.showOptionDialog(this.getFrame(), "Open as entity or template rule set?", "Open rule set", JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE, null, opts, "Entity");
+            File f = jfc.getSelectedFile();
+            String name;
+            if(f.getName().matches(".*\\.rule\\.srl"))
+                name = f.getName().substring(0, f.getName().length()-9);
+            else
+                name = f.getName();
+            SrlProject proj = SRLGUIApp.getApplication().proj;
+            RuleSet rs = RuleSet.loadFromFile(f, ruleType);
+            if (ruleType == Rule.ENTITY_RULE) {
+                proj.entityRulesets.add(rs);
+            } else {
+                proj.templateRulesets.add(rs);
+            }
+            SRLGUIApp.getApplication().setModified();
+            if (ruleType == Rule.ENTITY_RULE) {
+                SRLGUIApp.getApplication().entityRuleSets.put(name, rs);
+            } else {
+                SRLGUIApp.getApplication().templateRuleSets.put(name, rs);
+            }
+            DefaultMutableTreeNode node = new DefaultMutableTreeNode(name);
+            DefaultMutableTreeNode ruleSet = (ruleType == Rule.ENTITY_RULE ? SRLGUIApp.getApplication().entityRules : SRLGUIApp.getApplication().templateRules);
+            ((DefaultTreeModel) mainTree.getModel()).insertNodeInto(node,
+                ruleSet,
+                ruleSet.getChildCount());
+            mainTree.scrollPathToVisible(new TreePath(node.getPath()));
+        } catch(Exception x) { 
+            x.printStackTrace();
+            JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not import ruleset", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            jfc.resetChoosableFileFilters();
+        }
+    }
+
+    @Action
+    public void importWordList() {
+        try {
+            jfc.addChoosableFileFilter(new javax.swing.filechooser.FileFilter() {
+
+                @Override
+                public boolean accept(File f) {
+                    return f.getName().matches(".*\\.wordlist\\.srl");
+                }
+
+                @Override
+                public String getDescription() {
+                    return "SRL word list files (*.wordlist.srl)";
+                }
+            });
+            if(jfc.showOpenDialog(getFrame()) != jfc.APPROVE_OPTION)
+                return;
+            File f = jfc.getSelectedFile();
+            String name;
+            if(f.getName().matches(".*\\.wordlist\\.srl"))
+                name = f.getName().substring(0, f.getName().length()-13);
+            else
+                name = f.getName();
+            SrlProject proj = SRLGUIApp.getApplication().proj;
+            for(WordList wl : proj.wordlists) {
+               if(wl.name.equals(name)) {
+                     JOptionPane.showMessageDialog(this.getFrame(), name + " already exists", "Cannot add word list set", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            }
+            WordList wl = WordList.loadFromFile(f, proj.processor);
+            proj.corpus.listenToWordListSet(wl);
+            proj.wordlists.add(wl);
+            SRLGUIApp.getApplication().setModified();
+            SRLGUIApp.getApplication().wordLists.put(name, wl);
+            DefaultMutableTreeNode node = new DefaultMutableTreeNode(name);
+            ((DefaultTreeModel) mainTree.getModel()).insertNodeInto(node,
+                    SRLGUIApp.getApplication().wordList,
+                    SRLGUIApp.getApplication().wordList.getChildCount());
+            mainTree.scrollPathToVisible(new TreePath(node.getPath()));
+        } catch(Exception x) {
+            x.printStackTrace();
+            JOptionPane.showMessageDialog(getFrame(), x.getMessage(), "Could not import word list", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            jfc.resetChoosableFileFilters();
+        }
+    }
+
+    @Action
+    public Task importTagged() {
+         try {
+             JOptionPane.showMessageDialog(getFrame(), "This needs fixing... please email jmccrae@nii.ac.jp if this has somehow made it to a release version");
+            if (jfc == null) {
+               jfc = new JFileChooser();
+            }
+            jfc.setMultiSelectionEnabled(true);
+            jfc.addChoosableFileFilter(new CustomEncodingFilter());
+            jfc.addChoosableFileFilter(new javax.swing.filechooser.FileFilter() {
+
+                 @Override
+                   public boolean accept(File f) {
+                         return true;
+                  }
+
+            @Override
+            public String getDescription() {
+                return "Plain text (" + Charset.defaultCharset().name() + ")";
+            }
+        });
+        String encoding = null;
+        if (jfc.showOpenDialog(this.getFrame()) == JFileChooser.APPROVE_OPTION) {
+            if(jfc.getFileFilter() instanceof CustomEncodingFilter) {
+                encoding = JOptionPane.showInputDialog(this.getFrame(), "Enter encoding (e.g., \"UTF-8\"): ", "");
+                if(encoding == null) {
+                    jfc.setMultiSelectionEnabled(false);
+                    jfc.resetChoosableFileFilters();
+                    return new NullTask();
+                }
+                try {
+                    Charset.forName(encoding);
+                } catch(Exception x) {
+                    JOptionPane.showMessageDialog(this.getFrame(), "Invalid encoding", "Cannot load", JOptionPane.WARNING_MESSAGE);
+                    jfc.setMultiSelectionEnabled(false);
+                    jfc.resetChoosableFileFilters();
+                    return new NullTask();
+                }
+            }
+        }
+        File[] sf = jfc.getSelectedFiles();
+        return new DocumentLoadThread(encoding, sf, true);
+        } finally {
+            jfc.setMultiSelectionEnabled(false);
+        jfc.resetChoosableFileFilters();
+
+        }
+    }
+
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1522,6 +1698,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem10;
     private javax.swing.JMenuItem jMenuItem11;
+    private javax.swing.JMenuItem jMenuItem12;
+    private javax.swing.JMenuItem jMenuItem13;
+    private javax.swing.JMenuItem jMenuItem14;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
@@ -1539,6 +1718,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JToolBar.Separator jSeparator6;
     private javax.swing.JSeparator jSeparator7;
     private javax.swing.JSeparator jSeparator8;
+    private javax.swing.JSeparator jSeparator9;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JTree mainTree;

@@ -124,6 +124,17 @@ public class Corpus {
      * @throws IllegalArgumentException If the document name already exits
      */
     public void addDoc(String name, String contents) throws IOException, IllegalStateException, IllegalArgumentException {
+        addDoc(name,contents,false);
+    }
+    
+    /** Add a new document to corpus
+     * @param name The name of the document
+     * @param contents The text of the new document
+     * @param tagged Treat the document as pre-tagged
+     * @throws IOException The document couldn't be added
+     * @throws IllegalArgumentException If the document name already exits
+     */
+    public void addDoc(String name, String contents, boolean tagged) throws IOException, IllegalStateException, IllegalArgumentException {
         if (indexWriter == null) {
             reopenIndex(true);
         }
@@ -132,7 +143,7 @@ public class Corpus {
             throw new IllegalArgumentException(name + " already exists in corpus");
         }
         Document d = new Document();
-        d.add(new Field("originalContents", contents, Field.Store.YES, Field.Index.TOKENIZED));
+        d.add(new Field("originalContents", tagged ? stripTags(contents) : contents, Field.Store.YES, Field.Index.TOKENIZED));
         d.add(new Field("name", name, Field.Store.YES, Field.Index.TOKENIZED));
         d.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
         //support.addWordListInfo(name, wordListForDoc(contents.toLowerCase()));
@@ -140,17 +151,29 @@ public class Corpus {
         int i = 0;
         for (Collection<org.apache.lucene.analysis.Token> sentence : processor.getSplitter().split(new SrlDocument(name, contents, processor), name)) {
             StringBuffer sent = new StringBuffer();
+            StringBuffer taggedSent = new StringBuffer();
             Iterator<org.apache.lucene.analysis.Token> tkIter = sentence.iterator();
             while (tkIter.hasNext()) {
-                sent.append(tkIter.next().termText());
+                org.apache.lucene.analysis.Token tk = tkIter.next();
+                sent.append(tk.termText());
+                if(tk instanceof BeginTagToken) {
+                    taggedSent.append(((BeginTagToken)tk).getTag());
+                } else if(tk instanceof EndTagToken) {
+                    taggedSent.append(((EndTagToken)tk).getTag());
+                } else {
+                    taggedSent.append(tk.termText());
+                }
                 if (tkIter.hasNext()) {
                     sent.append(" ");
+                    taggedSent.append(" ");
                 }
             }
             Document d2 = new Document();
             d2.add(new Field("contents", sent.toString(), Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("name", name + " " + i, Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
+            if(tagged)
+                d2.add(new Field("taggedContents", taggedSent.toString(), Field.Store.YES, Field.Index.TOKENIZED));
             support.addWordListInfo(name + " " + i, wordListForDoc(sent.toString()));
             indexWriter.addDocument(d2);
             i++;
@@ -161,6 +184,10 @@ public class Corpus {
     private HashSet<String> uids = new HashSet<String>();
     private Random random = new Random();
 
+    private static String stripTags(String s) {
+        return s.replaceAll("<[^>]*>", "");
+    }
+    
     private String generateUID() {
         String s;
         do {
@@ -962,7 +989,13 @@ public class Corpus {
     private static String addEntities(SrlDocument sentence, Vector<Pair<Entity, SrlMatchRegion>> matches) {
         List<String> tokens = new LinkedList<String>();
         for (org.apache.lucene.analysis.Token tk : sentence) {
-            tokens.add(tk.termText());
+            if(tk instanceof EndTagToken) {
+                tokens.add(((EndTagToken)tk).getTag());
+            } else if(tk instanceof BeginTagToken) {
+                tokens.add(((BeginTagToken)tk).getTag());
+            } else {    
+                tokens.add(tk.termText());
+            }
         }
         List<List<String>> begins = new LinkedList<List<String>>();
         List<List<String>> ends = new LinkedList<List<String>>();
@@ -1024,7 +1057,9 @@ public class Corpus {
                         if (allMatches.get(name) == null) {
                             allMatches.put(name, new LinkedList<String>());
                         }
-                        allMatches.get(name).addAll(rulePair.second.getHeads(new SrlDocument(d, processor, true)));
+                        List<String> heads = rulePair.second.getHeads(new SrlDocument(d, processor, true));
+                        if(!heads.isEmpty())
+                            allMatches.get(name).addAll(heads);
                     }
                 });
             }

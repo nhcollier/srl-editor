@@ -77,8 +77,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             }
 
             public void changedUpdate(DocumentEvent e) {
-                if(userChange)
-                    modified = true;
+
             }
         });
     }
@@ -448,7 +447,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         userChange = true;
     }//GEN-LAST:event_tagRadioActionPerformed
 
-    static final Color[] colors = { Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Color.ORANGE, Color.PINK, Color.MAGENTA,
+    static final Color[] colors = { Color.BLUE, Color.RED, Color.GREEN,  Color.PINK, Color.MAGENTA,
         new Color(0xda70d6), new Color(0x800080), new Color(0x00ffff), new Color(0xfa8072), new Color(0x6495ed),
         new Color(0x808000), new Color(0x008080), new Color(0x00ff7f) };
     

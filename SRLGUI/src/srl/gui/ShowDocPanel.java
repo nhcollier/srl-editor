@@ -59,30 +59,39 @@ public class ShowDocPanel extends javax.swing.JPanel {
             for(String sent : doc) {
                 SrlDocument srlDoc = new SrlDocument("null", sent, corpus.getProcessor());
                 Iterator<Token> tkIter = srlDoc.iterator();
-                int tokenPrinted = 0;
+                int i = 0;
+                Token tk = tkIter.next();
                 while(dhl != null && dhl.sentence == sentenceNo) {
-                    for(int i = tokenPrinted; i < dhl.beginToken; i++) {
-                        String tkTxt = tokenText(tkIter.next()) + " ";
+                    while(i < dhl.beginToken || tk instanceof EndTagToken) {
+                        String tkTxt = tokenText(tk) + " ";
                         styledDoc.insertString(index, tkTxt, defaultStyle);
                         index += tkTxt.length();
+                        if(mode != TAGGED || !(tk instanceof BeginTagToken || tk instanceof EndTagToken))
+                           i++;
+                        tk = tkIter.next();
                     }
                     Style style = styledDoc.addStyle(sentenceNo + " " + dhl.beginToken, null);
                     StyleConstants.setBold(style, true);
                     StyleConstants.setForeground(style, dhl.colour);
-                    for(int i = dhl.beginToken; i < dhl.endToken; i++) {
-                        String tkTxt = tokenText(tkIter.next()) + " ";
+                    while(i < dhl.endToken || tk instanceof EndTagToken) {
+                        String tkTxt = tokenText(tk) + " ";
                         styledDoc.insertString(index, tkTxt, style);
                         index += tkTxt.length();
+                        if(mode != TAGGED || !(tk instanceof BeginTagToken || tk instanceof EndTagToken))
+                           i++;
+                        tk = tkIter.next();
                     }
-                    tokenPrinted = dhl.endToken;
                     while(dhl != null && dhl.sentence == sentenceNo &&
-                            dhl.endToken <= tokenPrinted)
+                            dhl.endToken <= i)
                         dhl = hlIter.hasNext() ? hlIter.next() : null;
                 }
-                while(tkIter.hasNext()) {
-                    String tkTxt = tokenText(tkIter.next()) + " ";
+                while(true) {
+                    String tkTxt = tokenText(tk) + " ";
                     styledDoc.insertString(index, tkTxt, defaultStyle);
                     index += tkTxt.length();
+                    if(!tkIter.hasNext())
+                        break;
+                    tk = tkIter.next();
                 }
                 styledDoc.insertString(index, "\n", defaultStyle);
                 index++;

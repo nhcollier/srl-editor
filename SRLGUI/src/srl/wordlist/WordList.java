@@ -102,7 +102,10 @@ public class WordList {
                 System.err.println(in);
             }
         }
-        
+        for(String s : wl.wordLists.keySet()) {
+            if(allWordLists.keySet().contains(s))
+                throw new IllegalArgumentException("Wordlist @" + s + " already exists");
+        }
         allWordLists.putAll(wl.wordLists);
         for(String s : wl.wordLists.keySet()) {
             allWordSets.put(s, wl);

@@ -72,9 +72,9 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
         if(!body.contains(current) && current == next) {
             if(token.termText().length() >= 1)
                 match.value.append(token.termText());
-            if(token instanceof EndTagToken)
+            /*if(token instanceof EndTagToken)
                 match.endRegion = tokenNo;
-            else
+            else*/
                 match.endRegion = tokenNo+1;
             if(match.value.toString().matches(".* "))
                 match.value.deleteCharAt(match.value.length()-1);
@@ -83,7 +83,7 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
             match.endRegion = tokenNo;
             return current;
         } else {
-            if(token.termText().length() > 1)
+            if(token.termText().length() >= 1)
                 match.value.append(token.termText() + (current instanceof EndTag ? "" : " "));
         }
         return this;

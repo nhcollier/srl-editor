@@ -497,6 +497,7 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
            
 }//GEN-LAST:event_matchesTableMouseClicked
 
+
 static final Color[] colors = { Color.BLUE, Color.RED, Color.YELLOW, Color.ORANGE, Color.PINK, Color.MAGENTA, Color.GREEN,
         new Color(0xda70d6), new Color(0x800080), new Color(0x00ffff), new Color(0xfa8072), new Color(0x6495ed),
         new Color(0x008080), new Color(0x00ff7f) };
@@ -627,6 +628,7 @@ private Thread matcherThread;
                 final List<String> docs = new LinkedList<String>();
                 final List<String> vars = new LinkedList<String>();
                 sig = new StopSignal();
+                results = new Vector<HashMap<Entity,SrlMatchRegion>>();
                 corpus.query(rule.getCorpusQuery(), new Corpus.QueryHit() {
 
                     public void hit(Document d, StopSignal signal) {

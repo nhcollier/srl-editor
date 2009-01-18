@@ -69,7 +69,7 @@ public class WordListEntry implements Comparable<WordListEntry> {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Entry) {
+        if (obj instanceof WordListEntry) {
             return compareTo((WordListEntry) obj) == 0;
         } else {
             return false;

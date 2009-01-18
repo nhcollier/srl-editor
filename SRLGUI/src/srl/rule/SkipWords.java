@@ -46,7 +46,6 @@ public class SkipWords implements TypeExpr {
         //  pair is added to the stack in a single run).
         if(token instanceof BeginTagToken) {
             tagDepth++;
-            return this;
         }
         if(token instanceof EndTagToken) {
             tagDepth--;
@@ -54,14 +53,16 @@ public class SkipWords implements TypeExpr {
                 return this;
         }
 	if(i < min) {
-	    i++;
+            //if(token instanceof BeginTagToken || token instanceof EndTagToken)
+                i++;
 	    return this;
 	} 
         MatchFork mf = MatchFork.find(stack, no, this);
         if(mf != null && (mf.used == true || stack.peek() == mf)) {
             stack.peek().split(no, this);
             if(i < max) {
-                i++;
+                //if(token instanceof BeginTagToken || token instanceof EndTagToken)
+                    i++;
                 return this;
             } else {
                 return null;
@@ -77,7 +78,8 @@ public class SkipWords implements TypeExpr {
             return te;
         } else if(i < max) {
             next.reset();
-            i++;
+            //if(token instanceof BeginTagToken || token instanceof EndTagToken)
+                i++;
             return this;
         } else {
             return null;

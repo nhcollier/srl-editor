@@ -102,6 +102,8 @@ public class Rule implements Expr {
     public boolean validateRule() {
         Set<String> headVars = new HashSet<String>();
         for(Head head : heads) {
+            if(head.var.matches("\".*\""))
+                continue; // Ignore literal heads
             if(!headVars.add(head.var))
                 return false;
         }
@@ -187,7 +189,7 @@ public class Rule implements Expr {
                 int j = i+1;
                 // Check for single token match
                 if (typeExpr == successState) {
-                    onMatch(rval,i,j);
+                    onMatch(rval,i + (tk instanceof BeginTagToken ? 1 : 0),j);
                     if (firstOnly) {
                         return rval;
                     }
@@ -210,7 +212,7 @@ public class Rule implements Expr {
                     // Check next token
                     typeExpr = typeExpr.matches(tk2, j++,stack);
                     if (typeExpr == successState) {
-                        onMatch(rval,i,j);
+                        onMatch(rval,i + (tk instanceof BeginTagToken ? 1 : 0),j);
                         if (firstOnly) {
                             return rval;
                         }
@@ -222,7 +224,7 @@ public class Rule implements Expr {
                     if(typeExpr instanceof Entity) {
                        ((Entity)typeExpr).match.endRegion = j;
                     }   
-                    onMatch(rval,i,j);
+                    onMatch(rval,i + (tk instanceof BeginTagToken ? 1 : 0),j);
                     if (firstOnly) {
                         return rval;
                     }
@@ -266,10 +268,12 @@ public class Rule implements Expr {
         Vector<Pair<Entity,SrlMatchRegion>> matches = srl.corpus.Corpus.sortMatches(ents);
         for (Pair<Entity,SrlMatchRegion> map : matches) {
             for (Head head : heads) {
-                if (map.first.var.equals(head.var)) {
+                if(head.var.matches("\".*\"")) {
+                    rv.add(head.name + "(" + head.var + ")");
+                } else if (map.first.var.equals(head.var)) {
                     // MULTIPLE MATCHES
                     rv.add(head.name + "(\"" + map.second.value.toString() + "\")");
-                }
+                } 
             }
         }
         return rv;
