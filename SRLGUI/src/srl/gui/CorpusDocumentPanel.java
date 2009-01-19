@@ -12,7 +12,9 @@ package srl.gui;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -26,8 +28,10 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import mccrae.tools.strings.Strings;
+import mccrae.tools.struct.Pair;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.*;
+import srl.project.SrlProject;
 
 /**
  *
@@ -462,11 +466,11 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         while((idx = taggedContents.indexOf("<",idx+1)) >= 0) {
             int idx2 = taggedContents.indexOf(">", idx);
             String tag = taggedContents.substring(idx, idx2+1);
-            Matcher m = Pattern.compile("</?(\\w+) ?(cl=\"\\w+\")?>").matcher(tag);
+            Matcher m = Pattern.compile("</?(\\w+) ?(cl=\"(\\w+)\")?>").matcher(tag);
             if(!m.matches())
                 continue;
             String name = m.group(1);
-            String val = m.group(2);
+            String val = m.group(3);
             if(tagStack.empty()) {
                 doc.insertString(oldIdx, taggedContents.substring(oldIdx, idx), null);
             } else {
@@ -476,11 +480,18 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                 if(style == null) {
                     style = doc.addStyle(name + " " + val, null);
                     StyleConstants.setBold(style, true);
-                    StyleConstants.setForeground(style, colors[tagNames.indexOf(name + " " + val) % colors.length]);
+                    SrlProject proj = SRLGUIApp.getApplication().proj;
+                    if(!proj.entities.contains(new Pair(name,val))) {
+                        JOptionPane.showMessageDialog(this, "Unknown tag type " + name
+                                + "/" + val + " adding to project", "New tag", 
+                                JOptionPane.INFORMATION_MESSAGE);
+                        proj.entities.add(new Pair<String,String>(name,val));
+                    }
+                    StyleConstants.setForeground(style, colors[proj.entities.indexOf(new Pair(name,val)) % colors.length]);
                 }
                 doc.insertString(oldIdx, taggedContents.substring(oldIdx, idx), style);
             }
-            if(m.group(2) == null) {
+            if(m.group(3) == null) {
                 idx2 = taggedContents.indexOf(">", idx);
                 if(!tagStack.peek().split(" ")[0].equals(name))
                     continue;
