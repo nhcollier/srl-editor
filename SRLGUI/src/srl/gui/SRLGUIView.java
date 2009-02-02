@@ -36,7 +36,7 @@ import srl.corpus.Corpus;
 import srl.corpus.CorpusConcurrencyException;
 import srl.project.SrlProject;
 import srl.rule.*;
-import srl.wordlist.WordList;
+import srl.wordlist.WordListSet;
 import srl.wordlist.WordListEntry;
 
 /**
@@ -924,7 +924,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         a.templateRuleSets.clear();
         a.entityRuleSets.clear();
         if (proj != null) {
-            for (WordList wl : proj.wordlists) {
+            for (WordListSet wl : proj.wordlists) {
                 dtm.insertNodeInto(new DefaultMutableTreeNode(wl.name), wordlists, wordlists.getChildCount());
                 a.wordLists.put(wl.name, wl);
             }
@@ -990,7 +990,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             try {
                 SRLGUIApp.getApplication().proj = SrlProject.openSrlProject(jfc.getSelectedFile());
                 proj = SRLGUIApp.getApplication().proj;
-                for (WordList wl : proj.wordlists) {
+                for (WordListSet wl : proj.wordlists) {
                     proj.corpus.listenToWordListSet(wl);
                     for (Map.Entry<String, ListenableSet<WordListEntry>> l : wl.wordLists.entrySet()) {
                         proj.corpus.listenToWordList(l.getKey(), l.getValue());
@@ -1117,13 +1117,13 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             return;
         }
         SrlProject proj = SRLGUIApp.getApplication().proj;
-        for(WordList wl : proj.wordlists) {
+        for(WordListSet wl : proj.wordlists) {
             if(wl.name.equals(name)) {
                  JOptionPane.showMessageDialog(this.getFrame(), name + " already exists", "Cannot add word list set", JOptionPane.WARNING_MESSAGE);
                 return;
             }
         }
-        WordList wl = new WordList(name, proj.corpus.getProcessor());
+        WordListSet wl = new WordListSet(name, proj.corpus.getProcessor());
         proj.corpus.listenToWordListSet(wl);
         proj.wordlists.add(wl);
         SRLGUIApp.getApplication().setModified();
@@ -1138,7 +1138,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     public void removeWordList(DefaultMutableTreeNode node) {
         String name = node.getUserObject().toString();
         SrlProject proj = SRLGUIApp.getApplication().proj;
-        WordList wl = SRLGUIApp.getApplication().wordLists.get(name);
+        WordListSet wl = SRLGUIApp.getApplication().wordLists.get(name);
         proj.wordlists.remove(wl);
         SRLGUIApp.getApplication().setModified();
         SRLGUIApp.getApplication().wordLists.remove(name);
@@ -1539,7 +1539,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
                 @Override
                 public boolean accept(File f) {
-                    return f.getName().matches(".*\\.rule\\.srl");
+                    return f.getName().matches(".*\\.rule\\.srl") || f.isDirectory();
                 }
 
                 @Override
@@ -1592,7 +1592,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
                 @Override
                 public boolean accept(File f) {
-                    return f.getName().matches(".*\\.wordlist\\.srl");
+                    return f.getName().matches(".*\\.wordlist\\.srl") || f.isDirectory();
                 }
 
                 @Override
@@ -1609,13 +1609,13 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             else
                 name = f.getName();
             SrlProject proj = SRLGUIApp.getApplication().proj;
-            for(WordList wl : proj.wordlists) {
+            for(WordListSet wl : proj.wordlists) {
                if(wl.name.equals(name)) {
                      JOptionPane.showMessageDialog(this.getFrame(), name + " already exists", "Cannot add word list set", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
             }
-            WordList wl = WordList.loadFromFile(f, proj.processor);
+            WordListSet wl = WordListSet.loadFromFile(f, proj.processor);
             proj.corpus.listenToWordListSet(wl);
             proj.wordlists.add(wl);
             SRLGUIApp.getApplication().setModified();
@@ -1636,7 +1636,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     @Action
     public Task importTagged() {
          try {
-             JOptionPane.showMessageDialog(getFrame(), "This needs fixing... please email jmccrae@nii.ac.jp if this has somehow made it to a release version");
+            // JOptionPane.showMessageDialog(getFrame(), "This needs fixing... please email jmccrae@nii.ac.jp if this has somehow made it to a release version");
             if (jfc == null) {
                jfc = new JFileChooser();
             }

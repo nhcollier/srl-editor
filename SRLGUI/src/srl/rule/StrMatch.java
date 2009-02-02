@@ -12,7 +12,7 @@ package srl.rule;
 
 import srl.wordlist.*;
 import java.util.*;
-import mccrae.tools.struct.Pair;
+import mccrae.tools.struct.ListenableSet;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 
@@ -26,20 +26,38 @@ public class StrMatch implements TypeExpr {
     String wordListName;
     SortedSet<WordListEntry> matches = null;
     WordListEntry currentMatch = null;
+    final boolean set;
 
     public StrMatch(String wordListName) {
-        this.wordListName = wordListName;
+        if(wordListName.charAt(0) == '@')
+            set = false;
+        else if(wordListName.charAt(0) == '%')
+            set = true;
+        else
+            throw new IllegalArgumentException("Word list name must start with @ or %");
+        this.wordListName = wordListName.substring(1);
     }
 
     public void getQuery(SrlQuery query) {
         query.query.append("\" \"");
-        query.wordLists.add(wordListName);
+        if(set)
+            query.wordListSets.add(wordListName);
+        else
+            query.wordLists.add(wordListName);
     }
 
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
         if(matches == null) {
-            matches = new TreeSet<WordListEntry>(WordList.getMatchSet(wordListName, token.termText().toLowerCase()));
-            currentMatch = WordList.getWordListSet(wordListName).getEntry(token.termText().toLowerCase());
+            if(set) {
+                matches = new TreeSet<WordListEntry>();
+                WordListSet wls = WordListSet.getWordListSetByName(wordListName);
+                for(Map.Entry<String,ListenableSet<WordListEntry>> entry : wls.wordLists.entrySet()) {
+                    matches.addAll(WordListSet.getMatchSet(entry.getKey(), token.termText().toLowerCase()));
+                }
+            } else {
+                matches = new TreeSet<WordListEntry>(WordListSet.getMatchSet(wordListName, token.termText().toLowerCase()));
+                currentMatch = WordListSet.getWordListSetByList(wordListName).getEntry(token.termText().toLowerCase());
+            }
         } else {
             currentMatch.addWord(token.termText());
         }
@@ -80,7 +98,7 @@ public class StrMatch implements TypeExpr {
 
     @Override
     public String toString() {
-        return "strmatches(@" + wordListName + ")";
+        return "strmatches(" + (set ? "%" : "@") + wordListName + ")";
     }
 
     public boolean canEnd() {
@@ -90,12 +108,12 @@ public class StrMatch implements TypeExpr {
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof StrMatch) {
-            return ((StrMatch)obj).wordListName.equals(wordListName);
+            return ((StrMatch)obj).wordListName.equals(wordListName) && ((StrMatch)obj).set == set;
         }
         return false;
     }
 
     public TypeExpr copy() {
-        return new StrMatch(wordListName);
+        return new StrMatch((set ? "%" : "@") + wordListName);
     }
 }

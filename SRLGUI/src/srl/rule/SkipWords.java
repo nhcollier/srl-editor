@@ -37,6 +37,10 @@ public class SkipWords implements TypeExpr {
         query.query.append("\" \"");
     }
 
+    private boolean skipTags = true;
+    
+    public void setSkipTags(boolean value) { skipTags = value; }
+    
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
         // Stack: Two options if next matches 1/ Return next.next 2/ Ignore, return this
         // If this number/expr pair is not on the stack do 1/ and add to stack
@@ -45,20 +49,18 @@ public class SkipWords implements TypeExpr {
         // If this number/expr pair is on the stack and not marked do 1/ (This will only happen if more than one 
         //  pair is added to the stack in a single run).
         if(token instanceof BeginTagToken) {
+            if(!skipTags)
+                return null;
             tagDepth++;
         }
-        if(token instanceof EndTagToken) {
-            tagDepth--;
-            if(tagDepth > 0)
-                return this;
-        }
+       
 	if(i < min) {
             //if(token instanceof BeginTagToken || token instanceof EndTagToken)
                 i++;
 	    return this;
 	} 
         MatchFork mf = MatchFork.find(stack, no, this);
-        if(mf != null && (mf.used == true || stack.peek() == mf)) {
+        if(mf != null && (mf.used == true || stack.peek() == mf) && (!skipTags || !(token instanceof EndTagToken))) {
             stack.peek().split(no, this);
             if(i < max) {
                 //if(token instanceof BeginTagToken || token instanceof EndTagToken)
@@ -67,6 +69,18 @@ public class SkipWords implements TypeExpr {
             } else {
                 return null;
             }
+        }
+        if(token instanceof EndTagToken) {
+            if(!skipTags) {
+                TypeExpr te = next.matches(token, no, stack);
+                if((stack.empty() || stack.peek().tokenNo < no) &&
+                        !(te == Rule.successState))
+                    stack.push(new MatchFork(no,this));
+                return te;
+            }
+            tagDepth--;
+            if(tagDepth > 0)
+                return this;
         }
         TypeExpr te = next.matches(token,no,stack);
         if(te != null) {

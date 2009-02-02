@@ -25,7 +25,7 @@ import srl.corpus.Processor;
  * may be found by its identifier alone without knowing its set)
  * @author john
  */
-public class WordList {
+public class WordListSet {
     /** This represents the wordlists. It is a map indexed by the wordlist names */
     public ListenableMap<String,ListenableSet<WordListEntry>> wordLists;
     /** The name of this word list set */
@@ -39,23 +39,24 @@ public class WordList {
      * @param name The wordlist set name
      * @param processor The linguistic processor 
      */
-    public WordList(String name, Processor processor) {
+    public WordListSet(String name, Processor processor) {
         this.name = name;
         this.processor = processor;
         wordLists = new ListenableMap<String,ListenableSet<WordListEntry>>(new HashMap<String,ListenableSet<WordListEntry>>());
+        allWordListSets.put(name, this);
     }
     
     /** Load a word list set from a file 
      * @param file The file
      * @param processor The linguistic processor used
      */
-    public static WordList loadFromFile(File file, Processor processor) throws IOException {
+    public static WordListSet loadFromFile(File file, Processor processor) throws IOException {
         System.out.println("Loading: " + file);
         String wlName = file.getName();
         if(wlName.matches(".*\\.wordlist\\.srl")) {
             wlName = wlName.substring(0,wlName.length()-13);
         }
-        WordList wl = new WordList(wlName, processor);
+        WordListSet wl = new WordListSet(wlName, processor);
         String cmt = "";
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file),"UTF-8"));
         for(String in = br.readLine(); in != null; in = br.readLine()) {
@@ -152,7 +153,8 @@ public class WordList {
     }
     
     static Map<String,ListenableSet<WordListEntry>> allWordLists = new HashMap<String,ListenableSet<WordListEntry>>();
-    static Map<String,WordList> allWordSets = new HashMap<String,WordList>();
+    static Map<String,WordListSet> allWordSets = new HashMap<String,WordListSet>();
+    static Map<String,WordListSet> allWordListSets = new HashMap<String,WordListSet>();
     
     /** Get a specific word list by name */
     public static ListenableSet<WordListEntry> getWordList(String wordListName) {
@@ -164,9 +166,13 @@ public class WordList {
         return allWordLists.keySet();
     }
     
-    /** Get a word list set by name */
-    public static WordList getWordListSet(String wordListName) {
+    /** Get a word list set by the name of one of the lists it contains */
+    public static WordListSet getWordListSetByList(String wordListName) {
         return allWordSets.get(wordListName);
+    }
+    
+    public static WordListSet getWordListSetByName(String wordListName) {
+        return allWordListSets.get(wordListName);
     }
     
     /**
@@ -176,7 +182,7 @@ public class WordList {
      */
     public static void addToList(String wordListName, Collection<String> entries) {
         Set<WordListEntry> wordList = getWordList(wordListName);
-        WordList wl = getWordListSet(wordListName);
+        WordListSet wl = getWordListSetByList(wordListName);
         for(String entry : entries) {
             wordList.add(wl.getEntry(entry));
         }
@@ -189,7 +195,7 @@ public class WordList {
      */
     public static void addToList(String wordListName, String[] entries) {
         Set<WordListEntry> wordList = getWordList(wordListName);
-        WordList wl = getWordListSet(wordListName);
+        WordListSet wl = getWordListSetByList(wordListName);
         for(String entry : entries) {
             wordList.add(wl.getEntry(entry));
         }
@@ -201,7 +207,7 @@ public class WordList {
      */
     public static SortedSet<WordListEntry> getMatchSet(String name, String token) {
         SortedSet<WordListEntry> set = ((SortedSet<WordListEntry>)allWordLists.get(name).getSet());
-        WordList wl = getWordListSet(name);
+        WordListSet wl = getWordListSetByList(name);
         LinkedList<String> l1 = new LinkedList<String>();
         LinkedList<String> l2 = new LinkedList<String>();
         l1.add(token);
@@ -213,7 +219,7 @@ public class WordList {
     /** Clear the list */
     public static void reset() {
         allWordLists = new HashMap<String,ListenableSet<WordListEntry>>();
-        allWordSets = new HashMap<String,WordList>();
+        allWordSets = new HashMap<String,WordListSet>();
     }
     
     /**

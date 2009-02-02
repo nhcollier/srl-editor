@@ -37,7 +37,7 @@ public class SrlProject {
     /** A list of the sets of rules used for template extraction */
     public List<RuleSet> templateRulesets;
     /** A list of the sets of wordlist */
-    public ListenableList<WordList> wordlists;
+    public ListenableList<WordListSet> wordlists;
     /** The project name */
     public final StringBuffer name = new StringBuffer();
     /** The project description */
@@ -96,8 +96,8 @@ public class SrlProject {
         if (!(new File(path, "template_rules")).mkdir()) {
             throw new IOException("Could not create directory " + path.toString() + "template_rules");
         }
-        WordList.reset();
-        wordlists = new ListenableList<WordList>(new LinkedList<WordList>());
+        WordListSet.reset();
+        wordlists = new ListenableList<WordListSet>(new LinkedList<WordListSet>());
         if (!(new File(path, "wordlists")).mkdir()) {
             throw new IOException("Could not create directory " + path.toString() + "wordlists");
         }
@@ -108,7 +108,7 @@ public class SrlProject {
     private SrlProject() {
         entityRulesets = new LinkedList<RuleSet>();
         templateRulesets = new LinkedList<RuleSet>();
-        wordlists = new ListenableList<WordList>(new LinkedList<WordList>());
+        wordlists = new ListenableList<WordListSet>(new LinkedList<WordListSet>());
     }
 
     /**
@@ -127,7 +127,7 @@ public class SrlProject {
     public static SrlProject openSrlProject(File path, boolean openCorpus) throws IllegalArgumentException, IOException, SAXException {
         SrlProject proj = new SrlProject();
         proj.path = path;
-        WordList.reset();
+        WordListSet.reset();
         XMLReader xr = XMLReaderFactory.createXMLReader();
         SrlProjectDocumentHandler handler = new SrlProjectDocumentHandler(proj);
         handler.dontOpenCorpus = !openCorpus;
@@ -153,7 +153,7 @@ public class SrlProject {
      * @param wordList The word list name
      */
     public void openWordList(String wordList) throws IOException {
-        wordlists.add(WordList.loadFromFile(new File(new File(path.getPath(), "wordlists"), wordList + ".wordlist.srl"), corpus.getProcessor()));
+        wordlists.add(WordListSet.loadFromFile(new File(new File(path.getPath(), "wordlists"), wordList + ".wordlist.srl"), corpus.getProcessor()));
         modified = true;
     }
 
@@ -178,7 +178,7 @@ public class SrlProject {
      * Write the project to disk
      */
     public void writeProject() throws IOException, CorpusConcurrencyException {
-        for (WordList wl : wordlists) {
+        for (WordListSet wl : wordlists) {
             File f = new File(new File(path, "wordlists"), wl.name + ".wordlist.srl");
             if (!f.exists()) {
                 f.createNewFile();
@@ -249,7 +249,7 @@ public class SrlProject {
         }
         ps.println("\t</template_rulesets>");
         ps.println("\t<wordlists>");
-        for (WordList wl : wordlists) {
+        for (WordListSet wl : wordlists) {
             ps.println("\t\t<wordlist>" + wl.name + "</wordlist>");
         }
         ps.println("\t</wordlists>");

@@ -128,6 +128,9 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
         } else {
             body.add(body.size()-1,typeExpr);
             typeExpr.setNext(body.get(body.size()-1));
+            if(typeExpr instanceof SkipWords) {
+                ((SkipWords)typeExpr).setSkipTags(false);
+            }
         }
     }
     

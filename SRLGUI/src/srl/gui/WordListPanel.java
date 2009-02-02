@@ -25,12 +25,12 @@ import javax.swing.event.DocumentListener;
  */
 public class WordListPanel extends javax.swing.JPanel {
 
-    WordList wl;
+    WordListSet wl;
     List<String> oldTable;
     private boolean userChangeFlag = true;
 
     /** Creates new form WordListPanel */
-    public WordListPanel(WordList wordList) {
+    public WordListPanel(WordListSet wordList) {
         oldTable = new Vector<String>();
         wl = wordList;
         initComponents();

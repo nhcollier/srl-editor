@@ -20,7 +20,7 @@ import javax.swing.border.*;
 import javax.swing.event.*;
 import mccrae.tools.struct.*;
 import srl.project.SrlProject;
-import srl.wordlist.WordList;
+import srl.wordlist.WordListSet;
 import srl.wordlist.WordListEntry;
 
 public class AutoCompleteTextField extends JTextField {
@@ -118,15 +118,15 @@ public class AutoCompleteTextField extends JTextField {
                     }
                 }
             });
-            for (WordList wl : proj.wordlists) {
+            for (WordListSet wl : proj.wordlists) {
                 wl.wordLists.addCollectionChangeListener(new WLCCL());
                 for (String s : wl.wordLists.keySet()) {
                     wordLists.add(s);
                 }
             }
-            proj.wordlists.addCollectionChangeListener(new CollectionChangeListener<WordList>() {
+            proj.wordlists.addCollectionChangeListener(new CollectionChangeListener<WordListSet>() {
 
-                public void collectionChanged(CollectionChangeEvent<WordList> e) {
+                public void collectionChanged(CollectionChangeEvent<WordListSet> e) {
                     if (e.getNewVal() != null) {
                         e.getNewVal().wordLists.addCollectionChangeListener(new WLCCL());
                     }

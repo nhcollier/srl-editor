@@ -232,7 +232,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(WORDLIST);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatch(s1.image.substring(1,s1.image.length())));
+       rule.addTypeExpr(new StrMatch(s1.image));
        typeExpr(rule);
       break;
     case STRMATCH_APPROX:
@@ -243,7 +243,7 @@ boolean cleanHead = false;
       s2 = jj_consume_token(NUMBER);
       jj_consume_token(PERCENT);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatchApprox(s1.image.substring(1,s1.image.length()),
+       rule.addTypeExpr(new StrMatchApprox(s1.image,
        Double.parseDouble(s2.image) / 100));
        typeExpr(rule);
       break;
@@ -293,6 +293,30 @@ boolean cleanHead = false;
       s1 = jj_consume_token(STRING_LITERAL);
        rule.addTypeExpr(new Literal(cleanLiteral(s1.image)));
        typeExpr(rule);
+      break;
+    case BEGINS:
+      jj_consume_token(BEGINS);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new PartialLiteral(s1.image, 0));
+        typeExpr(rule);
+      break;
+    case ENDS:
+      jj_consume_token(ENDS);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new PartialLiteral(s1.image, 1));
+        typeExpr(rule);
+      break;
+    case CONTAINS:
+      jj_consume_token(CONTAINS);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new PartialLiteral(s1.image, 2));
+        typeExpr(rule);
       break;
     case WORD:
       s1 = jj_consume_token(WORD);
@@ -358,7 +382,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(WORDLIST);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatch(s1.image.substring(1,s1.image.length())));
+       rule.addTypeExpr(new StrMatch(s1.image));
       break;
     case STRMATCH_APPROX:
       jj_consume_token(STRMATCH_APPROX);
@@ -368,7 +392,7 @@ boolean cleanHead = false;
       s2 = jj_consume_token(NUMBER);
       jj_consume_token(PERCENT);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatchApprox(s1.image.substring(1,s1.image.length()),
+       rule.addTypeExpr(new StrMatchApprox(s1.image,
            Double.parseDouble(s2.image) / 100));
       break;
     case STRMATCH_REGEX:
@@ -413,6 +437,27 @@ boolean cleanHead = false;
     case STRING_LITERAL:
       s1 = jj_consume_token(STRING_LITERAL);
        rule.addTypeExpr(new Literal(cleanLiteral(s1.image)));
+      break;
+    case BEGINS:
+      jj_consume_token(BEGINS);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new PartialLiteral(s1.image, 0));
+      break;
+    case ENDS:
+      jj_consume_token(ENDS);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new PartialLiteral(s1.image, 1));
+      break;
+    case CONTAINS:
+      jj_consume_token(CONTAINS);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new PartialLiteral(s1.image, 2));
       break;
     case WORD:
       s1 = jj_consume_token(WORD);
@@ -467,7 +512,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(WORDLIST);
       jj_consume_token(CLOSE_PARA);
-       e.addTypeExpr(new StrMatch(s1.image.substring(1,s1.image.length())));
+       e.addTypeExpr(new StrMatch(s1.image));
        entityExpr(e);
       break;
     case STRMATCH_APPROX:
@@ -478,7 +523,7 @@ boolean cleanHead = false;
       s2 = jj_consume_token(NUMBER);
       jj_consume_token(PERCENT);
       jj_consume_token(CLOSE_PARA);
-       e.addTypeExpr(new StrMatchApprox(s1.image.substring(1,s1.image.length()),
+       e.addTypeExpr(new StrMatchApprox(s1.image,
            Double.parseDouble(s2.image) / 100));
        entityExpr(e);
       break;
@@ -529,6 +574,30 @@ boolean cleanHead = false;
        e.addTypeExpr(new Literal(cleanLiteral(s1.image)));
      entityExpr(e);
       break;
+    case BEGINS:
+      jj_consume_token(BEGINS);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        e.addTypeExpr(new PartialLiteral(s1.image, 0));
+        entityExpr(e);
+      break;
+    case ENDS:
+      jj_consume_token(ENDS);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        e.addTypeExpr(new PartialLiteral(s1.image, 1));
+        entityExpr(e);
+      break;
+    case CONTAINS:
+      jj_consume_token(CONTAINS);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        e.addTypeExpr(new PartialLiteral(s1.image, 2));
+        entityExpr(e);
+      break;
     case WORD:
       s1 = jj_consume_token(WORD);
       jj_consume_token(OPEN_PARA);
@@ -570,7 +639,7 @@ boolean cleanHead = false;
       jj_la1_0();
    }
    private static void jj_la1_0() {
-      jj_la1_0 = new int[] {0x900008,0x140000,0x900008,0x140000,0x900008,0x900008,0x140000,0x28000,0x200000,0x200000,0xc401f9,0x200000,0x200000,0xc419f9,0x200000,0x200000,0x4411f0,};
+      jj_la1_0 = new int[] {0x4800008,0xa00000,0x4800008,0xa00000,0x4800008,0x4800008,0xa00000,0x140000,0x1000000,0x1000000,0x6200ff9,0x1000000,0x1000000,0x620cff9,0x1000000,0x1000000,0x2208ff0,};
    }
 
   public SrlParser(java.io.InputStream stream) {
@@ -675,8 +744,8 @@ boolean cleanHead = false;
 
   public ParseException generateParseException() {
     jj_expentries.removeAllElements();
-    boolean[] la1tokens = new boolean[24];
-    for (int i = 0; i < 24; i++) {
+    boolean[] la1tokens = new boolean[27];
+    for (int i = 0; i < 27; i++) {
       la1tokens[i] = false;
     }
     if (jj_kind >= 0) {
@@ -692,7 +761,7 @@ boolean cleanHead = false;
         }
       }
     }
-    for (int i = 0; i < 24; i++) {
+    for (int i = 0; i < 27; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

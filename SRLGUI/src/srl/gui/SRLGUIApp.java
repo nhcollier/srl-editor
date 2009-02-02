@@ -29,7 +29,7 @@ public class SRLGUIApp extends SingleFrameApplication {
 
     HashMap<String,RuleSet> entityRuleSets;
     HashMap<String,RuleSet> templateRuleSets;
-    HashMap<String,WordList> wordLists;
+    HashMap<String,WordListSet> wordLists;
     public SrlProject proj;
     
     public static final int SRL_ENTITY_RULESET = 1;
@@ -46,7 +46,7 @@ public class SRLGUIApp extends SingleFrameApplication {
     @Override protected void startup() {
         entityRuleSets = new HashMap<String,RuleSet>();
         templateRuleSets = new HashMap<String, RuleSet>();                
-        wordLists = new HashMap<String,WordList>();
+        wordLists = new HashMap<String,WordListSet>();
         show(new SRLGUIView(this));
         ExitListener exitListen = new ExitListener() {
 
@@ -124,7 +124,7 @@ public class SRLGUIApp extends SingleFrameApplication {
             wordList = new DefaultMutableTreeNode("Word List Sets");
             mainTreeNode.add(wordList);
             if(proj != null) {
-                for(WordList wl : proj.wordlists) {
+                for(WordListSet wl : proj.wordlists) {
                     wordList.add(new DefaultMutableTreeNode(wl.name));
                 }
                 for(RuleSet rs : proj.entityRulesets) {

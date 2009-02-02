@@ -36,7 +36,7 @@ public class Corpus {
     IndexSearcher indexSearcher;
     Processor processor;
     HashSet<String> docNames;
-    CorpusSupport support;
+//    CorpusSupport support;
     public boolean nestingAllowed = true,  overlappingAllowed = true;
     private File indexFile;
     private long lock = 0;
@@ -86,7 +86,7 @@ public class Corpus {
             }
             c.reopenIndex();
         }
-        if (newIndex) {
+        /*if (newIndex) {
             c.newSupport();
         } else {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(indexFile, "support")));
@@ -96,14 +96,14 @@ public class Corpus {
                 throw new IOException(x.getMessage());
             }
             ois.close();
-        }
+        }*/
         return c;
     }
 
     // Can't instantiate from static context (see above function)
-    private void newSupport() {
+    /*private void newSupport() {
         support = new CorpusSupport();
-    }
+    }*/
 
     /**
      * Save the corpus 
@@ -112,9 +112,9 @@ public class Corpus {
      */
     public void saveCorpus() throws IOException, CorpusConcurrencyException {
         optimizeIndex();
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(indexFile, "support")));
+        /*ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(indexFile, "support")));
         oos.writeObject(support);
-        oos.close();
+        oos.close();*/
     }
 
     /** Add a new document to corpus
@@ -172,9 +172,17 @@ public class Corpus {
             d2.add(new Field("contents", sent.toString(), Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("name", name + " " + i, Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
+            Set<Pair<String,String>> wls = wordListForDoc(sent.toString());
+            StringBuffer wlNames = new StringBuffer(), wlSetNames = new StringBuffer();
+            for(Pair<String,String> wl : wls) {
+                wlNames.append(wl.first + " ");
+                wlSetNames.append(WordListSet.getWordListSetByList(wl.first) + " ");
+            }
+            d2.add(new Field("wordlists", wlNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
+            d2.add(new Field("wordlistsets", wlSetNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
+            
             if(tagged)
                 d2.add(new Field("taggedContents", taggedSent.toString(), Field.Store.YES, Field.Index.TOKENIZED));
-            support.addWordListInfo(name + " " + i, wordListForDoc(sent.toString()));
             indexWriter.addDocument(d2);
             i++;
         }
@@ -199,8 +207,8 @@ public class Corpus {
 
     protected Set<Pair<String, String>> wordListForDoc(String contents) {
         Set<Pair<String, String>> rval = new HashSet<Pair<String, String>>();
-        for (String name : WordList.getAllWordListNames()) {
-            for (WordListEntry term : WordList.getWordList(name)) {
+        for (String name : WordListSet.getAllWordListNames()) {
+            for (WordListEntry term : WordListSet.getWordList(name)) {
                 if (contents.contains(term.toString())) {
                     rval.add(new Pair(name, term.toString()));
                     break;
@@ -347,7 +355,9 @@ public class Corpus {
             closeIndex();
         }
         if (query.query.toString().matches("\\s*") &&
-                query.entities.isEmpty()) {
+                query.entities.isEmpty() &&
+                query.wordListSets.isEmpty() &&
+                query.wordLists.isEmpty()) {
             nonLuceneQuery(query, collector, signal);
             return;
         }
@@ -357,29 +367,28 @@ public class Corpus {
             StringBuffer queryStr = new StringBuffer(cleanQuery(query.query.toString()));
             queryStr.append(" ");
             for (Pair<String, String> entity : query.entities) {
-                queryStr = queryStr.append("taggedContents:\"<" + entity.first + " cl=\\\"" + entity.second +
+                queryStr.append("taggedContents:\"<" + entity.first + " cl=\\\"" + entity.second +
                         "\\\">\" ");
+            }
+            for (String wl : query.wordLists) {
+                queryStr.append("wordlists:" + wl + " ");
+            }
+            for(String wls : query.wordListSets) {
+                queryStr.append("wordlistsets:" + wls + " ");
             }
             Query q = qp.parse(queryStr.toString());
             if (q.toString().matches("\\s*")) {
                 nonLuceneQuery(query, collector, signal);
                 return;
             }
-            Filter f = makeFilter(query);
-            if (f != null) {
-                indexSearcher.search(q, f, new SrlHitCollector(collector, signal));
-            } else {
-                indexSearcher.search(q, new SrlHitCollector(collector, signal));
-            }
-        } catch (Exception x) {
+            indexSearcher.search(q, new SrlHitCollector(collector, signal));
+         } catch (Exception x) {
             System.err.println(query.query.toString());
             x.printStackTrace();
         }
     }
 
     private void nonLuceneQuery(SrlQuery query, QueryHit collector, StopSignal signal) throws IOException, CorpusConcurrencyException {
-        if (query.wordLists.isEmpty()) {
-            if (query.entities.isEmpty()) {
                 // Empty queries match everything (!)
                 System.out.println("Empty Query! This may significantly affect performance");
                 for (int i = 0; i < indexSearcher.maxDoc(); i++) {
@@ -391,23 +400,6 @@ public class Corpus {
                     }
                 }
                 return;
-            }
-        } else {
-            Iterator<String> wlIter = query.wordLists.iterator();
-            Set<String> docs = support.wordListToDoc.get(wlIter.next());
-            while (wlIter.hasNext()) {
-                docs.retainAll(support.wordListToDoc.get(wlIter.next()));
-            }
-            if (docs == null) {
-                return;
-            }
-            for (String docName : docs) {
-                collector.hit(getDoc(docName), signal);
-                if (signal != null && signal.isStopped()) {
-                    return;
-                }
-            }
-        }
     }
 
     public boolean containsDoc(String docName) {
@@ -518,7 +510,7 @@ public class Corpus {
     /**
      * Creates a suitable filter for the query.
      */
-    protected Filter makeFilter(SrlQuery q) throws IOException, IllegalStateException, CorpusConcurrencyException {
+/*    protected Filter makeFilter(SrlQuery q) throws IOException, IllegalStateException, CorpusConcurrencyException {
         if (indexSearcher == null) {
             closeIndex();
         }
@@ -538,7 +530,7 @@ public class Corpus {
             }
         }
         return new BitSetFilter(bs);
-    }
+    }*/
 
     private class BitSetFilter extends Filter {
 
@@ -728,7 +720,7 @@ public class Corpus {
             reopenIndex();
         }
         indexWriter.deleteDocuments(new Term("name", name));
-        support.removeDoc(name);
+        //support.removeDoc(name);
         docNames.remove(name);
         addDoc(name, contents);
     }
@@ -933,13 +925,14 @@ public class Corpus {
      * @throws java.io.IOException
      */
     public void resupport() throws IOException {
-        CorpusSupport newSupport = new CorpusSupport();
-        for (String name : WordList.getAllWordListNames()) {
-            for (WordListEntry wle : WordList.getWordList(name)) {
+       /* CorpusSupport newSupport = new CorpusSupport();
+        for (String name : WordListSet.getAllWordListNames()) {
+            for (WordListEntry wle : WordListSet.getWordList(name)) {
                 newSupport.addWord(name, wle.toString(), this);
             }
         }
-        support = newSupport;
+        support = newSupport;*/
+        
     }
 
     /** Sort a selection of matches in order of appearance */
@@ -1107,7 +1100,7 @@ public class Corpus {
     }
 
     /** Add this as a listener to list */
-    public void listenToWordListSet(WordList list) {
+    public void listenToWordListSet(WordListSet list) {
         list.wordLists.addCollectionChangeListener(new CollectionChangeListener<ListenableSet<WordListEntry>>() {
 
             public void collectionChanged(CollectionChangeEvent<ListenableSet<WordListEntry>> e) {
@@ -1156,14 +1149,35 @@ public class Corpus {
     }
 
     protected void removeWordListElement(String name, String oldVal) {
-        if (oldVal == null) {
-            return;
+        try {
+            closeIndex();
+            QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
+            qp.setDefaultOperator(QueryParser.Operator.AND);
+            Query q = qp.parse("\"" + oldVal + "\"");
+            Hits hits = indexSearcher.search(q);
+            List<Document> newDocs = new LinkedList<Document>();
+            for(int i = 0; i < hits.length(); i++) {
+                Document d = indexSearcher.doc(i);
+                String s = d.getField("wordlists").stringValue();
+                s.replaceAll(name + " ", "");
+                d.removeField("wordlists");
+                d.add(new Field("wordlists", s, Field.Store.YES, Field.Index.TOKENIZED));
+                newDocs.add(d);
+            }
+             if (indexWriter == null) {
+                reopenIndex();
+            }
+            for(Document d : newDocs) {
+                indexWriter.deleteDocuments(new Term("uid", d.getField("uid").stringValue()));
+                indexWriter.addDocument(d);
+            }
+            closeIndex();
+        } catch (Exception x) {
+            x.printStackTrace();
         }
-        Thread t = new Thread(new RWT(name, oldVal));
-        t.start();
     }
 
-    private class RWT implements Runnable {
+/*    private class RWT implements Runnable {
 
         String name, oldVal;
 
@@ -1175,17 +1189,40 @@ public class Corpus {
         public void run() {
             support.removeWord(name, oldVal, Corpus.this);
         }
-    }
+    }*/
 
     protected void addWordListElement(String name, String newVal) {
-        if (newVal == null) {
-            return;
+        try {
+            if(indexWriter == null)
+                reopenIndex();
+            QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
+            qp.setDefaultOperator(QueryParser.Operator.AND);
+            Query q = qp.parse("\"" + newVal + "\"");
+            Hits hits = indexSearcher.search(q);
+        
+            List<Document> newDocs = new LinkedList<Document>();
+            for(int i = 0; i < hits.length(); i++) {
+                Document d = indexSearcher.doc(i);
+                String s = d.getField("wordlists").stringValue();
+                s = s + name + " ";
+                d.removeField("wordlists");
+                d.add(new Field("wordlists", s, Field.Store.YES, Field.Index.TOKENIZED));
+                newDocs.add(d);
+            }
+            if (indexWriter == null) {
+                reopenIndex();
+            }
+            for(Document d : newDocs) {
+                indexWriter.deleteDocuments(new Term("uid", d.getField("uid").stringValue()));
+                indexWriter.addDocument(d);
+            }
+            closeIndex();
+        } catch(Exception x) {
+            x.printStackTrace();
         }
-        Thread t = new Thread(new AWT(name, newVal));
-        t.start();
     }
 
-    private class AWT implements Runnable {
+ /*   private class AWT implements Runnable {
 
         String name, newVal;
 
@@ -1197,7 +1234,7 @@ public class Corpus {
         public void run() {
             support.addWord(name, newVal, Corpus.this);
         }
-    }
+    }*/
 
     // DELETE BEFORE RELEASE
     /*
@@ -1213,9 +1250,10 @@ public class Corpus {
     }*/
 }
 
+/*
 class CorpusSupport implements Serializable {
 
-    HashMap<String, Set<String>> wordListToDoc;
+//    HashMap<String, Set<String>> wordListToDoc;
     HashMap<String, Set<Pair<String, String>>> docToWordList;
 
     public CorpusSupport() {
@@ -1317,5 +1355,5 @@ class CorpusSupport implements Serializable {
             x.printStackTrace();
         }
     }
-}
+}*/
  

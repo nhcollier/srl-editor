@@ -22,10 +22,12 @@ import mccrae.tools.struct.Pair;
 public class SrlQuery {
     public StringBuffer query;
     public Set<String> wordLists;
+    public Set<String> wordListSets;
     public Set<Pair<String,String>> entities;
     
     public SrlQuery() {
         wordLists = new HashSet<String>();
+        wordListSets = new HashSet<String>();
         query = new StringBuffer();
 	entities = new HashSet<Pair<String,String>>();
     }

@@ -598,8 +598,11 @@ private Thread matcherThread;
         }
         oldSelectIndex = ruleIDList.getSelectedIndex();
             ruleEditor.setEnabled(true);
+            ruleEditor.setEditable(true);
             idEditor.setEnabled(true);
+            idEditor.setEditable(true);
             commentField.setEnabled(true);
+            commentField.setEditable(true);
     }
     
     private void onCommentChange() {

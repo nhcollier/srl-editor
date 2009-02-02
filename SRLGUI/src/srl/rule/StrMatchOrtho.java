@@ -22,7 +22,7 @@ import mccrae.tools.struct.Pair;
  */
 public class StrMatchOrtho implements TypeExpr {
 
-    final String[] expressions;
+    final String[][] expressions;
     final String baseExpr;
     
     TypeExpr next;
@@ -37,11 +37,14 @@ public class StrMatchOrtho implements TypeExpr {
     }
 
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
-        for(String exp : expressions) {
-            if(!token.termText().matches(exp))
-                return null;
-        }
+        LOOP: for(String[] expBlock : expressions) {
+            for(String exp : expBlock) {
+                if(!token.termText().matches(exp))
+                    continue LOOP;
+            }
             return next;
+        }
+        return null;
     }
 
     public void setNext(TypeExpr te) {
@@ -57,59 +60,46 @@ public class StrMatchOrtho implements TypeExpr {
     }
     
     boolean hasStartCheck = false;
-    private String[] readExpressions(String expression) {
-        String[] exprs = expression.split("&");
-        String[] rv = new String[exprs.length];
-        for(int i = 0; i < exprs.length; i++) {
-            Matcher m = Pattern.compile("(\\^)?(\\d*)(\\+)?(\\w+)").matcher(exprs[i]);
-            if(!m.matches()) {
-                throw new IllegalArgumentException("Unrecognised ortho expression: " + exprs[i]);
-                
-            }
-            boolean initial = m.group(1) != null && !m.group(1).equals("");
-            int number;
-            boolean fixed;
-            if(m.group(2) != null && !m.group(2).equals("")) {
-               number = Integer.parseInt(m.group(2));
-               fixed = m.group(3) == null || m.group(3).equals("");
-            } else {
-               fixed = false;
-               number = -1;
-            }                
-            String type = "\\p{" + m.group(4) + "}";
-            if(number == -1 && !initial && !fixed) {
-                rv[i] = type + "+";
-            } else if(initial && !fixed) {
-                rv[i] = type + ".*" + (number > 1 ? ("(" + type + ".*){" + (number-1) + ",}") : "");
-            } else if(fixed) {
-                rv[i] = type + (number > 1 ? "{" + number + "}" : "");
-            } else if(!initial) {
-                rv[i] = ".*(" + type + ".*)" + (number > 1 ? "{" + number + ",}" : "");
-            }
-           /* if(exprs[i].length() >= 2) {
-                if(Character.isUpperCase(exprs[i].charAt(exprs[i].length()-1))) {
+    private String[][] readExpressions(String expression) {
+        String[] blockExprs = expression.split("\\|");
+        String[][] rval = new String[blockExprs.length][];
+        int j = 0;
+        for(String blockExpr : blockExprs) {
+            String[] exprs = blockExpr.split("&");
+            String[] rv = new String[exprs.length];
+            for(int i = 0; i < exprs.length; i++) {
+                Matcher m = Pattern.compile("(\\^)?(\\d*)(\\+)?(\\w+)").matcher(exprs[i]);
+                if(!m.matches()) {
                     throw new IllegalArgumentException("Unrecognised ortho expression: " + exprs[i]);
-                } else {
-                    try {
-                        rv[i] = regexForOrtho(exprs[i].charAt(exprs[i].length()-1)) + "{" + 
-                                Integer.parseInt(exprs[i].substring(0,exprs[i].length()-1)) + "}";
-                    } catch(NumberFormatException x) {
-                        throw new IllegalArgumentException("Unrecognised ortho expression: " + exprs[i]);
-                    }
                 }
-            } else {
-                char c = exprs[i].charAt(0);
-                if(Character.isUpperCase(c)) {
-                    if(hasStartCheck)
-                        throw new IllegalArgumentException("Impossible ortho: " + expression);
-                    rv[i] = regexForOrtho(Character.toLowerCase(c)) + ".*";
-                    hasStartCheck = true;
+                boolean initial = m.group(1) != null && !m.group(1).equals("");
+                int number;
+                boolean fixed;
+                if(m.group(2) != null && !m.group(2).equals("")) {
+                    number = Integer.parseInt(m.group(2));
+                    fixed = m.group(3) == null || m.group(3).equals("");
                 } else {
-                    rv[i] = ".*" + regexForOrtho(c) + ".*";
+                    fixed = false;
+                    number = -1;
                 }
-            }*/
+                
+                String type = "\\p{" + m.group(4) + "}";
+                if(m.group(4).equals("Np")) {
+                    type = "[0-9,.]";
+                }
+                if(number == -1 && !initial && !fixed) {
+                    rv[i] = type + "+";
+                } else if(initial && !fixed) {
+                    rv[i] = type + ".*" + (number > 1 ? ("(" + type + ".*){" + (number-1) + ",}") : "");
+                } else if(fixed) {
+                    rv[i] = type + (number > 1 ? "{" + number + "}" : "");
+                } else if(!initial) {
+                    rv[i] = ".*(" + type + ".*)" + (number > 1 ? "{" + number + ",}" : "");
+                }
+            }
+            rval[j++] = rv;
         }
-        return rv;
+        return rval;
     }
     
     private String regexForOrtho(char ortho) {

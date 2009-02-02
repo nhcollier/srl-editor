@@ -19,22 +19,25 @@ public interface SrlParserConstants {
   int STRMATCH_APPROX = 5;
   int STRMATCH_REGEX = 6;
   int STRMATCH_ORTH = 7;
-  int WORDS = 8;
-  int OPEN_PARA = 9;
-  int CLOSE_PARA = 10;
-  int OPEN_BRACE = 11;
-  int CLOSE_BRACE = 12;
-  int COMMA = 13;
-  int PERCENT = 14;
-  int IMPLIES = 15;
-  int COLON = 16;
-  int SEMICOLON = 17;
-  int STRING_LITERAL = 18;
-  int WORDLIST = 19;
-  int VAR = 20;
-  int NUMBER = 21;
-  int WORD = 22;
-  int COMMENT = 23;
+  int BEGINS = 8;
+  int ENDS = 9;
+  int CONTAINS = 10;
+  int WORDS = 11;
+  int OPEN_PARA = 12;
+  int CLOSE_PARA = 13;
+  int OPEN_BRACE = 14;
+  int CLOSE_BRACE = 15;
+  int COMMA = 16;
+  int PERCENT = 17;
+  int IMPLIES = 18;
+  int COLON = 19;
+  int SEMICOLON = 20;
+  int STRING_LITERAL = 21;
+  int WORDLIST = 22;
+  int VAR = 23;
+  int NUMBER = 24;
+  int WORD = 25;
+  int COMMENT = 26;
 
   int DEFAULT = 0;
 
@@ -47,6 +50,9 @@ public interface SrlParserConstants {
     "\"approx\"",
     "\"regex\"",
     "\"ortho\"",
+    "\"begins\"",
+    "\"ends\"",
+    "\"contains\"",
     "\"words\"",
     "\"(\"",
     "\")\"",

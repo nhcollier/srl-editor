@@ -44,6 +44,9 @@ TOKEN : { < STRMATCH : "strmatches" > }
 TOKEN : { < STRMATCH_APPROX : "approx" > }
 TOKEN : { < STRMATCH_REGEX : "regex" > }
 TOKEN : { < STRMATCH_ORTH : "ortho" > }
+TOKEN : { < BEGINS : "begins" > }
+TOKEN : { < ENDS : "ends" > }
+TOKEN : { < CONTAINS : "contains" > }
 TOKEN : { < WORDS : "words" > }
 // Some of useful token types
 TOKEN : { < OPEN_PARA : "(" > }
@@ -58,7 +61,7 @@ TOKEN : { < SEMICOLON : ";" > }
 // A string literal marked with ""
 TOKEN : { < STRING_LITERAL : "\"" ( (~["\""]) | ( "\\" "\"")) * "\"" > }
 // A word list i.e, @wordlist
-TOKEN : { < WORDLIST : "@" (["A"-"Z","a"-"z","0"-"9","_"])+ > }
+TOKEN : { < WORDLIST : ("@"|"%") (["A"-"Z","a"-"z","0"-"9","_"])+ > }
 // A variable, must start with a capital letter
 TOKEN : { < VAR : (["A"-"Z"])(["A"-"Z","a"-"z","0"-"9"])* > }
 // A number accepts 20, 20.0 and 0.20
@@ -227,7 +230,7 @@ void typeExpr(Rule rule) :
      <OPEN_PARA>
      s1 = <WORDLIST>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatch(s1.image.substring(1,s1.image.length()))); }
+     { rule.addTypeExpr(new StrMatch(s1.image)); }
      { typeExpr(rule); }
     |
      <STRMATCH_APPROX>
@@ -237,7 +240,7 @@ void typeExpr(Rule rule) :
      s2 = <NUMBER>
      <PERCENT>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchApprox(s1.image.substring(1,s1.image.length()), 
+     { rule.addTypeExpr(new StrMatchApprox(s1.image, 
        Double.parseDouble(s2.image) / 100)); }
      { typeExpr(rule); }
     |
@@ -269,6 +272,30 @@ void typeExpr(Rule rule) :
      s1 = <STRING_LITERAL>
      { rule.addTypeExpr(new Literal(cleanLiteral(s1.image)));
        typeExpr(rule); }
+    |
+     <BEGINS>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new PartialLiteral(s1.image, 0));
+        typeExpr(rule); }
+    |
+     <ENDS>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new PartialLiteral(s1.image, 1));
+        typeExpr(rule); }
+    |
+     <CONTAINS>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new PartialLiteral(s1.image, 2));
+        typeExpr(rule); }
     |
      s1 = <WORD>
      <OPEN_PARA>
@@ -326,7 +353,7 @@ int entityBranch(Expr rule, Entity e) :
      <OPEN_PARA>
      s1 = <WORDLIST>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatch(s1.image.substring(1,s1.image.length()))); }
+     { rule.addTypeExpr(new StrMatch(s1.image)); }
     |
      <STRMATCH_APPROX>
      <OPEN_PARA>
@@ -335,7 +362,7 @@ int entityBranch(Expr rule, Entity e) :
      s2 = <NUMBER>
      <PERCENT>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchApprox(s1.image.substring(1,s1.image.length()), 
+     { rule.addTypeExpr(new StrMatchApprox(s1.image, 
            Double.parseDouble(s2.image) / 100)); }
     |
      <STRMATCH_REGEX>
@@ -362,6 +389,27 @@ int entityBranch(Expr rule, Entity e) :
     |
      s1 = <STRING_LITERAL>
      { rule.addTypeExpr(new Literal(cleanLiteral(s1.image))); }
+    |
+     <BEGINS>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new PartialLiteral(s1.image, 0)); }
+    |
+     <ENDS>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new PartialLiteral(s1.image, 1)); }
+    |
+     <CONTAINS>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new PartialLiteral(s1.image, 2)); }
     |
      s1 = <WORD>
      <OPEN_PARA>
@@ -411,7 +459,7 @@ void entityExpr(Entity e) :
      <OPEN_PARA>
      s1 = <WORDLIST>
      <CLOSE_PARA>
-     { e.addTypeExpr(new StrMatch(s1.image.substring(1,s1.image.length()))); }
+     { e.addTypeExpr(new StrMatch(s1.image)); }
      { entityExpr(e); }
     |
      <STRMATCH_APPROX>
@@ -421,7 +469,7 @@ void entityExpr(Entity e) :
      s2 = <NUMBER>
      <PERCENT>
      <CLOSE_PARA>
-     { e.addTypeExpr(new StrMatchApprox(s1.image.substring(1,s1.image.length()), 
+     { e.addTypeExpr(new StrMatchApprox(s1.image, 
            Double.parseDouble(s2.image) / 100)); }
      { entityExpr(e); }
     |
@@ -453,6 +501,30 @@ void entityExpr(Entity e) :
      s1 = <STRING_LITERAL>
      { e.addTypeExpr(new Literal(cleanLiteral(s1.image)));
      entityExpr(e); }
+    |
+     <BEGINS>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        e.addTypeExpr(new PartialLiteral(s1.image, 0));
+        entityExpr(e); }
+    |
+     <ENDS>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        e.addTypeExpr(new PartialLiteral(s1.image, 1));
+        entityExpr(e); }
+    |
+     <CONTAINS>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        e.addTypeExpr(new PartialLiteral(s1.image, 2));
+        entityExpr(e); }
     |
      s1 = <WORD>
      <OPEN_PARA>

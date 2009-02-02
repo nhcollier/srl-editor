@@ -24,10 +24,17 @@ public class StrMatchApprox implements TypeExpr {
 
     final String wordListName;
     final double matchAmount;
+    final boolean set;
     
     TypeExpr next;
             
     public StrMatchApprox(String wordListName, double matchAmount) {
+        if(wordListName.charAt(0) == '@')
+            set = false;
+        else if(wordListName.charAt(0) == '%')
+            set = true;
+        else
+            throw new IllegalArgumentException("Word list name must start with @ or %");
         this.wordListName = wordListName;
         this.matchAmount = matchAmount;
     }
@@ -38,7 +45,15 @@ public class StrMatchApprox implements TypeExpr {
     }
 
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
-        Set<WordListEntry> list = WordList.getWordList(wordListName);
+        Set<WordListEntry> list;
+        if(set) {
+            list = new HashSet<WordListEntry>();
+            for(Set<WordListEntry> wle : WordListSet.getWordListSetByName(wordListName).wordLists.values()) {
+                list.addAll(wle);
+            }
+        } else {
+            list = WordListSet.getWordList(wordListName);
+        }
         for(WordListEntry wle : list) {
             String s = wle.toString();
             if(1.0 - (double)levenshteinDistance(token.termText().toCharArray(),s.toCharArray()) / 
@@ -81,7 +96,7 @@ public class StrMatchApprox implements TypeExpr {
 
     @Override
     public String toString() {
-        return "approx(@" + wordListName + "," + (matchAmount * 100) + "%)";
+        return "approx(" + (set ? '%' : '@') + wordListName + "," + (matchAmount * 100) + "%)";
     }
 
     public boolean canEnd() {
@@ -92,12 +107,12 @@ public class StrMatchApprox implements TypeExpr {
     public boolean equals(Object obj) {
         if(obj instanceof StrMatchApprox) {
             StrMatchApprox sma = (StrMatchApprox)obj;
-            return sma.matchAmount == matchAmount && sma.wordListName.equals(wordListName);
+            return sma.matchAmount == matchAmount && sma.wordListName.equals(wordListName) && sma.set == set;
         }
         return false;
     }
 
     public TypeExpr copy() {
-        return new StrMatchApprox(wordListName, matchAmount);
+        return new StrMatchApprox((set ? '%' : '@') + wordListName, matchAmount);
     }
 }
