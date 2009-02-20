@@ -371,8 +371,9 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         userChange = false;
         String docName = (String) docList.getSelectedValue();
         if(docName != null) {
+            mainPane.setText("");
             try {
-                mainPane.setText(corpus.getPlainDocContents(docName));
+                mainPane.getDocument().insertString(0,corpus.getPlainDocContents(docName),null);
             } catch (IOException x) {
                 x.printStackTrace();
                 mainPane.setText("<<<<IO Error>>>>");
@@ -380,6 +381,10 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             } catch (CorpusConcurrencyException x) {
                 x.printStackTrace();
                 mainPane.setText("<<<<Corpus Locked: Document contents currently unavailable>>>>");
+                return;
+            } catch(Exception x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<" + x.getMessage() + ">>>>");
                 return;
             }
             mainPane.setEditable(true);
@@ -395,6 +400,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         }
         if(docList.getSelectedIndex() != -1) {
             List<String> docTexts;
+            mainPane.setText("");
             try {
                 docTexts = corpus.getDocSentences((String)docList.getSelectedValue());
             } catch (IOException x) {
@@ -419,7 +425,11 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             }
             if(s.length() > 0)
                 s.deleteCharAt(s.length() - 1);
-            mainPane.setText(s.toString());
+            try {
+                mainPane.getDocument().insertString(0,s.toString(),null);
+            } catch(Exception x) {
+                mainPane.setText("<<<<" + x.getMessage() + ">>>>");
+            }
         }
         mainPane.setEditable(false);
         textSelected = false;
@@ -514,6 +524,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             }
         }
         doc.insertString(oldIdx, taggedContents.substring(oldIdx), null);
+        
     }
     
     private void templatesRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_templatesRadioActionPerformed
@@ -523,16 +534,20 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         }
         String docName = (String) docList.getSelectedValue();
         if(docName != null) {
+            mainPane.setText("");
             try {
-                mainPane.setText(Strings.join("\n", corpus.getDocTemplateExtractions(docName)));
+                mainPane.getDocument().insertString(0,Strings.join("\n", corpus.getDocTemplateExtractions(docName)),null);
             } catch(IOException x) {
                 x.printStackTrace();
                 mainPane.setText("<<<<IO Error>>>>");
             } catch (CorpusConcurrencyException x) {
                 x.printStackTrace();
                 mainPane.setText("<<<<Corpus Locked: Document contents currently unavailable>>>>");
-                return;
-            }   
+            } catch(Exception x) {
+                x.printStackTrace();
+                mainPane.setText("<<<<" + x.getMessage() + ">>>>");
+            }
+                    
         }
         mainPane.setEditable(false);
         textSelected = false;

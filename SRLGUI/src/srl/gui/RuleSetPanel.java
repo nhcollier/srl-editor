@@ -479,8 +479,9 @@ public void showMatch() {
     int selectedRow = matchesTable.getSelectedRow();
         if(selectedRow == -1)
             return;
-        HashMap<Entity,SrlMatchRegion> match = results.get(selectedRow);
         String[] ss = ((String)matchesTable.getValueAt(selectedRow, 0)).split(" ");
+        HashMap<Entity,SrlMatchRegion> match = results.get((String)matchesTable.getValueAt(selectedRow, 0) + "###" 
+                + (String)matchesTable.getValueAt(selectedRow, 1));
         TreeSet<DocHighlight> highlights = getHighlights(match, 
                 Integer.parseInt(ss[1]));
         ((SRLGUIView)SRLGUIApp.getApplication().getMainView()).openShowDocPane(
@@ -612,7 +613,7 @@ private Thread matcherThread;
                 commentField.getText();
     }
 
-    public List<HashMap<Entity, SrlMatchRegion>> results = new Vector<HashMap<Entity,SrlMatchRegion>>();
+    public HashMap<String,HashMap<Entity, SrlMatchRegion>> results = new HashMap<String,HashMap<Entity,SrlMatchRegion>>();
     
     private class RuleMatchFinder implements Runnable {
 
@@ -631,7 +632,7 @@ private Thread matcherThread;
                 final List<String> docs = new LinkedList<String>();
                 final List<String> vars = new LinkedList<String>();
                 sig = new StopSignal();
-                results = new Vector<HashMap<Entity,SrlMatchRegion>>();
+                results = new HashMap<String,HashMap<Entity,SrlMatchRegion>>();
                 corpus.query(rule.getCorpusQuery(), new Corpus.QueryHit() {
 
                     public void hit(Document d, StopSignal signal) {
@@ -640,7 +641,7 @@ private Thread matcherThread;
                         }
                         SrlDocument doc = new SrlDocument(d, corpus.getProcessor(), ruleSet.ruleType == Rule.TEMPLATE_RULE);
                         List<HashMap<Entity, SrlMatchRegion>> results = rule.getMatch(doc, false);
-                        RuleSetPanel.this.results.addAll(results);
+                        //RuleSetPanel.this.results.addAll(results);
                         if (results != null) {
                             for (HashMap<Entity, SrlMatchRegion> result : results) {
                                 docs.add(doc.getName());
@@ -650,6 +651,8 @@ private Thread matcherThread;
                                     s.append(entry.getKey().var + "=" + entry.getValue().toString() + "; ");
                                 }
                                 vars.add(s.substring(0, s.length() > 0 ? s.length() - 2 : 0));
+                                RuleSetPanel.this.results.put(doc.getName() + "###" + s.substring(0, s.length() > 0 ? s.length() - 2 : 0),
+                                        result);
                             }
                         }
                     }

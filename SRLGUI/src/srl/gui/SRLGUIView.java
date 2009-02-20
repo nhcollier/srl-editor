@@ -1109,10 +1109,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         if (name == null) {
             return;
         }
-        if(name.matches(".*[<>:\"/\\\\\\|\\?\\*].*") ||
-                name.matches(".*\\s.*") ||
+        if(name.matches(".*\\W.*") ||
                 name.equals("")) {
-            JOptionPane.showMessageDialog(getFrame(), "Word list name cannot contain whitespace or the following characters: < > : \" \\ | ? *", 
+            JOptionPane.showMessageDialog(getFrame(), "Word list name cannot contain non-word characters. (Not A-Z or _)", 
                     "Invalid word list name", JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -1608,6 +1607,10 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 name = f.getName().substring(0, f.getName().length()-13);
             else
                 name = f.getName();
+            if(name.matches(".*\\W.*") || name.length()==0) {
+                JOptionPane.showMessageDialog(getFrame(), name + " is not a valid name... name must be only word characters", "Cannot add word list set", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
             SrlProject proj = SRLGUIApp.getApplication().proj;
             for(WordListSet wl : proj.wordlists) {
                if(wl.name.equals(name)) {

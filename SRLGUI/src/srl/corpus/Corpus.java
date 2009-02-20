@@ -28,6 +28,22 @@ import mccrae.tools.struct.*;
 /**
  * This class wraps Lucene to provide all the tools useful for
  * access to the corpus.
+ * 
+ * The corpus stores documents in two forms
+ * 1/ Head File
+ * Field "name": The document name as it appears in the document
+ * Field "originalContents": The raw text of the document
+ * Field "sentCount": The number of contexts this document is split into
+ * Field "uid": A unique identifier (a long integer value)
+ * 
+ * 2/ Context File
+ * Field "name": Of the form "name #" where name is the document name and # is the context number
+ * Field "contents": The tokenized contents of the context
+ * Field "taggedContents": The tokenized contents with the tags
+ * Field "extracted": The extracted templates
+ * Field "wordlists": The wordlists containing terms in this context
+ * Field "wordlistsets": The wordlist sets containing terms in this context
+ * Field "uid": A unique identifier (a long integer value)
  * @author John McCrae, National Institute of Informatics
  */
 public class Corpus {
@@ -168,6 +184,9 @@ public class Corpus {
                     taggedSent.append(" ");
                 }
             }
+            
+            addContext(name + " " + i, sent.toString(), tagged ? taggedSent.toString() : null,null);
+            /*
             Document d2 = new Document();
             d2.add(new Field("contents", sent.toString(), Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("name", name + " " + i, Field.Store.YES, Field.Index.TOKENIZED));
@@ -176,14 +195,14 @@ public class Corpus {
             StringBuffer wlNames = new StringBuffer(), wlSetNames = new StringBuffer();
             for(Pair<String,String> wl : wls) {
                 wlNames.append(wl.first + " ");
-                wlSetNames.append(WordListSet.getWordListSetByList(wl.first) + " ");
+                wlSetNames.append(WordListSet.getWordListSetByList(wl.first).name + " ");
             }
             d2.add(new Field("wordlists", wlNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("wordlistsets", wlSetNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
             
             if(tagged)
                 d2.add(new Field("taggedContents", taggedSent.toString(), Field.Store.YES, Field.Index.TOKENIZED));
-            indexWriter.addDocument(d2);
+            indexWriter.addDocument(d2);*/
             i++;
         }
         d.add(new Field("sentCount", i + "", Field.Store.YES, Field.Index.NO));
@@ -192,6 +211,33 @@ public class Corpus {
     private HashSet<String> uids = new HashSet<String>();
     private Random random = new Random();
 
+    /**
+     * Add a single context
+     * @param name The name of the context
+     * @param contents Its contents
+     * @param taggedContents Its tagged contents (or null if not applicable)
+     */
+    protected void addContext(String name, String contents, String taggedContents, String extracted) throws CorruptIndexException, IOException {
+        Document d2 = new Document();
+            d2.add(new Field("contents", contents, Field.Store.YES, Field.Index.TOKENIZED));
+            d2.add(new Field("name", name, Field.Store.YES, Field.Index.TOKENIZED));
+            d2.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
+            Set<Pair<String,String>> wls = wordListForDoc(contents);
+            StringBuffer wlNames = new StringBuffer(), wlSetNames = new StringBuffer();
+            for(Pair<String,String> wl : wls) {
+                wlNames.append(wl.first + " ");
+                wlSetNames.append(WordListSet.getWordListSetByList(wl.first).name + " ");
+            }
+            d2.add(new Field("wordlists", wlNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
+            d2.add(new Field("wordlistsets", wlSetNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
+            
+            if(taggedContents != null)
+                d2.add(new Field("taggedContents", taggedContents, Field.Store.YES, Field.Index.TOKENIZED));
+            if(extracted != null)
+                d2.add(new Field("extracted", extracted, Field.Store.YES, Field.Index.TOKENIZED));
+            indexWriter.addDocument(d2);
+    }
+    
     private static String stripTags(String s) {
         return s.replaceAll("<[^>]*>", "");
     }
@@ -572,6 +618,29 @@ public class Corpus {
         }
 
     }
+    
+    /**
+     * Get a document by its UID
+     * @param uid The unique identifier
+     */
+    protected Document getDocByUID(String uid) throws IOException, CorpusConcurrencyException {
+        if(indexSearcher == null)
+            closeIndex();
+        QueryParser qp = new QueryParser("uid", processor.getAnalyzer());
+        try {
+            Query q = qp.parse(uid);
+            Hits hits = indexSearcher.search(q);
+            if(hits.length() == 0)
+                return null;
+            else if(hits.length() == 1) 
+                return hits.doc(0);
+            else
+                throw new IllegalStateException("UID not unique!");
+        } catch(ParseException x) {
+            x.printStackTrace();
+            return null;
+        }
+    }
 
     /**
      * Gets the original text for a document
@@ -723,6 +792,26 @@ public class Corpus {
         //support.removeDoc(name);
         docNames.remove(name);
         addDoc(name, contents);
+    }
+    
+    /**
+     * Change the content of a single context in the corpus. (Used if wordlist or other things change)
+     * 
+     * @param String uid The uid (a field of the document)
+     */
+    public void updateContext(String uid)  throws IOException, CorpusConcurrencyException {
+        Document old = getDocByUID(uid);
+        if(old == null)
+            return;
+        if(indexWriter == null) {
+            reopenIndex();
+        }
+        indexWriter.deleteDocuments(new Term("uid",uid));
+        addContext(old.getField("name").stringValue(), 
+                old.getField("contents").stringValue(),
+                old.getField("taggedContents") != null ? old.getField("taggedContents").stringValue() : null,
+                old.getField("extracted") != null ? old.getField("extracted").stringValue() : null);
+                
     }
 
     /** Apply the tagging algorithm.
@@ -1052,7 +1141,7 @@ public class Corpus {
                         }
                         List<String> heads = rulePair.second.getHeads(new SrlDocument(d, processor, true));
                         if(!heads.isEmpty())
-                            allMatches.get(name).addAll(heads);
+                            allMatches.get(name).add(Strings.join(";", heads));
                     }
                 });
             }
@@ -1150,26 +1239,30 @@ public class Corpus {
 
     protected void removeWordListElement(String name, String oldVal) {
         try {
-            closeIndex();
+            if(indexSearcher == null)
+                optimizeIndex();
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
             qp.setDefaultOperator(QueryParser.Operator.AND);
             Query q = qp.parse("\"" + oldVal + "\"");
             Hits hits = indexSearcher.search(q);
-            List<Document> newDocs = new LinkedList<Document>();
+            List<String> newDocs = new LinkedList<String>();
             for(int i = 0; i < hits.length(); i++) {
-                Document d = indexSearcher.doc(i);
-                String s = d.getField("wordlists").stringValue();
-                s.replaceAll(name + " ", "");
-                d.removeField("wordlists");
-                d.add(new Field("wordlists", s, Field.Store.YES, Field.Index.TOKENIZED));
-                newDocs.add(d);
+                Document d;
+                try {
+                    d = indexSearcher.doc(i);
+                } catch(IllegalArgumentException x) {
+                    System.err.println("Deleted document ignored");
+                    continue;
+                }
+                if(d.getField("name").stringValue().matches(".* .*"))
+                    continue;
+                newDocs.add(d.getField("uid").stringValue());
             }
              if (indexWriter == null) {
                 reopenIndex();
             }
-            for(Document d : newDocs) {
-                indexWriter.deleteDocuments(new Term("uid", d.getField("uid").stringValue()));
-                indexWriter.addDocument(d);
+            for(String uid : newDocs) {
+                updateContext(uid);
             }
             closeIndex();
         } catch (Exception x) {
@@ -1193,28 +1286,32 @@ public class Corpus {
 
     protected void addWordListElement(String name, String newVal) {
         try {
-            if(indexWriter == null)
-                reopenIndex();
+            if(indexSearcher == null)
+                optimizeIndex();
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
             qp.setDefaultOperator(QueryParser.Operator.AND);
             Query q = qp.parse("\"" + newVal + "\"");
             Hits hits = indexSearcher.search(q);
         
-            List<Document> newDocs = new LinkedList<Document>();
+            String setName = WordListSet.getWordListSetByList(name).name;
+            List<String> newDocs = new LinkedList<String>();
             for(int i = 0; i < hits.length(); i++) {
-                Document d = indexSearcher.doc(i);
-                String s = d.getField("wordlists").stringValue();
-                s = s + name + " ";
-                d.removeField("wordlists");
-                d.add(new Field("wordlists", s, Field.Store.YES, Field.Index.TOKENIZED));
-                newDocs.add(d);
+                Document d;
+                try {
+                    d = indexSearcher.doc(i);
+                } catch(IllegalArgumentException x) {
+                    System.err.println("Deleted document ignored");
+                    continue;
+                }
+                if(d.getField("name").stringValue().matches(".* .*"))
+                    continue;
+                newDocs.add(d.getField("uid").stringValue());
             }
             if (indexWriter == null) {
                 reopenIndex();
             }
-            for(Document d : newDocs) {
-                indexWriter.deleteDocuments(new Term("uid", d.getField("uid").stringValue()));
-                indexWriter.addDocument(d);
+            for(String uid : newDocs) {
+                updateContext(uid);
             }
             closeIndex();
         } catch(Exception x) {
