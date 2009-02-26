@@ -729,6 +729,8 @@ public class Corpus {
      * @return The extracted templates of the document as a sentence-by-sentence list
      */
     public List<String> getDocTemplateExtractions(String name) throws IOException, CorpusConcurrencyException {
+        if(indexSearcher == null)
+            closeIndex();
         QueryParser qp = new QueryParser("name", processor.getAnalyzer());
         Vector<String> rval = new Vector<String>();
         try {
