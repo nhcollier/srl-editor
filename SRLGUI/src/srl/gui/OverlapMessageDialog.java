@@ -9,6 +9,7 @@ package srl.gui;
 import java.util.Collection;
 import javax.swing.DefaultListModel;
 import srl.corpus.Corpus;
+import srl.corpus.CorpusExtractor;
 
 /**
  *
@@ -17,10 +18,10 @@ import srl.corpus.Corpus;
 public class OverlapMessageDialog extends javax.swing.JDialog {
     
     /** Creates new form OverlapMessageDialog */
-    public OverlapMessageDialog(java.awt.Frame parent, boolean modal, Collection<Corpus.Overlap> overlaps) {
+    public OverlapMessageDialog(java.awt.Frame parent, boolean modal, Collection<CorpusExtractor.Overlap> overlaps) {
         super(parent, modal);
         initComponents();
-        for(Corpus.Overlap overlap : overlaps) {
+        for(CorpusExtractor.Overlap overlap : overlaps) {
             ((DefaultListModel)jList1.getModel()).addElement( overlap.r1.value + "[" + overlap.r1.beginRegion + "," + overlap.r1.endRegion + "] as " + overlap.e1.entityType + "=" + overlap.e1.entityValue 
                                 + " and " + overlap.r2.value + "[" + overlap.r2.beginRegion + "," + overlap.r2.endRegion + "] as " + overlap.e2.entityType + "=" + overlap.e2.entityValue);
         }

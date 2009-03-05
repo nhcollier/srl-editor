@@ -53,7 +53,7 @@ public class RuleSet {
      * (this may occur when attempting to load a file of the wrong type)
      */
     public static RuleSet loadFromFile(File patternFile, int ruleType) throws IOException, ParseException {
-        System.out.println("Loading: " + patternFile);
+        //System.out.println("Loading: " + patternFile);
         SrlParser parse = new SrlParser(new FileInputStream(patternFile),"UTF-8");
         RuleSet ps = new RuleSet(ruleType);
         if(ruleType == Rule.ENTITY_RULE)

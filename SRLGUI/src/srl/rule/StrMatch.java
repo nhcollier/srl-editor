@@ -51,9 +51,13 @@ public class StrMatch implements TypeExpr {
             if(set) {
                 matches = new TreeSet<WordListEntry>();
                 WordListSet wls = WordListSet.getWordListSetByName(wordListName);
-                for(Map.Entry<String,ListenableSet<WordListEntry>> entry : wls.wordLists.entrySet()) {
+                if(wls == null) {
+                        throw new IllegalArgumentException("Cannot find word list set %" + wordListName);
+                }
+                for(Map.Entry<String,ListenableSet<WordListEntry>> entry : wls.getWordListSets()) {
                     matches.addAll(WordListSet.getMatchSet(entry.getKey(), token.termText().toLowerCase()));
                 }
+                currentMatch = wls.getEntry(token.termText().toLowerCase());
             } else {
                 matches = new TreeSet<WordListEntry>(WordListSet.getMatchSet(wordListName, token.termText().toLowerCase()));
                 currentMatch = WordListSet.getWordListSetByList(wordListName).getEntry(token.termText().toLowerCase());

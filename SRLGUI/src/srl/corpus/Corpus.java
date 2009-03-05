@@ -52,20 +52,22 @@ public class Corpus {
     IndexSearcher indexSearcher;
     Processor processor;
     HashSet<String> docNames;
-//    CorpusSupport support;
-    public boolean nestingAllowed = true,  overlappingAllowed = true;
     private File indexFile;
     private long lock = 0;
 
     private Corpus() {
     }
-
+    
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
         closeCorpus();
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Primary Corpus actions 
+  
     /**
      * Close the corpus
      * @throws IOException If a disk error occured 
@@ -102,24 +104,30 @@ public class Corpus {
             }
             c.reopenIndex();
         }
-        /*if (newIndex) {
-            c.newSupport();
-        } else {
-            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(indexFile, "support")));
-            try {
-                c.support = (CorpusSupport) ois.readObject();
-            } catch (ClassNotFoundException x) {
-                throw new IOException(x.getMessage());
-            }
-            ois.close();
-        }*/
         return c;
     }
-
-    // Can't instantiate from static context (see above function)
-    /*private void newSupport() {
-        support = new CorpusSupport();
-    }*/
+    
+    private List<String> extractDocNames() throws IOException, IllegalStateException, CorpusConcurrencyException {
+        if (indexSearcher == null) {
+            closeIndex();
+        }
+        List<String> rv = new Vector<String>();
+        for (int i = 0; i < indexSearcher.maxDoc(); i++) {
+            String docName;
+            try {
+                docName = indexSearcher.doc(i).getField("name").stringValue();
+            } catch (IllegalArgumentException x) {
+                System.err.println("WARNING: Access to deleted document");
+                continue;
+            }
+            String uid = indexSearcher.doc(i).getField("uid").stringValue();
+            if (docName.matches("\\w+")) {
+                rv.add(docName);
+                uids.add(uid);
+            }
+        }
+        return rv;
+    }
 
     /**
      * Save the corpus 
@@ -132,139 +140,8 @@ public class Corpus {
         oos.writeObject(support);
         oos.close();*/
     }
-
-    /** Add a new document to corpus
-     * @param name The name of the document
-     * @param contents The text of the new document
-     * @throws IOException The document couldn't be added
-     * @throws IllegalArgumentException If the document name already exits
-     */
-    public void addDoc(String name, String contents) throws IOException, IllegalStateException, IllegalArgumentException {
-        addDoc(name,contents,false);
-    }
     
-    /** Add a new document to corpus
-     * @param name The name of the document
-     * @param contents The text of the new document
-     * @param tagged Treat the document as pre-tagged
-     * @throws IOException The document couldn't be added
-     * @throws IllegalArgumentException If the document name already exits
-     */
-    public void addDoc(String name, String contents, boolean tagged) throws IOException, IllegalStateException, IllegalArgumentException {
-        if (indexWriter == null) {
-            reopenIndex(true);
-        }
-        name = name.toLowerCase();
-        if (docNames.contains(name)) {
-            throw new IllegalArgumentException(name + " already exists in corpus");
-        }
-        Document d = new Document();
-        d.add(new Field("originalContents", tagged ? stripTags(contents) : contents, Field.Store.YES, Field.Index.TOKENIZED));
-        d.add(new Field("name", name, Field.Store.YES, Field.Index.TOKENIZED));
-        d.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
-        //support.addWordListInfo(name, wordListForDoc(contents.toLowerCase()));
-        docNames.add(name);
-        int i = 0;
-        for (Collection<org.apache.lucene.analysis.Token> sentence : processor.getSplitter().split(new SrlDocument(name, contents, processor), name)) {
-            StringBuffer sent = new StringBuffer();
-            StringBuffer taggedSent = new StringBuffer();
-            Iterator<org.apache.lucene.analysis.Token> tkIter = sentence.iterator();
-            while (tkIter.hasNext()) {
-                org.apache.lucene.analysis.Token tk = tkIter.next();
-                sent.append(tk.termText());
-                if(tk instanceof BeginTagToken) {
-                    taggedSent.append(((BeginTagToken)tk).getTag());
-                } else if(tk instanceof EndTagToken) {
-                    taggedSent.append(((EndTagToken)tk).getTag());
-                } else {
-                    taggedSent.append(tk.termText());
-                }
-                if (tkIter.hasNext()) {
-                    sent.append(" ");
-                    taggedSent.append(" ");
-                }
-            }
-            
-            addContext(name + " " + i, sent.toString(), tagged ? taggedSent.toString() : null,null);
-            /*
-            Document d2 = new Document();
-            d2.add(new Field("contents", sent.toString(), Field.Store.YES, Field.Index.TOKENIZED));
-            d2.add(new Field("name", name + " " + i, Field.Store.YES, Field.Index.TOKENIZED));
-            d2.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
-            Set<Pair<String,String>> wls = wordListForDoc(sent.toString());
-            StringBuffer wlNames = new StringBuffer(), wlSetNames = new StringBuffer();
-            for(Pair<String,String> wl : wls) {
-                wlNames.append(wl.first + " ");
-                wlSetNames.append(WordListSet.getWordListSetByList(wl.first).name + " ");
-            }
-            d2.add(new Field("wordlists", wlNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
-            d2.add(new Field("wordlistsets", wlSetNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
-            
-            if(tagged)
-                d2.add(new Field("taggedContents", taggedSent.toString(), Field.Store.YES, Field.Index.TOKENIZED));
-            indexWriter.addDocument(d2);*/
-            i++;
-        }
-        d.add(new Field("sentCount", i + "", Field.Store.YES, Field.Index.NO));
-        indexWriter.addDocument(d);
-    }
-    private HashSet<String> uids = new HashSet<String>();
-    private Random random = new Random();
-
-    /**
-     * Add a single context
-     * @param name The name of the context
-     * @param contents Its contents
-     * @param taggedContents Its tagged contents (or null if not applicable)
-     */
-    protected void addContext(String name, String contents, String taggedContents, String extracted) throws CorruptIndexException, IOException {
-        Document d2 = new Document();
-            d2.add(new Field("contents", contents, Field.Store.YES, Field.Index.TOKENIZED));
-            d2.add(new Field("name", name, Field.Store.YES, Field.Index.TOKENIZED));
-            d2.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
-            Set<Pair<String,String>> wls = wordListForDoc(contents);
-            StringBuffer wlNames = new StringBuffer(), wlSetNames = new StringBuffer();
-            for(Pair<String,String> wl : wls) {
-                wlNames.append(wl.first + " ");
-                wlSetNames.append(WordListSet.getWordListSetByList(wl.first).name + " ");
-            }
-            d2.add(new Field("wordlists", wlNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
-            d2.add(new Field("wordlistsets", wlSetNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
-            
-            if(taggedContents != null)
-                d2.add(new Field("taggedContents", taggedContents, Field.Store.YES, Field.Index.TOKENIZED));
-            if(extracted != null)
-                d2.add(new Field("extracted", extracted, Field.Store.YES, Field.Index.TOKENIZED));
-            indexWriter.addDocument(d2);
-    }
     
-    private static String stripTags(String s) {
-        return s.replaceAll("<[^>]*>", "");
-    }
-    
-    private String generateUID() {
-        String s;
-        do {
-            s = Math.abs(random.nextLong()) + "";
-        } while (uids.contains(s));
-        uids.add(s);
-        return s;
-    }
-
-    protected Set<Pair<String, String>> wordListForDoc(String contents) {
-        Set<Pair<String, String>> rval = new HashSet<Pair<String, String>>();
-        for (String name : WordListSet.getAllWordListNames()) {
-            for (WordListEntry term : WordListSet.getWordList(name)) {
-                if (contents.contains(term.toString())) {
-                    rval.add(new Pair(name, term.toString()));
-                    break;
-                }
-            }
-        }
-        return rval;
-    }
-    Directory dir;
-
     /** Optimize the index. Call this only after significant changes to the corpus. It may take several
      * seconds, but will improve search speed afterwards (YMMV).
      */
@@ -281,6 +158,13 @@ public class Corpus {
         closeIndex(0);
     }
 
+    /** Close the corpus, after which no more documents can be added. Use this method if
+     * you called reopenIndex(true), as then only this method with the correct
+     * lock value can be used to close the corpus.
+     * @param lockID The lockID returned from reopenIndex(true)
+     * @throws java.io.IOException
+     * @throws srl.corpus.CorpusConcurrencyException
+     */
     public void closeIndex(long lockID) throws IOException, CorpusConcurrencyException {
         synchronized (this) {
             if (lock != lockID) {
@@ -301,12 +185,23 @@ public class Corpus {
             indexWriter = null;
         }
     }
+    Directory dir;
 
-    /** Reopen the index to add new documents*/
-    public long reopenIndex() throws IOException {
-        return reopenIndex(false);
+
+    /** Reopen the index to add new documents. This is equivalent ot reopenIndex(false);
+     *
+     */
+    public void reopenIndex() throws IOException {
+        reopenIndex(false);
     }
 
+    /** Reopen the index to add new documents. If you specify the parameter lock
+     * as true the corpus will be opened and cannot be closed without the return
+     * value.
+     * @param lock Whether to lock the corpus 
+     * @return The lock key if lock=true (or zero otherwise)
+     * @throws java.io.IOException
+     */
     public long reopenIndex(boolean lock) throws IOException {
         synchronized (this) {
             if (indexWriter != null) {
@@ -346,252 +241,145 @@ public class Corpus {
         return dir instanceof RAMDirectory;
     }
 
-    private class SrlHitCollector extends HitCollector {
+    
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Document management
 
-        QueryHit qh;
-        StopSignal signal;
-
-        public SrlHitCollector(QueryHit qh, StopSignal signal) {
-            this.qh = qh;
-            this.signal = signal;
-        }
-
-        @Override
-        public void collect(int doc, float arg1) {
-            try {
-                qh.hit(indexSearcher.doc(doc), signal);
-            } catch (CorruptIndexException x) {
-                x.printStackTrace();
-            } catch (IOException x) {
-                x.printStackTrace();
-            }
-        }
-    }
-
-    /** Derive an object from this class to provide a callback on
-     * query success */
-    public interface QueryHit {
-
-        /** The callback function
-         * @param d The document hit
-         * @param signal Allows premature halt of the query. (If you don't
-         * know what this is ignore it, it's really not that important) */
-        public void hit(Document d, StopSignal signal);
-    }
-
-    /**
-     * Query the corpus
-     * @param query The query normally returned from Rule.getQuery()
-     * @param collector Every hit is passed to the hit(Document) method of the collector
-     * @throws java.io.IOException There was an disk error with the corpus
+    /** Add a new document to corpus
+     * @param name The name of the document
+     * @param contents The text of the new document
+     * @throws IOException The document couldn't be added
+     * @throws IllegalArgumentException If the document name already exits
      */
-    public void query(SrlQuery query, QueryHit collector) throws IOException, CorpusConcurrencyException {
-        query(query, collector, null);
+    public void addDoc(String name, String contents) throws IOException, IllegalStateException, IllegalArgumentException {
+        addDoc(name,contents,false);
     }
-
-    /**
-     * Query the corpus
-     * @param query The query normally returned from Rule.getQuery()
-     * @param collector Every hit is passed to the hit(Document) method of the collector
-     * @param signal An optional stop signal to abandon the query
-     * @throws java.io.IOException There was an disk error with the corpus
+    
+    /** Add a new document to corpus
+     * @param name The name of the document
+     * @param contents The text of the new document
+     * @param tagged Treat the document as pre-tagged
+     * @throws IOException The document couldn't be added
+     * @throws IllegalArgumentException If the document name already exits
      */
-    public void query(SrlQuery query, QueryHit collector, StopSignal signal) throws IOException, CorpusConcurrencyException {
-        if (indexSearcher == null) {
-            closeIndex();
+    public void addDoc(String name, String contents, boolean tagged) throws IOException, IllegalStateException, IllegalArgumentException {
+        if (indexWriter == null) {
+            reopenIndex(true);
         }
-        if (query.query.toString().matches("\\s*") &&
-                query.entities.isEmpty() &&
-                query.wordListSets.isEmpty() &&
-                query.wordLists.isEmpty()) {
-            nonLuceneQuery(query, collector, signal);
-            return;
+        name = name.toLowerCase();
+        if (docNames.contains(name)) {
+            throw new IllegalArgumentException(name + " already exists in corpus");
         }
-        try {
-            QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
-            qp.setDefaultOperator(QueryParser.Operator.AND);
-            StringBuffer queryStr = new StringBuffer(cleanQuery(query.query.toString()));
-            queryStr.append(" ");
-            for (Pair<String, String> entity : query.entities) {
-                queryStr.append("taggedContents:\"<" + entity.first + " cl=\\\"" + entity.second +
-                        "\\\">\" ");
-            }
-            for (String wl : query.wordLists) {
-                queryStr.append("wordlists:" + wl + " ");
-            }
-            for(String wls : query.wordListSets) {
-                queryStr.append("wordlistsets:" + wls + " ");
-            }
-            Query q = qp.parse(queryStr.toString());
-            if (q.toString().matches("\\s*")) {
-                nonLuceneQuery(query, collector, signal);
-                return;
-            }
-            indexSearcher.search(q, new SrlHitCollector(collector, signal));
-         } catch (Exception x) {
-            System.err.println(query.query.toString());
-            x.printStackTrace();
-        }
-    }
-
-    private void nonLuceneQuery(SrlQuery query, QueryHit collector, StopSignal signal) throws IOException, CorpusConcurrencyException {
-                // Empty queries match everything (!)
-                System.out.println("Empty Query! This may significantly affect performance");
-                for (int i = 0; i < indexSearcher.maxDoc(); i++) {
-                    if (indexSearcher.doc(i).getField("contents") != null) {
-                        collector.hit(indexSearcher.doc(i), signal);
-                    }
-                    if (signal != null && signal.isStopped()) {
-                        return;
-                    }
+        Document d = new Document();
+        d.add(new Field("originalContents", tagged ? stripTags(contents) : contents, Field.Store.YES, Field.Index.TOKENIZED));
+        d.add(new Field("name", name, Field.Store.YES, Field.Index.TOKENIZED));
+        d.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
+        docNames.add(name);
+        int i = 0;
+        for (Collection<org.apache.lucene.analysis.Token> sentence : processor.getSplitter().split(new SrlDocument(name, contents, processor), name)) {
+            StringBuffer sent = new StringBuffer();
+            StringBuffer taggedSent = new StringBuffer();
+            Iterator<org.apache.lucene.analysis.Token> tkIter = sentence.iterator();
+            while (tkIter.hasNext()) {
+                org.apache.lucene.analysis.Token tk = tkIter.next();
+                sent.append(tk.termText());
+                if(tk instanceof BeginTagToken) {
+                    taggedSent.append(((BeginTagToken)tk).getTag());
+                } else if(tk instanceof EndTagToken) {
+                    taggedSent.append(((EndTagToken)tk).getTag());
+                } else {
+                    taggedSent.append(tk.termText());
                 }
-                return;
+                if (tkIter.hasNext()) {
+                    sent.append(" ");
+                    taggedSent.append(" ");
+                }
+            }
+            
+            addContext(name + " " + i, sent.toString(), tagged ? taggedSent.toString() : sent.toString(),
+                    tagged ? taggedSent.toString() : sent.toString(), null);
+             
+            i++;
+        }
+        d.add(new Field("sentCount", i + "", Field.Store.YES, Field.Index.NO));
+        indexWriter.addDocument(d);
     }
+    private HashSet<String> uids = new HashSet<String>();
+    private Random random = new Random();
 
+    /**
+     * Add a single context
+     * @param name The name of the context
+     * @param contents Its contents
+     * @param taggedContents Its tagged contents (or null if not applicable)
+     */
+    protected void addContext(String name, String contents, String taggedContents, String pretaggedContents, String extracted) throws CorruptIndexException, IOException {
+        Document d2 = new Document();
+            d2.add(new Field("contents", contents.toLowerCase(), Field.Store.YES, Field.Index.TOKENIZED));
+            d2.add(new Field("name", name, Field.Store.YES, Field.Index.TOKENIZED));
+            d2.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
+            Set<Pair<String,String>> wls = wordListForDoc(contents);
+            StringBuffer wlNames = new StringBuffer(), wlSetNames = new StringBuffer();
+            for(Pair<String,String> wl : wls) {
+                wlNames.append(wl.first + " ");
+                wlSetNames.append(WordListSet.getWordListSetByList(wl.first).name + " ");
+            }
+            d2.add(new Field("wordlists", wlNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
+            d2.add(new Field("wordlistsets", wlSetNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
+            
+            if(taggedContents != null)
+                d2.add(new Field("taggedContents", taggedContents, Field.Store.YES, Field.Index.TOKENIZED));
+            if(pretaggedContents != null)
+                d2.add(new Field("pretaggedContents", pretaggedContents, Field.Store.YES, Field.Index.TOKENIZED));
+            if(extracted != null)
+                d2.add(new Field("extracted", extracted, Field.Store.YES, Field.Index.TOKENIZED));
+            indexWriter.addDocument(d2);
+    }
+    
+    private static String stripTags(String s) {
+        return s.replaceAll("<[^>]*>", "");
+    }
+    
+    private String generateUID() {
+        String s;
+        do {
+            s = Math.abs(random.nextLong()) + "";
+        } while (uids.contains(s));
+        uids.add(s);
+        return s;
+    }
+    
+
+
+    private Set<Pair<String, String>> wordListForDoc(String contents) {
+        Set<Pair<String, String>> rval = new HashSet<Pair<String, String>>();
+        for (String name : WordListSet.getAllWordListNames()) {
+            for (WordListEntry term : WordListSet.getWordList(name)) {
+                if (contents.toLowerCase().contains(term.toString())) {
+                    rval.add(new Pair(name, term.toString()));
+                    break;
+                }
+            }
+        }
+        return rval;
+    }
+    
+        /**
+     * Does this corpus contain a particular document
+     * @param docName The document name
+     * @return True if the corpys contains a document by that name
+     */
     public boolean containsDoc(String docName) {
         return docNames.contains(docName);
     }
-
-    /** Query the corpus for a single string
-     */
-    public Hits query(String query) throws IOException, CorpusConcurrencyException {
-        if (query.equals("")) {
-            return null;
-        }
-        if (indexSearcher == null) {
-            closeIndex();
-        }
-        try {
-            QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
-            qp.setDefaultOperator(QueryParser.Operator.AND);
-            Query q = qp.parse(QueryParser.escape(query.toLowerCase()));
-            return indexSearcher.search(q);
-        } catch (Exception x) {
-            x.printStackTrace();
-            return null;
-        }
-    }
-
-    /** Make a literal string not cause problems for the indexer, i.e., Put to lower case and bs all reserved terms */
-    public static String cleanQuery(String s) {
-        s = s.toLowerCase();
-        //s = s.replaceAll("([\\+\\-\\!\\(\\)\\[\\]\\^\\~\\?\\:\\\\\\{\\}\\|\\*]|\\&\\&)", "\\\\$1");
-        s = s.replaceAll("\\\\", "\\\\\\\\");
-        return s;
-    }
-
+    
     /** Get the names of all the documents in the corpus */
     public Set<String> getDocNames() {
         return new TreeSet<String>(docNames);
     }
-
-    /** Get all the context names */
-    public Set<String> getContextNames() throws IOException, CorpusConcurrencyException {
-        if (indexSearcher == null) {
-            closeIndex();
-        }
-        Set<String> rv = new HashSet<String>();
-        for (int i = 0; i < indexSearcher.maxDoc(); i++) {
-            String docName = indexSearcher.doc(i).getField("name").stringValue();
-            String uid = indexSearcher.doc(i).getField("uid").stringValue();
-            rv.add(docName);
-            uids.add(uid);
-        }
-        return rv;
-    }
-
-    /** Get doc names and the corresponding number of contexts */
-    public Map<String, Integer> getDocContextCounts() throws IOException, CorpusConcurrencyException {
-        if (indexSearcher == null) {
-            closeIndex();
-        }
-        Map<String, Integer> rv = new HashMap<String, Integer>();
-        for (int i = 0; i < indexSearcher.maxDoc(); i++) {
-            try {
-                String docName = indexSearcher.doc(i).getField("name").stringValue();
-                String uid = indexSearcher.doc(i).getField("uid").stringValue();
-                if (docName.matches("\\w+ \\w+")) {
-                    String[] ss = docName.split(" ");
-                    if (rv.containsKey(ss[0])) {
-                        rv.put(ss[0], Math.max(rv.get(ss[0]), Integer.parseInt(ss[1])));
-                    } else {
-                        rv.put(ss[0], Integer.parseInt(ss[1]));
-                    }
-                } else {
-                    if (!rv.containsKey(docName)) {
-                        rv.put(docName, 0);
-                    }
-                }
-                uids.add(uid);
-            } catch (IllegalArgumentException x) {
-                System.err.println("WARNING: Access to deleted document");
-                continue;
-            }
-        }
-        return rv;
-    }
-
-    private List<String> extractDocNames() throws IOException, IllegalStateException, CorpusConcurrencyException {
-        if (indexSearcher == null) {
-            closeIndex();
-        }
-        List<String> rv = new Vector<String>();
-        for (int i = 0; i < indexSearcher.maxDoc(); i++) {
-            String docName;
-            try {
-                docName = indexSearcher.doc(i).getField("name").stringValue();
-            } catch (IllegalArgumentException x) {
-                System.err.println("WARNING: Access to deleted document");
-                continue;
-            }
-            String uid = indexSearcher.doc(i).getField("uid").stringValue();
-            if (docName.matches("\\w+")) {
-                rv.add(docName);
-                uids.add(uid);
-            }
-        }
-        return rv;
-    }
-
-    /**
-     * Creates a suitable filter for the query.
-     */
-/*    protected Filter makeFilter(SrlQuery q) throws IOException, IllegalStateException, CorpusConcurrencyException {
-        if (indexSearcher == null) {
-            closeIndex();
-        }
-        HashSet<String> filterDocs = new HashSet<String>();
-        for (String wordList : q.wordLists) {
-            if (support.wordListToDoc.containsKey(wordList)) {
-                filterDocs.addAll(support.wordListToDoc.get(wordList));
-            }
-        }
-        if (filterDocs.isEmpty()) {
-            return null;
-        }
-        BitSet bs = new BitSet(indexSearcher.maxDoc());
-        for (int i = 0; i < indexSearcher.maxDoc(); i++) {
-            if (filterDocs.contains(indexSearcher.doc(i).getField("name").stringValue())) {
-                bs.set(i);
-            }
-        }
-        return new BitSetFilter(bs);
-    }*/
-
-    private class BitSetFilter extends Filter {
-
-        BitSet bs;
-
-        BitSetFilter(BitSet bs) {
-            this.bs = bs;
-        }
-
-        @Override
-        public BitSet bits(IndexReader arg0) throws IOException {
-            return bs;
-        }
-    }
-
+    
+    
     /**
      * Get a particular document
      * @param name Document name
@@ -619,6 +407,7 @@ public class Corpus {
 
     }
     
+    
     /**
      * Get a document by its UID
      * @param uid The unique identifier
@@ -642,7 +431,7 @@ public class Corpus {
         }
     }
 
-    /**
+        /**
      * Gets the original text for a document
      * @param name The document name
      * @return The plain text contents
@@ -652,102 +441,26 @@ public class Corpus {
         return getDoc(name).getField("originalContents").stringValue();
     }
 
-    /**
-     * Get the document sentence by sentence
-     * @param name The document name
-     * @return A list of the sentences
-     * @throws IOException If a disk error occurred
-     */
-    public List<String> getDocSentences(String name) throws IOException, CorpusConcurrencyException {
-        if (indexSearcher == null) {
+    private List<String> getDocFields(String docName, String fieldName) throws IOException, CorpusConcurrencyException {
+           if(indexSearcher == null)
             closeIndex();
-        }
         QueryParser qp = new QueryParser("name", processor.getAnalyzer());
         Vector<String> rval = new Vector<String>();
         try {
-            Query q = qp.parse("\"" + cleanQuery(name) + "\"");
+            Query q = qp.parse("\"" + cleanQuery(docName) + "\"");
             Hits hits = indexSearcher.search(q);
             for (int i = 0; i < hits.length(); i++) {
-                String docName = hits.doc(i).getField("name").stringValue();
-                if (docName.equals(name)) { // Not necessary, but it's nice to set the vector to the correct size
+                String docName2 = hits.doc(i).getField("name").stringValue();
+                if (docName2.equals(docName)) { // Not necessary, but it's nice to set the vector to the correct size
                     rval.setSize(Integer.parseInt(hits.doc(i).getField("sentCount").stringValue()));
                 } else {
-                    Matcher m = Pattern.compile("(.*) (\\d+)").matcher(docName);
-                    if (!m.matches() || !m.group(1).equals(name)) {
-                        continue;
-                    }
-                    rval.set(Integer.parseInt(m.group(2)),
-                            hits.doc(i).getField("contents").stringValue());
-                }
-            }
-        } catch (org.apache.lucene.queryParser.ParseException x) {
-            x.printStackTrace();
-            return null;
-        }
-        return rval;
-    }
-
-    /** Get the tagged contents (as stored) of the document.
-     * @return The tagged contents of the document as a sentence-by-sentence list
-     */
-    public List<String> getDocTaggedContents(String name) throws IOException, CorpusConcurrencyException {
-        if (indexSearcher == null) {
-            closeIndex();
-        }
-        QueryParser qp = new QueryParser("name", processor.getAnalyzer());
-        Vector<String> rval = new Vector<String>();
-        try {
-            Query q = qp.parse("\"" + cleanQuery(name) + "\"");
-            Hits hits = indexSearcher.search(q);
-            for (int i = 0; i < hits.length(); i++) {
-                String docName = hits.doc(i).getField("name").stringValue();
-                if (docName.equals(name)) { // Not necessary, but it's nice to set the vector to the correct size
-                    rval.setSize(Integer.parseInt(hits.doc(i).getField("sentCount").stringValue()));
-                } else {
-                    Matcher m = Pattern.compile(".* (\\d+)").matcher(docName);
+                    Matcher m = Pattern.compile(".* (\\d+)").matcher(docName2);
                     if (!m.matches()) {
-                        throw new RuntimeException("Invalid document name in corpus: " + docName);
+                        throw new RuntimeException("Invalid document name in corpus: " + docName2);
                     }
-                    if (hits.doc(i).getField("taggedContents") != null) {
+                    if (hits.doc(i).getField(fieldName) != null) {
                         rval.set(Integer.parseInt(m.group(1)),
-                                hits.doc(i).getField("taggedContents").stringValue());
-                    } else {
-                        rval.set(Integer.parseInt(m.group(1)),
-                                hits.doc(i).getField("contents").stringValue());
-                    }
-                }
-            }
-        } catch (org.apache.lucene.queryParser.ParseException x) {
-            x.printStackTrace();
-            return null;
-        }
-        return rval;
-    }
-
-    /**
-     * The extracted templates as stored for a document.
-     * @return The extracted templates of the document as a sentence-by-sentence list
-     */
-    public List<String> getDocTemplateExtractions(String name) throws IOException, CorpusConcurrencyException {
-        if(indexSearcher == null)
-            closeIndex();
-        QueryParser qp = new QueryParser("name", processor.getAnalyzer());
-        Vector<String> rval = new Vector<String>();
-        try {
-            Query q = qp.parse("\"" + cleanQuery(name) + "\"");
-            Hits hits = indexSearcher.search(q);
-            for (int i = 0; i < hits.length(); i++) {
-                String docName = hits.doc(i).getField("name").stringValue();
-                if (docName.equals(name)) { // Not necessary, but it's nice to set the vector to the correct size
-                    rval.setSize(Integer.parseInt(hits.doc(i).getField("sentCount").stringValue()));
-                } else {
-                    Matcher m = Pattern.compile(".* (\\d+)").matcher(docName);
-                    if (!m.matches()) {
-                        throw new RuntimeException("Invalid document name in corpus: " + docName);
-                    }
-                    if (hits.doc(i).getField("extracted") != null) {
-                        rval.set(Integer.parseInt(m.group(1)),
-                                hits.doc(i).getField("extracted").stringValue());
+                                hits.doc(i).getField(fieldName).stringValue());
                     } else {
                         rval.set(Integer.parseInt(m.group(1)), "");
                     }
@@ -758,6 +471,31 @@ public class Corpus {
             return null;
         }
         return rval;
+    }
+    
+    /**
+     * Get the document sentence by sentence
+     * @param name The document name
+     * @return A list of the sentences
+     * @throws IOException If a disk error occurred
+     */
+    public List<String> getDocSentences(String name) throws IOException, CorpusConcurrencyException {
+        return getDocFields(name, "contents");
+    }
+
+    /** Get the tagged contents (as stored) of the document.
+     * @return The tagged contents of the document as a sentence-by-sentence list
+     */
+    public List<String> getDocTaggedContents(String name) throws IOException, CorpusConcurrencyException {
+        return getDocFields(name, "taggedContents");
+    }
+
+    /**
+     * The extracted templates as stored for a document.
+     * @return The extracted templates of the document as a sentence-by-sentence list
+     */
+    public List<String> getDocTemplateExtractions(String name) throws IOException, CorpusConcurrencyException {
+        return getDocFields(name, "extracted");
     }
 
     /**
@@ -809,375 +547,202 @@ public class Corpus {
             reopenIndex();
         }
         indexWriter.deleteDocuments(new Term("uid",uid));
-        addContext(old.getField("name").stringValue(), 
+        try {
+            addContext(old.getField("name").stringValue(), 
                 old.getField("contents").stringValue(),
                 old.getField("taggedContents") != null ? old.getField("taggedContents").stringValue() : null,
+                old.getField("pretaggedContents") != null ? old.getField("pretaggedContents").stringValue() : null,
                 old.getField("extracted") != null ? old.getField("extracted").stringValue() : null);
+        } catch(NullPointerException x) {
+            System.err.println(uid);
+            System.err.println(old.getField("name"));
+            x.printStackTrace();
+        }
                 
     }
+    
+    ////////////////////////////////////////////////////////////////////////////
+    // Querying interface
+    
+    private class SrlHitCollector extends HitCollector {
 
-    /** Apply the tagging algorithm.
-     * @param sents The document as a list of sentences
-     * @param ruleSets The rulesets to apply
-     * @param p The linguistic processor
-     * @return The document as a list (tags are added as BeginTagToken and 
-     * EndTagToken objects
-     */
-    public static List<SrlDocument> tagSentences(List<SrlDocument> sents, Collection<RuleSet> ruleSets, Processor p) throws IOException {
-        final Vector<List<HashMap<Entity, SrlMatchRegion>>> allMatches =
-                new Vector<List<HashMap<Entity, SrlMatchRegion>>>(sents.size());
-        for (RuleSet ruleSet : ruleSets) {
-            for (Pair<String, Rule> rulePair : ruleSet.rules) {
-                int i = 0;
-                for (Collection<org.apache.lucene.analysis.Token> sent : sents) {
-                    allMatches.add(new LinkedList<HashMap<Entity, SrlMatchRegion>>());
-                    allMatches.get(i++).addAll(rulePair.second.getMatch((SrlDocument) sent, false));
-                }
+        QueryHit qh;
+        StopSignal signal;
+
+        public SrlHitCollector(QueryHit qh, StopSignal signal) {
+            this.qh = qh;
+            this.signal = signal;
+        }
+
+        @Override
+        public void collect(int doc, float arg1) {
+            try {
+                qh.hit(indexSearcher.doc(doc), signal);
+            } catch (CorruptIndexException x) {
+                x.printStackTrace();
+            } catch (IOException x) {
+                x.printStackTrace();
             }
         }
-        List<SrlDocument> rval = new Vector<SrlDocument>(sents.size());
-        int i = 0;
-        for (List<HashMap<Entity, SrlMatchRegion>> matches : allMatches) {
-            rval.add(new SrlDocument("name", addEntities((SrlDocument) sents.get(i), sortMatches(matches)), p));
-        }
-        return rval;
     }
 
-    /** Used to represent an overlap in tagging */
-    public class Overlap {
+    /** Derive an object from this class to provide a callback on
+     * query success */
+    public interface QueryHit {
 
-        public Entity e1,  e2;
-        public SrlMatchRegion r1,  r2;
-
-        public Overlap(Pair<Entity, SrlMatchRegion> m1, Pair<Entity, SrlMatchRegion> m2) {
-            e1 = m1.first;
-            e2 = m2.first;
-            r1 = m1.second;
-            r2 = m2.second;
-        }
+        /** The callback function
+         * @param d The document hit
+         * @param signal Allows premature halt of the query. (If you don't
+         * know what this is ignore it, it's really not that important) */
+        public void hit(Document d, StopSignal signal);
     }
 
     /**
-     * Tag the corpus
-     * @param overlaps A collection, which this function will add any overlaps it detects to (an overlap is a pair of matches
-     * where both matches hit the same token and both matches have one token not matched by the other e.g., [0,4] &amp; [1,5])
-     * @param ruleSets The set of rules for named entity extraction
+     * Query the corpus. This is the method normally used for query based on a 
+     * SRL rule 
+     * @param query The query normally returned from Rule.getQuery()
+     * @param collector Every hit is passed to the hit(Document) method of the collector
+     * @throws java.io.IOException There was an disk error with the corpus
+     * @see Rule#getCorpusQuery()
      */
-    public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps) throws IOException, CorpusConcurrencyException {
-        tagCorpus(ruleSets, overlaps, null);
+    public void query(SrlQuery query, QueryHit collector) throws IOException, CorpusConcurrencyException {
+        query(query, collector, null);
     }
 
     /**
-     * Tag the corpus
-     * @param overlaps A collection, which this function will add any overlaps it detects to (an overlap is a pair of matches
-     * where both matches hit the same token and both matches have one token not matched by the other e.g., [0,4] &amp; [1,5])
-     * @param ruleSets The set of rules for named entity extraction
-     * @param monitor Monitors the progress surprisingly
+     * Query the corpus. This is the method normally used for query based on a 
+     * SRL rule 
+     * @param query The query normally returned from Rule.getQuery()
+     * @param collector Every hit is passed to the hit(Document) method of the collector
+     * @param signal An optional stop signal to abandon the query
+     * @throws java.io.IOException There was an disk error with the corpus
+     * @see Rule#getCorpusQuery()
      */
-    public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps, ProgressMonitor monitor) throws IOException, CorpusConcurrencyException {
-        if (isIndexOpen()) {
+    public void query(SrlQuery query, QueryHit collector, StopSignal signal) throws IOException, CorpusConcurrencyException {
+        if (indexSearcher == null) {
             closeIndex();
         }
-        final HashMap<String, List<HashMap<Entity, SrlMatchRegion>>> allMatches =
-                new HashMap<String, List<HashMap<Entity, SrlMatchRegion>>>();
-        int i = 0;
-        for (RuleSet ruleSet : ruleSets) {
-            int j = 0;
-            for (final Pair<String, Rule> rulePair : ruleSet.rules) {
-                if (monitor != null) {
-                    monitor.setMessageVal("Matching rule " + rulePair.first);
-                    monitor.setProgressVal((float) (i * ruleSet.rules.size() + j++) / (float) ruleSets.size() / (float) ruleSet.rules.size());
-                }
-                query(rulePair.second.getCorpusQuery(), new QueryHit() {
-
-                    public void hit(Document d, StopSignal signal) {
-                        String name = d.getField("name").stringValue();
-                        if (allMatches.get(name) == null) {
-                            allMatches.put(name, new LinkedList<HashMap<Entity, SrlMatchRegion>>());
-                        }
-                        allMatches.get(name).addAll(rulePair.second.getMatch(new SrlDocument(d, processor, false), false));
-                    }
-                });
-            }
-            i++;
+        if (query.query.toString().matches("\\s*") &&
+                query.entities.isEmpty() &&
+                query.wordListSets.isEmpty() &&
+                query.wordLists.isEmpty()) {
+            nonLuceneQuery(query, collector, signal);
+            return;
         }
-        long lockID = reopenIndex(true);
-        IndexReader reader = null;
         try {
-            reader = IndexReader.open(indexWriter.getDirectory());
-            i = 0;
-            for (Map.Entry<String, List<HashMap<Entity, SrlMatchRegion>>> entry : allMatches.entrySet()) {
-                Vector<Pair<Entity, SrlMatchRegion>> matches = findOverlapsAndKill(entry.getValue(), overlaps);
-                addTagsToDocument(entry.getKey(), matches, reader, monitor);
-                if (monitor != null) {
-                    monitor.setMessageVal("Updating document " + entry.getKey());
-                    monitor.setProgressVal((float) i++ / allMatches.size());
-                }
+            QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
+            qp.setDefaultOperator(QueryParser.Operator.AND);
+            StringBuffer queryStr = new StringBuffer(cleanQuery(query.query.toString()));
+            queryStr.append(" ");
+            for (Pair<String, String> entity : query.entities) {
+                queryStr.append("taggedContents:\"<" + entity.first + " cl=\\\"" + entity.second +
+                        "\\\">\" ");
             }
-        } finally {
-            closeIndex(lockID);
+            for (String wl : query.wordLists) {
+                queryStr.append("wordlists:" + wl + " ");
+            }
+            for(String wls : query.wordListSets) {
+                queryStr.append("wordlistsets:" + wls + " ");
+            }
+            Query q = qp.parse(queryStr.toString());
+            if (q.toString().matches("\\s*")) {
+                nonLuceneQuery(query, collector, signal);
+                return;
+            }
+            indexSearcher.search(q, new SrlHitCollector(collector, signal));
+         } catch (Exception x) {
+            System.err.println(query.query.toString());
+            x.printStackTrace();
         }
-        optimizeIndex();
-        if (reader != null) {
-            reader.close();
+    }
+
+    // If the SRLQuery is null we use this query method
+    private void nonLuceneQuery(SrlQuery query, QueryHit collector, StopSignal signal) throws IOException, CorpusConcurrencyException {
+        // Empty queries match everything (!)
+        System.out.println("Empty Query! This may significantly affect performance");
+        for (int i = 0; i < indexSearcher.maxDoc(); i++) {
+            if (indexSearcher.doc(i).getField("contents") != null) {
+                collector.hit(indexSearcher.doc(i), signal);
+            }
+            if (signal != null && signal.isStopped()) {
+                return;
+            }
         }
-        if (monitor != null) {
-            monitor.setMessageVal("Corpus tagging complete");
-            monitor.setProgressVal(1.0f);
-        }
+        return;
     }
 
     /**
-     * (expert) Add a set of tags from an external source. 
-     * @param docName The document to add the tags to
-     * @param matches The matches (formatted as if it was the result
+     * Query the corpus for a single string of plain text
+     * @param query The string to query
+     * @return The documents this matches
      * @throws java.io.IOException
-     * @throws org.apache.lucene.index.CorruptIndexException
-     */
-    public void addTagsToDocument(String docName, List<Vector<Pair<Entity, SrlMatchRegion>>> matches) throws IOException, CorruptIndexException, CorpusConcurrencyException {
-        reopenIndex();
-        IndexReader reader = IndexReader.open(indexWriter.getDirectory());
-        int i = 0;
-        for (Vector<Pair<Entity, SrlMatchRegion>> match : matches) {
-            addTagsToDocument(docName + " " + i, match, reader, null);
-            i++;
+     * @throws srl.corpus.CorpusConcurrencyException
+    */
+    public Hits query(String query) throws IOException, CorpusConcurrencyException {
+        if (query.equals("")) {
+            return null;
         }
-        closeIndex();
-        reader.close();
+        if (indexSearcher == null) {
+            closeIndex();
+        }
+        try {
+            QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
+            qp.setDefaultOperator(QueryParser.Operator.AND);
+            Query q = qp.parse(QueryParser.escape(query.toLowerCase()));
+            return indexSearcher.search(q);
+        } catch (Exception x) {
+            x.printStackTrace();
+            return null;
+        }
     }
 
-    private void addTagsToDocument(String docName, Vector<Pair<Entity, SrlMatchRegion>> matches, IndexReader reader, ProgressMonitor monitor)
-            throws IOException, CorruptIndexException {
-        String docNameProper = docName.toLowerCase().split(" ")[0];
-        Term t = new Term("name", docNameProper);
-        int docNo = Integer.parseInt(docName.split(" ")[1]);
-        TermDocs td = reader.termDocs(t);
-        Document old;
-        while (true) {
-            if (!td.next()) {
-                throw new RuntimeException("Lost document: " + docName);
-            }
-            old = reader.document(td.doc());
-            String dn = old.getField("name").stringValue();
-            String[] ss = dn.split(" ");
-            if (dn.matches(".* .*") && ss[0].equals(docNameProper) &&
-                    Integer.parseInt(ss[1]) == docNo) {
-                break;
-            }
-        }
-
-        Document newDoc = new Document();
-        newDoc.add(new Field("name", old.getField("name").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
-        newDoc.add(new Field("contents", old.getField("contents").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
-        newDoc.add(new Field("uid", old.getField("uid").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
-        String taggedContents = addEntities(new SrlDocument(old, processor, false), matches);
-        newDoc.add(new Field("taggedContents", taggedContents, Field.Store.YES, Field.Index.TOKENIZED));
-        Term uidT = new Term("uid", old.getField("uid").stringValue());
-        indexWriter.updateDocument(uidT, newDoc);
+    /** Make a literal string not cause problems for the indexer, i.e., Put to lower case and bs all reserved terms */
+    protected static String cleanQuery(String s) {
+        s = s.toLowerCase();
+        s = s.replaceAll("\\\\", "\\\\\\\\");
+        return s;
     }
 
-    private Vector<Pair<Entity, SrlMatchRegion>> findOverlapsAndKill(List<HashMap<Entity, SrlMatchRegion>> allMatches,
-            Collection<Overlap> overlaps) {
-        Vector<Pair<Entity, SrlMatchRegion>> matches = sortMatches(allMatches);
-        ListIterator<Pair<Entity, SrlMatchRegion>> mIter = matches.listIterator(matches.size());
-        LOOP:
-        while (mIter.hasPrevious()) {
-            Pair<Entity, SrlMatchRegion> m1 = mIter.previous();
-            ListIterator<Pair<Entity, SrlMatchRegion>> mIter2 = matches.listIterator();
-            while (mIter2.hasNext()) {
-                Pair<Entity, SrlMatchRegion> m2 = mIter2.next();
-                if (m2.second.beginRegion < m1.second.beginRegion &&
-                        m2.second.endRegion < m1.second.endRegion &&
-                        m2.second.beginRegion < m1.second.endRegion &&
-                        m2.second.endRegion > m1.second.beginRegion) {
-                    mIter2.remove();
-                    mIter = matches.listIterator(matches.size());
-                    if (overlaps != null) {
-                        overlaps.add(new Overlap(m1, m2));
-                    }
-                    continue LOOP;
-                } else if (m2.second.beginRegion == m1.second.beginRegion &&
-                        m1.second.endRegion == m2.second.beginRegion &&
-                        m1.first.entityType.equals(m2.first.entityType) &&
-                        m1.first.entityValue.equals(m2.first.entityValue)) {
-                    mIter2.remove();
-                    mIter = matches.listIterator(matches.size());
-                    continue LOOP;
-                }
-
-            }
-        }
-        return matches;
-    }
-
+    ////////////////////////////////////////////////////////////////////////////
+    // Vigilance! (checking the corpus remains up to date with user changes)
+    
     /** Reinitialize the corpus support. This is actually research for word 
      * list entry matches, sometimes they get out of sync, I don't know why,
      * hopefully they are fixed now and I just forgot to remove this comment.
      * @throws java.io.IOException
+     * @throws CorpusConcurrencyException
      */
-    public void resupport() throws IOException {
-       /* CorpusSupport newSupport = new CorpusSupport();
-        for (String name : WordListSet.getAllWordListNames()) {
-            for (WordListEntry wle : WordListSet.getWordList(name)) {
-                newSupport.addWord(name, wle.toString(), this);
-            }
-        }
-        support = newSupport;*/
+    public void resupport() throws IOException, CorpusConcurrencyException {
         
-    }
-
-    /** Sort a selection of matches in order of appearance */
-    public static Vector<Pair<Entity, SrlMatchRegion>> sortMatches(List<HashMap<Entity, SrlMatchRegion>> matches) {
-        Vector<Pair<Entity, SrlMatchRegion>> rv = new Vector<Pair<Entity, SrlMatchRegion>>(matches.size());
-        for (HashMap<Entity, SrlMatchRegion> match : matches) {
-            for (Map.Entry<Entity, SrlMatchRegion> entry : match.entrySet()) {
-                rv.add(new Pair<Entity, SrlMatchRegion>(entry.getKey(), entry.getValue()));
-            }
-        }
-        Collections.sort(rv, new Comparator() {
-
-            public int compare(Object o1, Object o2) {
-                Pair<Entity, SrlMatchRegion> m1 = (Pair<Entity, SrlMatchRegion>) o1, m2 = (Pair<Entity, SrlMatchRegion>) o2;
-                if (m1.second.endRegion < m2.second.endRegion) {
-                    return -1;
-                } else if (m1.second.endRegion > m2.second.endRegion) {
-                    return 1;
-                } else if (m1.second.beginRegion < m2.second.beginRegion) {
-                    return -1;
-                } else if (m2.second.beginRegion > m2.second.endRegion) {
-                    return 1;
-                } else {
-                    return m1.first.entityType.compareTo(m2.first.entityType);
-                }
-            }
-        });
-        Iterator<Pair<Entity, SrlMatchRegion>> matchIter = rv.iterator();
-        if (!matchIter.hasNext()) {
-            return rv;
-        }
-        Pair<Entity, SrlMatchRegion> last = matchIter.next();
-        while (matchIter.hasNext()) {
-            Pair<Entity, SrlMatchRegion> next = matchIter.next();
-            if (next.first == last.first && next.second.beginRegion == last.second.beginRegion && next.second.endRegion == last.second.endRegion) {
-                matchIter.remove();
-            } else {
-                last = next;
-            }
-        }
-        return rv;
-    }
-
-    /**
-     * Add Named Entity Tags
-     */
-    private static String addEntities(SrlDocument sentence, Vector<Pair<Entity, SrlMatchRegion>> matches) {
-        List<String> tokens = new LinkedList<String>();
-        for (org.apache.lucene.analysis.Token tk : sentence) {
-            if(tk instanceof EndTagToken) {
-                tokens.add(((EndTagToken)tk).getTag());
-            } else if(tk instanceof BeginTagToken) {
-                tokens.add(((BeginTagToken)tk).getTag());
-            } else {    
-                tokens.add(tk.termText());
-            }
-        }
-        List<List<String>> begins = new LinkedList<List<String>>();
-        List<List<String>> ends = new LinkedList<List<String>>();
-        for (int i = 0; i <= tokens.size() + 1; i++) {
-            ends.add(new LinkedList<String>());
-            begins.add(new LinkedList<String>());
-        }
-        ends.add(new LinkedList<String>());
-        for (Pair<Entity, SrlMatchRegion> entry : matches) {
-            begins.get(entry.second.beginRegion).add(0, "<" +
-                    entry.first.entityType + " cl=\"" +
-                    entry.first.entityValue + "\">");
-            try {
-                ends.get(entry.second.endRegion).add("</" +
-                        entry.first.entityType + ">");
-            } catch (IndexOutOfBoundsException x) {
-                System.out.println(sentence.getName());
-                x.printStackTrace();
-            }
-        }
-        int offset = 0;
-        for (int i = 0; i < ends.size(); i++) {
-            for (String s : ends.get(i)) {
-                tokens.add(i + offset++, s);
-            }
-            if (i < begins.size()) {
-                for (String s : begins.get(i)) {
-                    tokens.add(i + offset++, s);
-                }
-            }
-        }
-        return Strings.join(" ", tokens);
-    }
-
-    /** Extract all the templates from this corpus */
-    public void extractTemplates(Collection<RuleSet> ruleSets) throws IOException, CorpusConcurrencyException {
-        extractTemplates(ruleSets, null);
-    }
-
-    /** Extract all the templates from this corpus */
-    public void extractTemplates(Collection<RuleSet> ruleSets, ProgressMonitor monitor) throws IOException, CorpusConcurrencyException {
-        if (isIndexOpen()) {
-            closeIndex();
-        }
-        final HashMap<String, List<String>> allMatches =
-                new HashMap<String, List<String>>();
-        int i = 0;
-        for (RuleSet ruleSet : ruleSets) {
-            int j = 0;
-            for (final Pair<String, Rule> rulePair : ruleSet.rules) {
-                if (monitor != null) {
-                    monitor.setMessageVal("Matching rule " + rulePair.first);
-                    monitor.setProgressVal((float) (i * ruleSet.rules.size() + j) / (float) ruleSets.size() / (float) ruleSet.rules.size());
-                }
-                query(rulePair.second.getCorpusQuery(), new QueryHit() {
-
-                    public void hit(Document d, StopSignal signal) {
-                        String name = d.getField("uid").stringValue();
-                        if (allMatches.get(name) == null) {
-                            allMatches.put(name, new LinkedList<String>());
-                        }
-                        List<String> heads = rulePair.second.getHeads(new SrlDocument(d, processor, true));
-                        if(!heads.isEmpty())
-                            allMatches.get(name).add(Strings.join(";", heads));
-                    }
-                });
-            }
-            i++;
-        }
-        long lockID = reopenIndex(true);
-        IndexReader reader = null;
         try {
-            reader = IndexReader.open(indexWriter.getDirectory());
-            i = 0;
-            for (Map.Entry<String, List<String>> entry : allMatches.entrySet()) {
-
-                TermDocs td = reader.termDocs(new Term("uid", entry.getKey()));
-                if (!td.next()) {
-                    throw new RuntimeException("Lost Document!");
+            if(indexSearcher == null)
+                optimizeIndex();
+           
+        
+            List<String> newDocs = new LinkedList<String>();
+            for(int i = 0; i < indexSearcher.maxDoc(); i++) {
+                Document d;
+                try {
+                    d = indexSearcher.doc(i);
+                } catch(IllegalArgumentException x) {
+                    System.err.println("Deleted document ignored");
+                    continue;
                 }
-                Document d = reader.document(td.doc());
-                if (monitor != null) {
-                    monitor.setMessageVal("Updating document " + d.getField("name").stringValue());
-                    monitor.setProgressVal((float) i++ / allMatches.size());
-                }
-                d.removeFields("extracted");
-                d.add(new Field("extracted", Strings.join("\n", entry.getValue()), Field.Store.YES, Field.Index.NO));
-                indexWriter.updateDocument(new Term("uid", entry.getKey()), d);
+                if(!d.getField("name").stringValue().matches(".* .*"))
+                    continue;
+                newDocs.add(d.getField("uid").stringValue());
             }
-        } finally {
-            reader.close();
-            closeIndex(lockID);
+            if (indexWriter == null) {
+                reopenIndex();
+            }
+            for(String uid : newDocs) {
+                updateContext(uid);
+            }
+            optimizeIndex();
+        } catch(Exception x) {
+            x.printStackTrace();
         }
-        optimizeIndex();
-        if (monitor != null) {
-            monitor.setMessageVal("Template Extraction complete");
-            monitor.setProgressVal(1.0f);
-        }
+        
     }
 
     /** Is the corpus open for indexing */
@@ -1192,7 +757,7 @@ public class Corpus {
 
     /** Add this as a listener to list */
     public void listenToWordListSet(WordListSet list) {
-        list.wordLists.addCollectionChangeListener(new CollectionChangeListener<ListenableSet<WordListEntry>>() {
+        list.addChangeListener(new CollectionChangeListener<ListenableSet<WordListEntry>>() {
 
             public void collectionChanged(CollectionChangeEvent<ListenableSet<WordListEntry>> e) {
 
@@ -1256,7 +821,7 @@ public class Corpus {
                     System.err.println("Deleted document ignored");
                     continue;
                 }
-                if(d.getField("name").stringValue().matches(".* .*"))
+                if(!d.getField("name").stringValue().matches(".* .*"))
                     continue;
                 newDocs.add(d.getField("uid").stringValue());
             }
@@ -1271,20 +836,6 @@ public class Corpus {
             x.printStackTrace();
         }
     }
-
-/*    private class RWT implements Runnable {
-
-        String name, oldVal;
-
-        RWT(String name, String oldVal) {
-            this.name = name;
-            this.oldVal = oldVal;
-        }
-
-        public void run() {
-            support.removeWord(name, oldVal, Corpus.this);
-        }
-    }*/
 
     protected void addWordListElement(String name, String newVal) {
         try {
@@ -1305,7 +856,7 @@ public class Corpus {
                     System.err.println("Deleted document ignored");
                     continue;
                 }
-                if(d.getField("name").stringValue().matches(".* .*"))
+                if(!d.getField("name").stringValue().matches(".* .*"))
                     continue;
                 newDocs.add(d.getField("uid").stringValue());
             }
@@ -1321,138 +872,5 @@ public class Corpus {
         }
     }
 
- /*   private class AWT implements Runnable {
-
-        String name, newVal;
-
-        AWT(String name, String newVal) {
-            this.name = name;
-            this.newVal = newVal;
-        }
-
-        public void run() {
-            support.addWord(name, newVal, Corpus.this);
-        }
-    }*/
-
-    // DELETE BEFORE RELEASE
-    /*
-    public static void main(String[] args) {
-    try {
-    CorpusSupport s = new CorpusSupport();
-    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File("support")));
-    oos.writeObject(s);
-    oos.close();
-    } catch (Exception x) {
-    x.printStackTrace();
-    }
-    }*/
 }
-
-/*
-class CorpusSupport implements Serializable {
-
-//    HashMap<String, Set<String>> wordListToDoc;
-    HashMap<String, Set<Pair<String, String>>> docToWordList;
-
-    public CorpusSupport() {
-        wordListToDoc = new HashMap<String, Set<String>>();
-        docToWordList = new HashMap<String, Set<Pair<String, String>>>();
-    }
-
-    void addWordListInfo(String docName, Set<Pair<String, String>> wordLists) {
-        if (wordLists.isEmpty()) {
-            return;
-        }
-        docToWordList.put(docName, wordLists);
-        for (Pair<String, String> word : wordLists) {
-            if (!wordListToDoc.containsKey(word.first)) {
-                wordListToDoc.put(word.first, new HashSet<String>());
-            }
-            wordListToDoc.get(word.first).add(docName);
-        }
-    }
-
-    void removeDoc(String docName) {
-        Iterator<Map.Entry<String, Set<Pair<String, String>>>> iter = docToWordList.entrySet().iterator();
-        while (iter.hasNext()) {
-            if (iter.next().getKey().matches(docName + " .+")) {
-                iter.remove();
-            }
-        }
-        for (Set<String> docs : wordListToDoc.values()) {
-            Iterator<String> docIter = docs.iterator();
-            while (docIter.hasNext()) {
-                if (docIter.next().matches(docName + " .+")) {
-                    docIter.remove();
-                }
-            }
-        }
-    }
-
-    void removeWordList(String wordListName) {
-        Set<String> removed = wordListToDoc.remove(wordListName);
-        for (String doc : removed) {
-            List<Pair<String, String>> toRemove = new LinkedList<Pair<String, String>>();
-            for (Pair<String, String> wordList : docToWordList.get(doc)) {
-                if (wordList.first.equals(wordListName)) {
-                    toRemove.add(wordList);
-                }
-            }
-            docToWordList.get(doc).removeAll(toRemove);
-        }
-    }
-
-    void removeWord(String wordListName, String word, Corpus c) {
-        for (Set<Pair<String, String>> wordList : docToWordList.values()) {
-            wordList.remove(new Pair<String, String>(wordListName, word));
-        }
-        List<String> toRemove = new LinkedList<String>();
-        if (!wordListToDoc.containsKey(wordListName)) {
-            return;
-        }
-        for (String docName : wordListToDoc.get(wordListName)) {
-            try {
-                if (c.wordListForDoc(c.getDoc(docName).getField("contents").stringValue()).isEmpty()) {
-                    toRemove.add(docName);
-                }
-            } catch (IOException x) {
-                System.err.println("Corpus may not be synced to support");
-                x.printStackTrace();
-            } catch (CorpusConcurrencyException x) {
-                System.err.println("Corpus may not be synced to support");
-                x.printStackTrace();
-            }
-        }
-        wordListToDoc.get(wordListName).removeAll(toRemove);
-    }
-
-    void addWord(String wordListName, String word, Corpus c) {
-        try {
-            Hits hits = c.query(word);
-            if (hits == null) {
-                return;
-            }
-            HashSet<String> docs = new HashSet<String>();
-            for (int i = 0; i < hits.length(); i++) {
-                String docName = hits.doc(i).getField("name").stringValue();
-                if (!docToWordList.containsKey(docName)) {
-                    docToWordList.put(docName, new HashSet<Pair<String, String>>());
-                }
-                docToWordList.get(docName).add(new Pair(wordListName, word));
-                docs.add(docName);
-            }
-            if (!wordListToDoc.containsKey(wordListName)) {
-                wordListToDoc.put(wordListName, new HashSet<String>());
-            }
-            wordListToDoc.get(wordListName).addAll(docs);
-        } catch (IOException x) {
-            System.err.println("Corpus may not be synced to support");
-            x.printStackTrace();
-        } catch (CorpusConcurrencyException x) {
-            System.err.println("Corpus may not be synced to support");
-            x.printStackTrace();
-        }
-    }
-}*/
  

@@ -51,7 +51,7 @@ public class WordListSet {
      * @param processor The linguistic processor used
      */
     public static WordListSet loadFromFile(File file, Processor processor) throws IOException {
-        System.out.println("Loading: " + file);
+        //System.out.println("Loading: " + file);
         String wlName = file.getName();
         if(wlName.matches(".*\\.wordlist\\.srl")) {
             wlName = wlName.substring(0,wlName.length()-13);
@@ -206,7 +206,10 @@ public class WordListSet {
      * as more tokens are read.
      */
     public static SortedSet<WordListEntry> getMatchSet(String name, String token) {
-        SortedSet<WordListEntry> set = ((SortedSet<WordListEntry>)allWordLists.get(name).getSet());
+        ListenableSet<WordListEntry> wles = allWordLists.get(name);
+        if(wles == null)
+            throw new IllegalArgumentException("Cannot find word list @" + name);
+        SortedSet<WordListEntry> set = ((SortedSet<WordListEntry>)wles.getSet());
         WordListSet wl = getWordListSetByList(name);
         LinkedList<String> l1 = new LinkedList<String>();
         LinkedList<String> l2 = new LinkedList<String>();
@@ -235,5 +238,17 @@ public class WordListSet {
      */
     private WordListEntry getEntry(List<String> s) {
         return new WordListEntry(s);
+    }
+    
+    public void addChangeListener(CollectionChangeListener<ListenableSet<WordListEntry>> listener) {
+        wordLists.addCollectionChangeListener(listener);
+    }
+    
+    public Set<String> getWordListNames() {
+        return wordLists.keySet();
+    }
+    
+    public Set<Map.Entry<String, ListenableSet<WordListEntry>>> getWordListSets() {
+        return wordLists.entrySet();
     }
 }

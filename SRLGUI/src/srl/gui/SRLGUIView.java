@@ -34,6 +34,7 @@ import javax.swing.tree.*;
 import mccrae.tools.struct.ListenableSet;
 import srl.corpus.Corpus;
 import srl.corpus.CorpusConcurrencyException;
+import srl.corpus.CorpusExtractor;
 import srl.project.SrlProject;
 import srl.rule.*;
 import srl.wordlist.WordListSet;
@@ -560,6 +561,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                                 SRLGUIApp.getApplication().setModified();
                             } catch (IOException x) {
                                 error(x, "Cannot re-initialize corpus");
+                            } catch(CorpusConcurrencyException x) {
+                                error(x, "Corpus locked");
                             }
                         }
                     });
@@ -1336,8 +1339,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
         public Object doInBackground() throws Exception {
             try {
-                LinkedList<Corpus.Overlap> overlaps = new LinkedList<Corpus.Overlap>();
-                SRLGUIApp.getApplication().proj.corpus.tagCorpus(SRLGUIApp.getApplication().proj.entityRulesets,overlaps, this);
+                CorpusExtractor ce = new CorpusExtractor(SRLGUIApp.getApplication().proj.corpus);
+                LinkedList<CorpusExtractor.Overlap> overlaps = new LinkedList<CorpusExtractor.Overlap>();
+                ce.tagCorpus(SRLGUIApp.getApplication().proj.entityRulesets,overlaps, this);
                 if(overlaps.isEmpty())
                     JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Corpus tagging complete", "Corpus tagger", JOptionPane.INFORMATION_MESSAGE);
                 else {
@@ -1376,7 +1380,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
         public Object doInBackground() throws Exception {
             try {
-                SRLGUIApp.getApplication().proj.corpus.extractTemplates(SRLGUIApp.getApplication().proj.templateRulesets, this);
+                CorpusExtractor ce = new CorpusExtractor(SRLGUIApp.getApplication().proj.corpus);
+                ce.extractTemplates(SRLGUIApp.getApplication().proj.templateRulesets, this);
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Template Extraction Complete", "Template Extraction", JOptionPane.INFORMATION_MESSAGE);
             } catch(IOException x) {
                 x.printStackTrace();

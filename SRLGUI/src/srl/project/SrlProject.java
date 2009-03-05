@@ -153,7 +153,7 @@ public class SrlProject {
      * @param wordList The word list name
      */
     public void openWordList(String wordList) throws IOException {
-        wordlists.add(WordListSet.loadFromFile(new File(new File(path.getPath(), "wordlists"), wordList + ".wordlist.srl"), corpus.getProcessor()));
+        wordlists.add(WordListSet.loadFromFile(new File(new File(path.getPath(), "wordlists"), wordList + ".wordlist.srl"), processor));
         modified = true;
     }
 

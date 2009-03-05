@@ -119,8 +119,8 @@ public class AutoCompleteTextField extends JTextField {
                 }
             });
             for (WordListSet wl : proj.wordlists) {
-                wl.wordLists.addCollectionChangeListener(new WLCCL());
-                for (String s : wl.wordLists.keySet()) {
+                wl.addChangeListener(new WLCCL());
+                for (String s : wl.getWordListNames()) {
                     wordLists.add(s);
                 }
             }
@@ -128,7 +128,7 @@ public class AutoCompleteTextField extends JTextField {
 
                 public void collectionChanged(CollectionChangeEvent<WordListSet> e) {
                     if (e.getNewVal() != null) {
-                        e.getNewVal().wordLists.addCollectionChangeListener(new WLCCL());
+                        e.getNewVal().addChangeListener(new WLCCL());
                     }
                 }
             });

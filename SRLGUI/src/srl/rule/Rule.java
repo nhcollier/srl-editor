@@ -265,7 +265,7 @@ public class Rule implements Expr {
     public List<String> getHeads(SrlDocument sentence) {
         List<String> rv = new LinkedList<String>();
         List<HashMap<Entity, SrlMatchRegion>> ents = getMatch(sentence, false);
-        Vector<Pair<Entity,SrlMatchRegion>> matches = srl.corpus.Corpus.sortMatches(ents);
+        Vector<Pair<Entity,SrlMatchRegion>> matches = srl.corpus.CorpusExtractor.sortMatches(ents);
         for (Pair<Entity,SrlMatchRegion> map : matches) {
             for (Head head : heads) {
                 if(head.var.matches("\".*\"")) {
