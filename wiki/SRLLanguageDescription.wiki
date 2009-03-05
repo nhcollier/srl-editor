@@ -15,11 +15,14 @@ head := <id> “(“ <var> “)”
 body_expression := ( “strmatches” “(“ <wordlist> “)” |
 				 “approx” “(“ <wordlist> “,” <number> “%” “)” |
 				 “ortho” “(“ <literal> “)” |
-				 “regex” “(“ <literal> “)” |
 				 “words” “(“ <number>? “,” <number>? “)” |
 				 <literal> |
+                                 "begins" "(" <literal> ")" |
+                                 "ends" "(" <literal> ")" |
+                                 "contains" "(" <literal> ")" |
+				 “regex” “(“ <literal> “)” |
 				 <entity_expression> )*
-entity_expression := <id> “(“ <id> “,” <var> “)” ( “{“ <body_expression>† “}” )?
+entity_expression := <id> "*"? “(“ <id> “,” <var> “)” ( “{“ <body_expression>† “}” )?
 <id> := A sequence of alphanumeric characters starting with a lowercase letter
 <var> := A sequence of alphanumeric characters starting with an uppercase letter
 <wordlist> := A “@” followed by alphanumeric characters
