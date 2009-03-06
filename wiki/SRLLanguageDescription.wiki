@@ -76,6 +76,7 @@ Ortho classes are the same as Unicode categories
   * Nd: a digit zero through nine in any script except ideographic scripts. 
   * Nl: a number that looks like a letter, such as a Roman numeral. 
   * No: a superscript or subscript digit, or a number that is not a digit 0..9 (excluding numbers from ideographic scripts). 
+  * Np: numbers and or comma and period.
   * P: any kind of punctuation character. 
   * Pd: any kind of hyphen or dash. 
   * Ps: any kind of opening bracket. 
