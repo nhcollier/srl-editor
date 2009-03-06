@@ -188,11 +188,17 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
     @Override
     public String toString() {
         int skip = (ruleType == Rule.ENTITY_RULE ? 0 : 1); 
+        String varForm = var.matches("EXPR.*") ? "" : "," + var;
         if(body.size() == 1 + skip + skip && body.get(skip) instanceof SkipWords && (((SkipWords)body.get(skip)).max == 1 && ruleType == Rule.ENTITY_RULE ||
                 ((SkipWords)body.get(skip)).max == Integer.MAX_VALUE && ruleType == Rule.TEMPLATE_RULE)) {
-            return entityType + "(" + entityValue + "," + var + ")";
+            return entityType + "(" + entityValue + varForm + ")";
+        } else if(body.get(skip) instanceof SkipWords && body.get(body.size() - skip - 1) instanceof SkipWords &&
+                ((SkipWords)body.get(skip)).min == 0 && ((SkipWords)body.get(skip)).max == Integer.MAX_VALUE &&
+                ((SkipWords)body.get(body.size() - skip - 1)).min == 0 && ((SkipWords)body.get(body.size() - skip - 1)).max == Integer.MAX_VALUE) {
+                
+            return entityType + "*(" + entityValue + varForm + ") {" + Strings.join(" ", body.subList(skip+1,body.size()-skip-1)) + "}";
         } else {
-            return entityType + "(" + entityValue + "," + var + ") { " + Strings.join(" ", body.subList(skip, body.size()-skip)) + " }";
+            return entityType + "(" + entityValue + varForm + ") { " + Strings.join(" ", body.subList(skip, body.size()-skip)) + " }";
         }
     }
 

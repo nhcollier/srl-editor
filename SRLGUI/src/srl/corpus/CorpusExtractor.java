@@ -143,8 +143,8 @@ public class CorpusExtractor {
         List<SrlDocument> rval = new Vector<SrlDocument>(sents.size());
         int i = 0;
         for (List<HashMap<Entity, SrlMatchRegion>> matches : allMatches) {
-            // TODO: Work out how to call findOverlapsAndKill
-            rval.add(new SrlDocument("name", addEntities((SrlDocument) sents.get(i++), sortMatches(matches)), p));
+            Vector<Pair<Entity,SrlMatchRegion>> m2 = findOverlapsAndKill(matches,null);
+            rval.add(new SrlDocument("name", addEntities((SrlDocument) sents.get(i++), m2), p));
         }
         return rval;
     }
@@ -162,7 +162,7 @@ public class CorpusExtractor {
                 if (m2.second.beginRegion < m1.second.beginRegion &&
                         m2.second.endRegion < m1.second.endRegion &&
                         m2.second.beginRegion < m1.second.endRegion &&
-                        m2.second.endRegion > m1.second.beginRegion) {
+                        m2.second.endRegion > m1.second.beginRegion) { // Overlap
                     mIter2.remove();
                     mIter = matches.listIterator(matches.size());
                     if (overlaps != null) {
@@ -172,9 +172,18 @@ public class CorpusExtractor {
                 } else if (m2.second.beginRegion == m1.second.beginRegion &&
                         m1.second.endRegion == m2.second.beginRegion &&
                         m1.first.entityType.equals(m2.first.entityType) &&
-                        m1.first.entityValue.equals(m2.first.entityValue)) {
+                        m1.first.entityValue.equals(m2.first.entityValue)) { // ???
                     mIter2.remove();
                     mIter = matches.listIterator(matches.size());
+                    continue LOOP;
+                } else if(m2.second.beginRegion >= m1.second.beginRegion &&
+                        m2.second.endRegion <= m1.second.endRegion &&
+                        m1 != m2) { // Contained
+                    mIter2.remove();
+                    mIter = matches.listIterator(matches.size());
+                    if (overlaps != null) {
+                        overlaps.add(new Overlap(m1, m2));
+                    }
                     continue LOOP;
                 }
 

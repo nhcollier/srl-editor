@@ -40,7 +40,7 @@ public class SRLGUIAboutBox extends javax.swing.JDialog {
         javax.swing.JLabel homepageLabel = new javax.swing.JLabel();
         javax.swing.JLabel appHomepageLabel = new javax.swing.JLabel();
         javax.swing.JLabel appDescLabel = new javax.swing.JLabel();
-        imageLabel = new javax.swing.JLabel();
+        javax.swing.JLabel imageLabel = new javax.swing.JLabel();
         javax.swing.JLabel homepageLabel1 = new javax.swing.JLabel();
         javax.swing.JLabel appHomepageLabel1 = new javax.swing.JLabel();
         javax.swing.JLabel appHomepageLabel2 = new javax.swing.JLabel();
@@ -166,7 +166,6 @@ public class SRLGUIAboutBox extends javax.swing.JDialog {
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
-    private javax.swing.JLabel imageLabel;
     // End of variables declaration//GEN-END:variables
     
 }

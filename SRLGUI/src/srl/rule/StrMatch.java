@@ -102,7 +102,7 @@ public class StrMatch implements TypeExpr {
 
     @Override
     public String toString() {
-        return "strmatches(" + (set ? "%" : "@") + wordListName + ")";
+        return "list(" + (set ? "%" : "@") + wordListName + ")";
     }
 
     public boolean canEnd() {

@@ -14,6 +14,8 @@ import srl.rule.*;
 import mccrae.tools.struct.Pair;
 
 public class SrlParser implements SrlParserConstants {
+    private static int autoVarNum = 0;
+
     private StringBuffer comment = new StringBuffer();
         private String cleanLiteral(String literal) {
             literal = literal.replaceAll("\\\"", "\"");
@@ -212,10 +214,9 @@ boolean cleanHead = false;
 //              strmatch_orth( STRING_LITERAL ) TYPE_EXPR |
 //              words ( NUMBER? , NUMBER? ) TYPE_EXPR |
 //              STRING_LITERAL TYPE_EXPR |
-//              WORD ( WORD , VAR ) ENTITY_BRANCH TYPE_EXPR* 
-// *(unless ENTITY_BRANCH == EOL, parse exception if ENTITY_BRAND == "}")
+//              WORD ( WORD , VAR ) ENTITY_BRANCH 
   final public void typeExpr(Rule rule) throws ParseException {
-    Token s1 = null, s2 = null, s3;
+    Token s1 = null, s2 = null, s3 = null, s4 = null;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case EOL:
       jj_consume_token(EOL);
@@ -320,43 +321,64 @@ boolean cleanHead = false;
       break;
     case WORD:
       s1 = jj_consume_token(WORD);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case STAR:
+        s4 = jj_consume_token(STAR);
+        break;
+      default:
+        jj_la1[10] = jj_gen;
+        ;
+      }
       jj_consume_token(OPEN_PARA);
       s2 = jj_consume_token(WORD);
-      jj_consume_token(COMMA);
-      s3 = jj_consume_token(VAR);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case COMMA:
+        jj_consume_token(COMMA);
+        s3 = jj_consume_token(VAR);
+        break;
+      default:
+        jj_la1[11] = jj_gen;
+        ;
+      }
       jj_consume_token(CLOSE_PARA);
-       Entity e = new Entity(s1.image,s2.image,s3.image,rule.getRuleType());
+       String varName;
+       if(s3 == null) {
+            varName = "EXPR" + autoVarNum++;
+       } else {
+            varName = s3.image;
+       }
+       Entity e = new Entity(s1.image,s2.image,varName,rule.getRuleType());
        rule.addTypeExpr(e);
+       if(s4 != null) {
+            e.addTypeExpr(new SkipWords(0,Integer.MAX_VALUE));
+       }
        int i = entityBranch(rule,e);
        if(i != 0) {
            e.addTypeExpr(new SkipWords(1, (rule.getRuleType() == Rule.TEMPLATE_RULE ?
                                            Integer.MAX_VALUE : 1)));
         }
-        if(i >= 0) {
-            typeExpr(rule);
-        } else if(i == -2) {
-            {if (true) throw new ParseException();}
+        if(s4 != null) {
+            e.addTypeExpr(new SkipWords(0,Integer.MAX_VALUE));
         }
       break;
     default:
-      jj_la1[10] = jj_gen;
+      jj_la1[12] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
   }
 
 // ENTITY_BRANCH -> EOL | COMMENT | EOF |
-//              } | 
-//              strmatch ( WORDLIST ) |
-//              strmatch_approx ( WORDLIST, NUMBER % ) |
-//              strmatch_regex ( STRING_LITERAL ) |
-//              strmatch_orth( STRING_LITERAL ) |
-//              words ( NUMBER? , NUMBER? ) |
-//              STRING_LITERAL |
+//              strmatch ( WORDLIST ) TYPE_EXPR |
+//              strmatch_approx ( WORDLIST, NUMBER % ) TYPE_EXPR |
+//              strmatch_regex ( STRING_LITERAL ) TYPE_EXPR |
+//              strmatch_orth( STRING_LITERAL ) TYPE_EXPR |
+//              words ( NUMBER? , NUMBER? ) TYPE_EXPR |
+//              STRING_LITERAL TYPE_EXPR |
 //              WORD ( WORD , VAR ) ENTITY_BRANCH |
-//              { ENTITY_EXPR
-  final public int entityBranch(Expr rule, Entity e) throws ParseException {
-    Token s1 = null, s2 = null, s3;
+//              { ENTITY_EXPR TYPE_EXPR 
+  final public int entityBranch(Rule rule, Entity e) throws ParseException {
+    Token s1 = null, s2 = null, s3 = null, s4 = null;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case EOL:
       jj_consume_token(EOL);
@@ -373,16 +395,13 @@ boolean cleanHead = false;
        }
        {if (true) return -1;}
       break;
-    case CLOSE_BRACE:
-      jj_consume_token(CLOSE_BRACE);
-       {if (true) return -2;}
-      break;
     case STRMATCH:
       jj_consume_token(STRMATCH);
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(WORDLIST);
       jj_consume_token(CLOSE_PARA);
        rule.addTypeExpr(new StrMatch(s1.image));
+       typeExpr(rule);
       break;
     case STRMATCH_APPROX:
       jj_consume_token(STRMATCH_APPROX);
@@ -394,6 +413,7 @@ boolean cleanHead = false;
       jj_consume_token(CLOSE_PARA);
        rule.addTypeExpr(new StrMatchApprox(s1.image,
            Double.parseDouble(s2.image) / 100));
+       typeExpr(rule);
       break;
     case STRMATCH_REGEX:
       jj_consume_token(STRMATCH_REGEX);
@@ -401,6 +421,7 @@ boolean cleanHead = false;
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
        rule.addTypeExpr(new StrMatchRegex(cleanLiteral(s1.image)));
+       typeExpr(rule);
       break;
     case STRMATCH_ORTH:
       jj_consume_token(STRMATCH_ORTH);
@@ -408,6 +429,7 @@ boolean cleanHead = false;
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
        rule.addTypeExpr(new StrMatchOrtho(cleanLiteral(s1.image)));
+       typeExpr(rule);
       break;
     case WORDS:
       jj_consume_token(WORDS);
@@ -417,7 +439,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[11] = jj_gen;
+        jj_la1[13] = jj_gen;
         ;
       }
       jj_consume_token(COMMA);
@@ -426,17 +448,19 @@ boolean cleanHead = false;
         s2 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[12] = jj_gen;
+        jj_la1[14] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
        int i1 = (s1 == null ? 0 : Integer.parseInt(s1.image));
        int i2 = (s2 == null ? Integer.MAX_VALUE : Integer.parseInt(s2.image));
        rule.addTypeExpr(new SkipWords(i1,i2));
+       typeExpr(rule);
       break;
     case STRING_LITERAL:
       s1 = jj_consume_token(STRING_LITERAL);
        rule.addTypeExpr(new Literal(cleanLiteral(s1.image)));
+       typeExpr(rule);
       break;
     case BEGINS:
       jj_consume_token(BEGINS);
@@ -444,6 +468,7 @@ boolean cleanHead = false;
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
         rule.addTypeExpr(new PartialLiteral(s1.image, 0));
+       typeExpr(rule);
       break;
     case ENDS:
       jj_consume_token(ENDS);
@@ -451,6 +476,7 @@ boolean cleanHead = false;
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
         rule.addTypeExpr(new PartialLiteral(s1.image, 1));
+       typeExpr(rule);
       break;
     case CONTAINS:
       jj_consume_token(CONTAINS);
@@ -458,35 +484,55 @@ boolean cleanHead = false;
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
         rule.addTypeExpr(new PartialLiteral(s1.image, 2));
+       typeExpr(rule);
       break;
     case WORD:
       s1 = jj_consume_token(WORD);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case STAR:
+        s4 = jj_consume_token(STAR);
+        break;
+      default:
+        jj_la1[15] = jj_gen;
+        ;
+      }
       jj_consume_token(OPEN_PARA);
       s2 = jj_consume_token(WORD);
-      jj_consume_token(COMMA);
-      s3 = jj_consume_token(VAR);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case COMMA:
+        jj_consume_token(COMMA);
+        s3 = jj_consume_token(VAR);
+        break;
+      default:
+        jj_la1[16] = jj_gen;
+        ;
+      }
       jj_consume_token(CLOSE_PARA);
-       Entity e2 = new Entity(s1.image,s2.image,s3.image,rule.getRuleType());
+       String varName;
+       if(s3 == null) {
+            varName = "EXPR" + autoVarNum++;
+       } else {
+            varName = s3.image;
+       }
+       Entity e2 = new Entity(s1.image,s2.image,varName,rule.getRuleType());
        rule.addTypeExpr(e2);
+       if(s4 != null) {
+            e.addTypeExpr(new SkipWords(0,Integer.MAX_VALUE));
+       }
        int i = entityBranch(rule,e2);
        if(i != 0) {
             e2.addTypeExpr(new SkipWords(1,(rule.getRuleType() == Rule.TEMPLATE_RULE ?
                                            Integer.MAX_VALUE : 1)));
         }
-        if(i == -1) {
-            {if (true) return -1;}
-        }
-        if(i == -2) {
-            {if (true) throw new ParseException();}
-        }
       break;
     case OPEN_BRACE:
       jj_consume_token(OPEN_BRACE);
        entityExpr(e);
+       typeExpr(rule);
        {if (true) return 0;}
       break;
     default:
-      jj_la1[13] = jj_gen;
+      jj_la1[17] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -501,7 +547,6 @@ boolean cleanHead = false;
 //              strmatch_orth( STRING_LITERAL ) ENTITY_EXPR |
 //              words ( NUMBER? , NUMBER? ) ENTITY_EXPR |
 //              STRING_LITERAL ENTITY_EXPR |
-//              WORD ( WORD , VAR ) ENTITY_BRANCH ENTITY_EXPR* |
 //              }
 // *(unless ENTITY_BRANCH == }, if ENTITY_BRANCH = EOL throw parse exception)
   final public void entityExpr(Entity e) throws ParseException {
@@ -551,7 +596,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[14] = jj_gen;
+        jj_la1[18] = jj_gen;
         ;
       }
       jj_consume_token(COMMA);
@@ -560,7 +605,7 @@ boolean cleanHead = false;
         s2 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[15] = jj_gen;
+        jj_la1[19] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -598,31 +643,11 @@ boolean cleanHead = false;
         e.addTypeExpr(new PartialLiteral(s1.image, 2));
         entityExpr(e);
       break;
-    case WORD:
-      s1 = jj_consume_token(WORD);
-      jj_consume_token(OPEN_PARA);
-      s2 = jj_consume_token(WORD);
-      jj_consume_token(COMMA);
-      s3 = jj_consume_token(VAR);
-      jj_consume_token(CLOSE_PARA);
-       Entity e2 = new Entity(s1.image,s2.image,s3.image,e.getRuleType());
-       e.addTypeExpr(e2);
-       int i = entityBranch(e,e2);
-       if(i != 0) {
-           e2.addTypeExpr(new SkipWords(1,(e.getRuleType() == Rule.TEMPLATE_RULE ?
-                                           Integer.MAX_VALUE : 1)));
-        }
-        if(i >= 0) {
-            entityExpr(e);
-        } else if(i == -1) {
-            {if (true) throw new ParseException();}
-        }
-      break;
     case CLOSE_BRACE:
       jj_consume_token(CLOSE_BRACE);
       break;
     default:
-      jj_la1[16] = jj_gen;
+      jj_la1[20] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -633,13 +658,13 @@ boolean cleanHead = false;
   public Token token, jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[17];
+  final private int[] jj_la1 = new int[21];
   static private int[] jj_la1_0;
   static {
       jj_la1_0();
    }
    private static void jj_la1_0() {
-      jj_la1_0 = new int[] {0x4800008,0xa00000,0x4800008,0xa00000,0x4800008,0x4800008,0xa00000,0x140000,0x1000000,0x1000000,0x6200ff9,0x1000000,0x1000000,0x620cff9,0x1000000,0x1000000,0x2208ff0,};
+      jj_la1_0 = new int[] {0x9000008,0x1400000,0x9000008,0x1400000,0x9000008,0x9000008,0x1400000,0x140000,0x2000000,0x2000000,0x200000,0x10000,0xc400ff9,0x2000000,0x2000000,0x200000,0x10000,0xc404ff9,0x2000000,0x2000000,0x408ff0,};
    }
 
   public SrlParser(java.io.InputStream stream) {
@@ -651,7 +676,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 17; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(java.io.InputStream stream) {
@@ -663,7 +688,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 17; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
   }
 
   public SrlParser(java.io.Reader stream) {
@@ -672,7 +697,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 17; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(java.io.Reader stream) {
@@ -681,7 +706,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 17; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
   }
 
   public SrlParser(SrlParserTokenManager tm) {
@@ -689,7 +714,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 17; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
   }
 
   public void ReInit(SrlParserTokenManager tm) {
@@ -697,7 +722,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 17; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
   }
 
   final private Token jj_consume_token(int kind) throws ParseException {
@@ -744,15 +769,15 @@ boolean cleanHead = false;
 
   public ParseException generateParseException() {
     jj_expentries.removeAllElements();
-    boolean[] la1tokens = new boolean[27];
-    for (int i = 0; i < 27; i++) {
+    boolean[] la1tokens = new boolean[28];
+    for (int i = 0; i < 28; i++) {
       la1tokens[i] = false;
     }
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 17; i++) {
+    for (int i = 0; i < 21; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -761,7 +786,7 @@ boolean cleanHead = false;
         }
       }
     }
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 28; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

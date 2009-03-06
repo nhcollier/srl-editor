@@ -15,6 +15,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.text.*;
 import java.util.*;
+import java.util.List;
 import java.util.regex.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
@@ -23,15 +24,16 @@ import srl.project.SrlProject;
 import srl.wordlist.WordListSet;
 import srl.wordlist.WordListEntry;
 
-public class AutoCompleteTextField extends JTextField {
+public class AutoCompleteTextField extends JTextArea {
 
     TreeSet<String> entitiesKeyWords = new TreeSet<String>();
     HashMap<String, TreeSet<String>> entityValues = new HashMap<String, TreeSet<String>>();
     TreeSet<String> wordLists = new TreeSet<String>();
-    public static final String[] KEY_WORDS = {"strmatches", "words", "approx", "regex", "ortho"};
+    public static final String[] KEY_WORDS = {"list","strmatches", "words", "approx", "regex", "ortho"};
     PopUpWindow popupMenu;
     JWindow theMenu;
     boolean ignoreNextSpace = false;
+    boolean ignoreNextEnter = false;
     boolean showPopupMenu = false;
 
     public AutoCompleteTextField() {
@@ -39,6 +41,8 @@ public class AutoCompleteTextField extends JTextField {
         for (String s : KEY_WORDS) {
             entitiesKeyWords.add(s);
         }
+        setLineWrap(true);
+        setWrapStyleWord(true);
         getCaret().addChangeListener(new ChangeListener() {
 
             AutoCompleteTextField actf = AutoCompleteTextField.this;
@@ -50,7 +54,7 @@ public class AutoCompleteTextField extends JTextField {
                 Point p = getCaret().getMagicCaretPosition();
                 if (popupMenu != null && p != null) {
                     Point p2 = actf.getLocationOnScreen();
-                    popupMenu.setLocation(new Point(p2.x + p.x, p2.y + actf.getHeight()));
+                    popupMenu.setLocation(new Point(p2.x + p.x, p2.y + actf.getRowHeight()));
                     popupMenu.setVisible(true);
                 }
             }
@@ -88,6 +92,16 @@ public class AutoCompleteTextField extends JTextField {
                         if(popupMenu.theList.getSelectedValue()!= null) {
                             complete((String) popupMenu.theList.getSelectedValue());
                             ignoreNextSpace = true;
+                        }
+                    }
+                } else if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    if (popupMenu != null && popupMenu.isVisible()) {
+                        if(getText().matches(".* ")) {
+                            setText(getText().substring(0, getText().length() - 1));
+                        }
+                        if(popupMenu.theList.getSelectedValue()!= null) {
+                            complete((String) popupMenu.theList.getSelectedValue());
+                            ignoreNextEnter = true;
                         }
                     }
                 }
@@ -174,8 +188,8 @@ public class AutoCompleteTextField extends JTextField {
             Matcher m = Pattern.compile(".* ([a-z][A-Za-z0-9]*)").matcher(text);
             m.matches();
             showMatches(entitiesKeyWords.subSet(m.group(1), m.group(1) + "{"));
-        } else if (text.matches(".* (strmatches|approx)?\\s*\\(\\s*@\\w*")) {
-            Matcher m = Pattern.compile(".* (strmatches|approx)?\\s*\\(\\s*@(\\w*)").matcher(text);
+        } else if (text.matches(".* (strmatches|list|approx)?\\s*\\(\\s*@\\w*")) {
+            Matcher m = Pattern.compile(".* (strmatches|list|approx)?\\s*\\(\\s*@(\\w*)").matcher(text);
             m.matches();
             if (m.group(2) != null && m.group(2).length() > 0) {
                 showMatches(wordLists.subSet(m.group(2), m.group(2) + "{"));
@@ -282,6 +296,12 @@ public class AutoCompleteTextField extends JTextField {
         }
     }
 
+    public List<ActionListener> actionListeners = new LinkedList<ActionListener>();
+    
+    public void addActionListener(java.awt.event.ActionListener al) {
+        actionListeners.add(al);
+    }
+    
     private class ACTFListener implements ActionListener {
 
         String s;
@@ -307,6 +327,16 @@ public class AutoCompleteTextField extends JTextField {
                 throws BadLocationException {
             if (ignoreNextSpace && s.matches(" ")) {
                 ignoreNextSpace = false;
+                return;
+            }
+            if (ignoreNextEnter && s.matches("\n")) {
+                ignoreNextEnter = false;
+                return;
+            } 
+            if(s.matches("\n")) {
+                for(ActionListener al : actionListeners) {
+                    al.actionPerformed(new ActionEvent(this, 0, null));
+                }
                 return;
             }
             super.insertString(i, s, attributeSet);

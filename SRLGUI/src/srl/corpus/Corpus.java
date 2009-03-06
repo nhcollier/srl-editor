@@ -816,7 +816,7 @@ public class Corpus {
             for(int i = 0; i < hits.length(); i++) {
                 Document d;
                 try {
-                    d = indexSearcher.doc(i);
+                    d = indexSearcher.doc(hits.id(i));
                 } catch(IllegalArgumentException x) {
                     System.err.println("Deleted document ignored");
                     continue;
@@ -851,7 +851,7 @@ public class Corpus {
             for(int i = 0; i < hits.length(); i++) {
                 Document d;
                 try {
-                    d = indexSearcher.doc(i);
+                    d = indexSearcher.doc(hits.id(i));
                 } catch(IllegalArgumentException x) {
                     System.err.println("Deleted document ignored");
                     continue;

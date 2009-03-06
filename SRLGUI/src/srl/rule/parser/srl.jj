@@ -29,6 +29,8 @@ import srl.rule.*;
 import mccrae.tools.struct.Pair;
 
 public class SrlParser {
+    private static int autoVarNum = 0;
+
     private StringBuffer comment = new StringBuffer();
 	private String cleanLiteral(String literal) {
             literal = literal.replaceAll("\\\"", "\"");
@@ -40,7 +42,7 @@ PARSER_END(SrlParser)
 SKIP : { "\t" | " " }
 TOKEN : { < EOL : "\n" | "\r" | "\n\r" | "\r\n" > }
 // The literal types
-TOKEN : { < STRMATCH : "strmatches" > }
+TOKEN : { < STRMATCH : "strmatches" | "list" > }
 TOKEN : { < STRMATCH_APPROX : "approx" > }
 TOKEN : { < STRMATCH_REGEX : "regex" > }
 TOKEN : { < STRMATCH_ORTH : "ortho" > }
@@ -58,6 +60,7 @@ TOKEN : { < PERCENT : "%" > }
 TOKEN : { < IMPLIES : ":-" > }
 TOKEN : { < COLON : ":" > }
 TOKEN : { < SEMICOLON : ";" > }
+TOKEN : { < STAR : "*" > }
 // A string literal marked with ""
 TOKEN : { < STRING_LITERAL : "\"" ( (~["\""]) | ( "\\" "\"")) * "\"" > }
 // A word list i.e, @wordlist
@@ -211,12 +214,11 @@ boolean cleanHead = false;
 //              strmatch_orth( STRING_LITERAL ) TYPE_EXPR |
 //              words ( NUMBER? , NUMBER? ) TYPE_EXPR |
 //              STRING_LITERAL TYPE_EXPR |
-//              WORD ( WORD , VAR ) ENTITY_BRANCH TYPE_EXPR* 
-// *(unless ENTITY_BRANCH == EOL, parse exception if ENTITY_BRAND == "}")
+//              WORD ( WORD , VAR ) ENTITY_BRANCH 
 
 void typeExpr(Rule rule) :
 {
-    Token s1 = null, s2 = null, s3;
+    Token s1 = null, s2 = null, s3 = null, s4 = null;
 }
 {
      <EOL> | <EOF>
@@ -298,39 +300,47 @@ void typeExpr(Rule rule) :
         typeExpr(rule); }
     |
      s1 = <WORD>
+     (s4 = <STAR>)?
      <OPEN_PARA>
      s2 = <WORD>
-     <COMMA>
-     s3 = <VAR>
+     (<COMMA>
+     s3 = <VAR>)?
      <CLOSE_PARA>
-     { Entity e = new Entity(s1.image,s2.image,s3.image,rule.getRuleType());
+     { 
+       String varName;
+       if(s3 == null) {
+            varName = "EXPR" + autoVarNum++;
+       } else {
+            varName = s3.image;
+       }
+       Entity e = new Entity(s1.image,s2.image,varName,rule.getRuleType());
        rule.addTypeExpr(e);
+       if(s4 != null) {
+            e.addTypeExpr(new SkipWords(0,Integer.MAX_VALUE));
+       }
        int i = entityBranch(rule,e);
        if(i != 0) {
            e.addTypeExpr(new SkipWords(1, (rule.getRuleType() == Rule.TEMPLATE_RULE ? 
 					   Integer.MAX_VALUE : 1)));
         } 
-        if(i >= 0) {
-            typeExpr(rule); 
-        } else if(i == -2) {
-            throw new ParseException();
+        if(s4 != null) {
+            e.addTypeExpr(new SkipWords(0,Integer.MAX_VALUE));
         }
     }
 }
 
 // ENTITY_BRANCH -> EOL | COMMENT | EOF |
-//              } | 
-//              strmatch ( WORDLIST ) |
-//              strmatch_approx ( WORDLIST, NUMBER % ) |
-//              strmatch_regex ( STRING_LITERAL ) |
-//              strmatch_orth( STRING_LITERAL ) |
-//              words ( NUMBER? , NUMBER? ) |
-//              STRING_LITERAL |
+//              strmatch ( WORDLIST ) TYPE_EXPR |
+//              strmatch_approx ( WORDLIST, NUMBER % ) TYPE_EXPR |
+//              strmatch_regex ( STRING_LITERAL ) TYPE_EXPR |
+//              strmatch_orth( STRING_LITERAL ) TYPE_EXPR |
+//              words ( NUMBER? , NUMBER? ) TYPE_EXPR |
+//              STRING_LITERAL TYPE_EXPR |
 //              WORD ( WORD , VAR ) ENTITY_BRANCH |
-//              { ENTITY_EXPR
-int entityBranch(Expr rule, Entity e) :
+//              { ENTITY_EXPR TYPE_EXPR 
+int entityBranch(Rule rule, Entity e) :
 {
-    Token s1 = null, s2 = null, s3;
+    Token s1 = null, s2 = null, s3 = null, s4 = null;
 }
 {
     (
@@ -346,14 +356,13 @@ int entityBranch(Expr rule, Entity e) :
        }
        return -1; }
     |
-     <CLOSE_BRACE>
-     { return -2; }
-    |
      <STRMATCH>
      <OPEN_PARA>
      s1 = <WORDLIST>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatch(s1.image)); }
+     { rule.addTypeExpr(new StrMatch(s1.image)); 
+       typeExpr(rule);
+     }
     |
      <STRMATCH_APPROX>
      <OPEN_PARA>
@@ -363,19 +372,23 @@ int entityBranch(Expr rule, Entity e) :
      <PERCENT>
      <CLOSE_PARA>
      { rule.addTypeExpr(new StrMatchApprox(s1.image, 
-           Double.parseDouble(s2.image) / 100)); }
+           Double.parseDouble(s2.image) / 100)); 
+       typeExpr(rule);
+     }
     |
      <STRMATCH_REGEX>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchRegex(cleanLiteral(s1.image))); }
+     { rule.addTypeExpr(new StrMatchRegex(cleanLiteral(s1.image)));
+       typeExpr(rule); }
     |
      <STRMATCH_ORTH>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchOrtho(cleanLiteral(s1.image))); }
+     { rule.addTypeExpr(new StrMatchOrtho(cleanLiteral(s1.image)));
+       typeExpr(rule); }
     |
      <WORDS>
      <OPEN_PARA>
@@ -385,55 +398,65 @@ int entityBranch(Expr rule, Entity e) :
      <CLOSE_PARA>
      { int i1 = (s1 == null ? 0 : Integer.parseInt(s1.image));
        int i2 = (s2 == null ? Integer.MAX_VALUE : Integer.parseInt(s2.image));
-       rule.addTypeExpr(new SkipWords(i1,i2)); }
+       rule.addTypeExpr(new SkipWords(i1,i2));
+       typeExpr(rule); }
     |
      s1 = <STRING_LITERAL>
-     { rule.addTypeExpr(new Literal(cleanLiteral(s1.image))); }
+     { rule.addTypeExpr(new Literal(cleanLiteral(s1.image)));
+       typeExpr(rule); }
     |
      <BEGINS>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new PartialLiteral(s1.image, 0)); }
+        rule.addTypeExpr(new PartialLiteral(s1.image, 0));
+       typeExpr(rule); }
     |
      <ENDS>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new PartialLiteral(s1.image, 1)); }
+        rule.addTypeExpr(new PartialLiteral(s1.image, 1));
+       typeExpr(rule); }
     |
      <CONTAINS>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new PartialLiteral(s1.image, 2)); }
+        rule.addTypeExpr(new PartialLiteral(s1.image, 2));
+       typeExpr(rule); }
     |
      s1 = <WORD>
+     (s4 = <STAR>)?
      <OPEN_PARA>
      s2 = <WORD>
-     <COMMA>
-     s3 = <VAR>
+     (<COMMA>
+     s3 = <VAR>)?
      <CLOSE_PARA>
-     { Entity e2 = new Entity(s1.image,s2.image,s3.image,rule.getRuleType());
+     { String varName;
+       if(s3 == null) {
+            varName = "EXPR" + autoVarNum++;
+       } else {
+            varName = s3.image;
+       }
+       Entity e2 = new Entity(s1.image,s2.image,varName,rule.getRuleType());
        rule.addTypeExpr(e2);
+       if(s4 != null) {
+            e.addTypeExpr(new SkipWords(0,Integer.MAX_VALUE));
+       }
        int i = entityBranch(rule,e2);
        if(i != 0) {
             e2.addTypeExpr(new SkipWords(1,(rule.getRuleType() == Rule.TEMPLATE_RULE ? 
 					   Integer.MAX_VALUE : 1)));
-        }
-        if(i == -1) {
-            return -1;
-        }
-        if(i == -2) {
-            throw new ParseException();
         } 
      }
     |
      <OPEN_BRACE>
      { entityExpr(e);
+       typeExpr(rule);
        return 0; }
     )
     { return +1; }
@@ -446,7 +469,6 @@ int entityBranch(Expr rule, Entity e) :
 //              strmatch_orth( STRING_LITERAL ) ENTITY_EXPR |
 //              words ( NUMBER? , NUMBER? ) ENTITY_EXPR |
 //              STRING_LITERAL ENTITY_EXPR |
-//              WORD ( WORD , VAR ) ENTITY_BRANCH ENTITY_EXPR* |
 //              }
 // *(unless ENTITY_BRANCH == }, if ENTITY_BRANCH = EOL throw parse exception)
 
@@ -525,26 +547,6 @@ void entityExpr(Entity e) :
      {
         e.addTypeExpr(new PartialLiteral(s1.image, 2));
         entityExpr(e); }
-    |
-     s1 = <WORD>
-     <OPEN_PARA>
-     s2 = <WORD>
-     <COMMA>
-     s3 = <VAR>
-     <CLOSE_PARA>
-     { Entity e2 = new Entity(s1.image,s2.image,s3.image,e.getRuleType());
-       e.addTypeExpr(e2);
-       int i = entityBranch(e,e2);
-       if(i != 0) {
-	   e2.addTypeExpr(new SkipWords(1,(e.getRuleType() == Rule.TEMPLATE_RULE ? 
-					   Integer.MAX_VALUE : 1)));
-        } 
-        if(i >= 0) {
-            entityExpr(e);
-        } else if(i == -1) {
-            throw new ParseException();
-        }
-     }
     |
      <CLOSE_BRACE>
 }

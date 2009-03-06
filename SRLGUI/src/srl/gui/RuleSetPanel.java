@@ -11,6 +11,8 @@
 package srl.gui;
 
 import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import javax.swing.event.DocumentEvent;
@@ -92,6 +94,12 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                     showMatchButton.setEnabled(true);
             }
         });
+        ruleEditor.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                ruleEditorActionPerformed(e);
+            }
+        });
     }
 
     private boolean dontMatch = false;
@@ -118,9 +126,10 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         addButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         ruleIDList = new javax.swing.JList();
-        ruleEditor = new srl.gui.AutoCompleteTextField();
         jButton1 = new javax.swing.JButton();
         showMatchButton = new javax.swing.JButton();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        ruleEditor = new srl.gui.AutoCompleteTextField();
 
         setName("Form"); // NOI18N
 
@@ -242,18 +251,8 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                         .add(removeButton)
                         .add(addButton)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 457, Short.MAX_VALUE))
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 469, Short.MAX_VALUE))
         );
-
-        ruleEditor.setText(resourceMap.getString("ruleEditor.text")); // NOI18N
-        ruleEditor.setToolTipText(resourceMap.getString("ruleEditor.toolTipText")); // NOI18N
-        ruleEditor.setEnabled(false);
-        ruleEditor.setName("ruleEditor"); // NOI18N
-        ruleEditor.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ruleEditorActionPerformed(evt);
-            }
-        });
 
         javax.swing.ActionMap actionMap = org.jdesktop.application.Application.getInstance(srl.gui.SRLGUIApp.class).getContext().getActionMap(RuleSetPanel.class, this);
         jButton1.setAction(actionMap.get("acceptRule")); // NOI18N
@@ -264,6 +263,13 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         showMatchButton.setText(resourceMap.getString("showMatchButton.text")); // NOI18N
         showMatchButton.setName("showMatchButton"); // NOI18N
 
+        jScrollPane4.setName("jScrollPane4"); // NOI18N
+
+        ruleEditor.setColumns(20);
+        ruleEditor.setRows(3);
+        ruleEditor.setName("ruleEditor"); // NOI18N
+        jScrollPane4.setViewportView(ruleEditor);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -273,45 +279,42 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane3)
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 464, Short.MAX_VALUE)
+                    .add(jLabel3)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(matchesLabel)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 510, Short.MAX_VALUE)
+                        .add(showMatchButton))
                     .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(idEditor, 0, 0, Short.MAX_VALUE)
-                            .add(matchesLabel))
+                        .add(idEditor, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 39, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel4)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(showMatchButton)
-                            .add(layout.createSequentialGroup()
-                                .add(ruleEditor, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jButton1))))
-                    .add(jLabel3))
+                        .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jButton1))
+                    .add(jScrollPane3, 0, 0, Short.MAX_VALUE)
+                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 651, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
+                        .addContainerGap()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(idEditor, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel4))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(matchesLabel)
-                                    .add(showMatchButton)))
                             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                .add(jButton1)
-                                .add(ruleEditor, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                                .add(idEditor, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(jLabel4))
+                            .add(jButton1)
+                            .add(jScrollPane4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 58, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 320, Short.MAX_VALUE)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(showMatchButton)
+                            .add(matchesLabel))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 285, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel3)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -493,7 +496,7 @@ public void showMatch() {
 private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_matchesTableMouseClicked
     if(evt.getClickCount() == 2 &&
             evt.getButton() == MouseEvent.BUTTON1) {
-        
+        showMatch();
     }
            
 }//GEN-LAST:event_matchesTableMouseClicked
@@ -697,6 +700,7 @@ private Thread matcherThread;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JLabel matchesLabel;
     private javax.swing.JTable matchesTable;
     private javax.swing.JButton removeButton;

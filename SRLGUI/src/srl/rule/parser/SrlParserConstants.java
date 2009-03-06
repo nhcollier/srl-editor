@@ -32,12 +32,13 @@ public interface SrlParserConstants {
   int IMPLIES = 18;
   int COLON = 19;
   int SEMICOLON = 20;
-  int STRING_LITERAL = 21;
-  int WORDLIST = 22;
-  int VAR = 23;
-  int NUMBER = 24;
-  int WORD = 25;
-  int COMMENT = 26;
+  int STAR = 21;
+  int STRING_LITERAL = 22;
+  int WORDLIST = 23;
+  int VAR = 24;
+  int NUMBER = 25;
+  int WORD = 26;
+  int COMMENT = 27;
 
   int DEFAULT = 0;
 
@@ -46,7 +47,7 @@ public interface SrlParserConstants {
     "\"\\t\"",
     "\" \"",
     "<EOL>",
-    "\"strmatches\"",
+    "<STRMATCH>",
     "\"approx\"",
     "\"regex\"",
     "\"ortho\"",
@@ -63,6 +64,7 @@ public interface SrlParserConstants {
     "\":-\"",
     "\":\"",
     "\";\"",
+    "\"*\"",
     "<STRING_LITERAL>",
     "<WORDLIST>",
     "<VAR>",
