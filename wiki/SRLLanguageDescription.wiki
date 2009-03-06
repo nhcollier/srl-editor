@@ -8,21 +8,21 @@ It is important to note that the text is first tokenized into words and that mos
 
 ===Rule language:===
 {{{
-entity_rule := “:-” <body_expression>
-template_rule := <head_expression> “:-” <body_expression>
-head_expression := <head> ( “;” <head> )*
-head := <id> “(“ <var> “)”
-body_expression := ( “strmatches” “(“ <wordlist> “)” |
-				 “approx” “(“ <wordlist> “,” <number> “%” “)” |
-				 “ortho” “(“ <literal> “)” |
-				 “words” “(“ <number>? “,” <number>? “)” |
-				 <literal> |
-                                 "begins" "(" <literal> ")" |
-                                 "ends" "(" <literal> ")" |
-                                 "contains" "(" <literal> ")" |
-				 “regex” “(“ <literal> “)” |
-				 <entity_expression> )*
-entity_expression := <id> "*"? “(“ <id> “,” <var> “)” ( “{“ <body_expression>† “}” )?
+entity_rule := ":-" <body_expression>
+template_rule := <head_expression> ":-" <body_expression>
+head_expression := <head> ( ";" <head> )*
+head := <id> "(" <var> ")"
+body_expression := ( "list" "(" <wordlist> ")" |
+		     "approx" "(" <wordlist> "," <number> "%" ")" |
+		     "ortho" "(" <literal> ")" |
+		     "words" "(" <number>? "," <number>? ")" |
+		     <literal> |
+                     "begins" "(" <literal> ")" |
+                     "ends" "(" <literal> ")" |
+                     "contains" "(" <literal> ")" |
+		     "regex" "(" <literal> ")" |
+	             <entity_expression> )*
+entity_expression := <id> "*"? "(" <id> ( "," <var> )? ")" ( "{" <body_expression>† "}" )?
 <id> := A sequence of alphanumeric characters starting with a lowercase letter
 <var> := A sequence of alphanumeric characters starting with an uppercase letter
 <wordlist> := A “@” followed by alphanumeric characters
@@ -36,16 +36,24 @@ _† An entity expression's body is not allowed to contain another entity expres
 This is a template rule matching any sequence starting with “tested positive for” and then a named entity from the list of diseases {{{@disease}}}, outputting the matching result as filling the slot `disease(...)`. The entity rule to find an entity from the same pattern would look like
 
 {{{ :- "tested" "positive" "for" name(disease,D) { strmatches(@disease) } }}}
-==strmatches:==
+==list:==
 Matches a sequence of words from a word list.
 
-E.g., {{{strmatches(@wordlist)}}} where {{{@wordlist=(“cat”,”dog”,”fire breathing dragon”)}}} matches all three either “cat”, “dog” or “fire” “breathing” “dragon” (3 tokens).
+E.g., {{{list(@wordlist)}}} where {{{@wordlist=(“cat”,”dog”,”fire breathing dragon”)}}} matches all three either “cat”, “dog” or “fire” “breathing” “dragon” (3 tokens).
+
 ==approx:==
-Similar to {{{strmatches}}} but applies approximate matching, the second parameter designates how fuzzy to be. This will match if the difference (defined as 1 minus Levenshtein distance over the length of the longest string) between the text and a word occurring in its list is no more the second parameter. (Hence 0% will match any string)
+Similar to {{{list}}} but applies approximate matching, the second parameter designates how fuzzy to be. This will match if the difference (defined as 1 minus Levenshtein distance over the length of the longest string) between the text and a word occurring in its list is no more the second parameter. (Hence 0% will match any string)
 
 E.g. {{{approx(@wordlist,90%)}}} matches “fire” “breathing” “dragons” (95% match)
 
 _Approx currently does not support multi-token entries in wordlists_
+
+==begins,ends,contains:==
+{{{begins}}},{{{ends}}},{{{contains}}} match to a single word which begin, end or
+contain respectively the chosen literal
+
+E.g. {{{begins("work")}}} matches "work", "works, "worked" and "working"
+
 ==ortho:==
 Ortho provides simple orthographic forms 
 {{{
@@ -117,6 +125,11 @@ Entities are defined as {{{entityType(entityVal,var) { body } }}}. An entity mat
 
 e.g., {{{ name(disease,D) }}} matches “{{{<name cl=”disease”>dengue fever</name>}}}” in a template rule, variable D is then bound to “dengue fever” for outputting in the head.
 
-{{{ time(date,D) { strmatches(@month) ortho(“2Nd”) ortho(“4Nd”) } }}} matches “April 17 1984” and tags it as “{{{<time cl=”date”>April 17 1984</name>}}}”
+{{{ time(date,D) { strmatches(@month) ortho(“2N”) ortho(“4N”) } }}} matches “April 17 1984” and tags it as “{{{<time cl=”date”>April 17 1984</name>}}}”
+
+If the variable is not needed (i.e., the entity does not match to any heads), it may be omitted (the system will replace it with an automatic variable of the form {{{EXPR##}}}). 
+
+The special form {{{entityType*(entityVal,var) { body } }}} is equivalent to the form
+{{{entityType(entityVal,var) { words(,) body words(,) } }}}. This means the entity contains the given body but is not limited. This feature can make template rules more concise.
 ==Other notes==
 Please avoid rules do not have literals, {{{ strmatches }}} or entities (only for template rules). These can be significantly slower to search as matching sentences/documents can not be found quickly by the search algorithm. Searching speed can be vastly improved by including more literals. Entities are only indexed for template rules, so including entities does not improve the performance of entity rules. 
