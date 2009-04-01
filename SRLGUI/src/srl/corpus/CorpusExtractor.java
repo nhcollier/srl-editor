@@ -109,6 +109,8 @@ public class CorpusExtractor {
             corpus.closeIndex(lockID);
         }
         corpus.optimizeIndex();
+        
+        
         if (reader != null) {
             reader.close();
         }
@@ -289,7 +291,14 @@ public class CorpusExtractor {
                 break;
             }
         }
-
+        String taggedContents = addEntities(new SrlDocument(old, corpus.processor, false), matches);
+        try {
+            corpus.updateContext(old, old.getField("contents").stringValue(),
+                taggedContents);
+        } catch(Exception x) {
+            x.printStackTrace();
+        }
+/*
         Document newDoc = new Document();
         newDoc.add(new Field("name", old.getField("name").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
         newDoc.add(new Field("contents", old.getField("contents").stringValue(), Field.Store.YES, Field.Index.TOKENIZED));
@@ -297,7 +306,7 @@ public class CorpusExtractor {
         String taggedContents = addEntities(new SrlDocument(old, corpus.processor, false), matches);
         newDoc.add(new Field("taggedContents", taggedContents, Field.Store.YES, Field.Index.TOKENIZED));
         Term uidT = new Term("uid", old.getField("uid").stringValue());
-        corpus.indexWriter.updateDocument(uidT, newDoc);
+        corpus.indexWriter.updateDocument(uidT, newDoc);*/
     }
 
         /**

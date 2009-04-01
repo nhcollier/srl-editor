@@ -543,6 +543,39 @@ public class Corpus {
         addDoc(name, contents);
     }
     
+    
+    /**
+     * Change the contents of document in the corpus. If the document already exists
+     * 
+     * @param name The name of the document
+     * @param contents The new contents
+     * @throws java.io.IOException
+     */
+    public void updateContext(Document old, String contents, String taggedContents) throws IOException, CorpusConcurrencyException {
+        String name = old.getField("name").stringValue();
+        if (old != null) {
+            if (!old.getField("name").stringValue().matches(".* .*") && 
+                    contents.equals(old.getField("originalContents").stringValue())) {
+                return;
+            }
+        }
+        if (indexWriter == null) {
+            reopenIndex();
+        }
+        indexWriter.deleteDocuments(new Term("uid", old.getField("uid").stringValue()));
+        //support.removeDoc(name);
+        try {
+            addContext(name,
+                    contents,
+                taggedContents,
+                old.getField("pretaggedContents") != null ? old.getField("pretaggedContents").stringValue() : null,
+                old.getField("extracted") != null ? old.getField("extracted").stringValue() : null);
+        } catch(NullPointerException x) {
+            System.err.println(old.getField("name"));
+            x.printStackTrace();
+        }
+    }
+    
     /**
      * Change the content of a single context in the corpus. (Used if wordlist or other things change)
      * 
