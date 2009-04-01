@@ -323,7 +323,12 @@ public class Corpus {
             StringBuffer wlNames = new StringBuffer(), wlSetNames = new StringBuffer();
             for(Pair<String,String> wl : wls) {
                 wlNames.append(wl.first + " ");
-                wlSetNames.append(WordListSet.getWordListSetByList(wl.first).name + " ");
+                WordListSet wls2 =WordListSet.getWordListSetByList(wl.first);
+                if(wls2 == null) {
+                    System.err.println("Could not locate " + wl.first);
+                    continue;
+                }
+                wlSetNames.append(wls2.name + " ");
             }
             d2.add(new Field("wordlists", wlNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("wordlistsets", wlSetNames.toString(), Field.Store.YES, Field.Index.TOKENIZED));
@@ -355,6 +360,10 @@ public class Corpus {
     private Set<Pair<String, String>> wordListForDoc(String contents) {
         Set<Pair<String, String>> rval = new HashSet<Pair<String, String>>();
         for (String name : WordListSet.getAllWordListNames()) {
+            if(WordListSet.getWordList(name) == null) {
+                System.err.println("Could not find " + name);
+                continue;
+            }
             for (WordListEntry term : WordListSet.getWordList(name)) {
                 if (contents.toLowerCase().contains(term.toString())) {
                     rval.add(new Pair(name, term.toString()));

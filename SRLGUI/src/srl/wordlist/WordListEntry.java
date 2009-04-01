@@ -13,7 +13,7 @@ package srl.wordlist;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
+import mccrae.tools.strings.Strings;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
 import srl.corpus.Processor;
@@ -24,11 +24,11 @@ import srl.corpus.Processor;
 public class WordListEntry implements Comparable<WordListEntry> {
 
     private List<String> words;
-    private String originalVal;
+    //private String originalVal;
 
     WordListEntry(String val, Processor processor) {
         words = new LinkedList<String>();
-        originalVal = val;
+      //  originalVal = val;
         TokenStream ts = processor.getTokenStream(val.toLowerCase());
         try {
             for (Token s = ts.next(); s != null; s = ts.next()) {
@@ -42,7 +42,7 @@ public class WordListEntry implements Comparable<WordListEntry> {
 
     WordListEntry(List<String> words) {
         this.words = words;
-        this.originalVal = "";
+        //this.originalVal = "";
     }
 
     /** (expert) This function is used for constructing an Entry step by step
@@ -92,9 +92,9 @@ public class WordListEntry implements Comparable<WordListEntry> {
             return 0;
         }
     }
-
+    
     @Override
     public String toString() {
-        return originalVal;
+        return Strings.join(" ", words);
     }
 }
