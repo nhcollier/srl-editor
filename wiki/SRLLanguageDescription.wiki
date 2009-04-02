@@ -54,6 +54,11 @@ contain respectively the chosen literal
 
 E.g. {{{begins("work")}}} matches "work", "works, "worked" and "working"
 
+==optional:==
+{{{optional}}} matches a single literal, or skips the match if the literal is not there
+
+E.g. {{{optional("tabby") "cat"}}} matches both "tabby cat" and "cat"
+
 ==ortho:==
 Ortho provides simple orthographic forms 
 {{{
