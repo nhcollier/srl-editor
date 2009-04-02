@@ -29,7 +29,7 @@ public class AutoCompleteTextField extends JTextArea {
     TreeSet<String> entitiesKeyWords = new TreeSet<String>();
     HashMap<String, TreeSet<String>> entityValues = new HashMap<String, TreeSet<String>>();
     TreeSet<String> wordLists = new TreeSet<String>();
-    public static final String[] KEY_WORDS = {"list","strmatches", "words", "approx", "regex", "ortho"};
+    public static final String[] KEY_WORDS = {"list","strmatches", "words", "approx", "regex", "ortho","begins","ends","contains","optional"};
     PopUpWindow popupMenu;
     JWindow theMenu;
     boolean ignoreNextSpace = false;

@@ -50,6 +50,7 @@ TOKEN : { < BEGINS : "begins" > }
 TOKEN : { < ENDS : "ends" > }
 TOKEN : { < CONTAINS : "contains" > }
 TOKEN : { < WORDS : "words" > }
+TOKEN : { < OPTIONAL : "optional" > }
 // Some of useful token types
 TOKEN : { < OPEN_PARA : "(" > }
 TOKEN : { < CLOSE_PARA : ")" > }
@@ -299,6 +300,14 @@ void typeExpr(Rule rule) :
         rule.addTypeExpr(new PartialLiteral(s1.image, 2));
         typeExpr(rule); }
     |
+     <OPTIONAL>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new OptionalLiteral(s1.image));
+        typeExpr(rule); }
+    |
      s1 = <WORD>
      (s4 = <STAR>)?
      <OPEN_PARA>
@@ -429,6 +438,14 @@ int entityBranch(Rule rule, Entity e) :
         rule.addTypeExpr(new PartialLiteral(s1.image, 2));
        typeExpr(rule); }
     |
+     <OPTIONAL>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new OptionalLiteral(s1.image));
+        typeExpr(rule); }
+    |
      s1 = <WORD>
      (s4 = <STAR>)?
      <OPEN_PARA>
@@ -546,6 +563,14 @@ void entityExpr(Entity e) :
      <CLOSE_PARA>
      {
         e.addTypeExpr(new PartialLiteral(s1.image, 2));
+        entityExpr(e); }
+    |
+     <OPTIONAL>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL>
+     <CLOSE_PARA>
+     {
+        e.addTypeExpr(new OptionalLiteral(s1.image));
         entityExpr(e); }
     |
      <CLOSE_BRACE>

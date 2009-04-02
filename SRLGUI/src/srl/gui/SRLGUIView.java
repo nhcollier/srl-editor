@@ -1647,6 +1647,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             // JOptionPane.showMessageDialog(getFrame(), "This needs fixing... please email jmccrae@nii.ac.jp if this has somehow made it to a release version");
             if (jfc == null) {
                jfc = new JFileChooser();
+            } else {
+                jfc = new JFileChooser(jfc.getSelectedFile());
             }
             jfc.setMultiSelectionEnabled(true);
             jfc.addChoosableFileFilter(new CustomEncodingFilter());

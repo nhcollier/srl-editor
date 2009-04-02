@@ -26,14 +26,17 @@ public class PartialLiteral implements TypeExpr {
     public static final int CONTAINS = 2;
 
     public PartialLiteral(String partLiteral, int part) {
-        this.partLiteral = partLiteral;
+        this.partLiteral = partLiteral.substring(1, partLiteral.length()-1);
         this.part = part;
     }
 
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
-        if(part == BEGIN && token.termText().substring(0, partLiteral.length()).equals(partLiteral) ||
-                part == END && token.termText().substring(token.termText().length()-partLiteral.length()-1).equals(partLiteral) ||
-                part == CONTAINS && token.termText().contains(partLiteral))
+        if(token.termLength() < partLiteral.length()) {
+            return null;
+        }
+        if(part == BEGIN && token.termText().toLowerCase().substring(0, partLiteral.length()).equals(partLiteral) ||
+                part == END && token.termText().toLowerCase().substring(token.termText().length()-partLiteral.length()-1).equals(partLiteral) ||
+                part == CONTAINS && token.termText().toLowerCase().contains(partLiteral))
             return next;
         else
             return null;
@@ -58,5 +61,17 @@ public class PartialLiteral implements TypeExpr {
     }
 
     public void skip(Token token) {
+    }
+    
+    public String toString() {
+        if(part == BEGIN) {
+            return "begins(\"" + partLiteral + "\")";
+        } else if(part == END) {
+            return "ends(\"" + partLiteral + "\")";
+        } else if(part == CONTAINS) {
+            return "contains(\"" + partLiteral + "\")";
+        } else {
+            return "<<ERROR>>";
+        }
     }
 }

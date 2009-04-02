@@ -26,8 +26,8 @@
                   <Component id="jToolBar1" min="-2" pref="25" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="1" attributes="0">
-                      <Component id="rightPane" alignment="0" pref="405" max="32767" attributes="0"/>
-                      <Component id="jScrollPane1" alignment="0" pref="405" max="32767" attributes="0"/>
+                      <Component id="rightPane" alignment="0" pref="403" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" alignment="0" pref="403" max="32767" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -116,7 +116,6 @@
                   <action class="srl.gui.SRLGUIView" id="saveProject" methodName="saveProject"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="jButton3.text"/>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="focusable" type="boolean" value="false"/>
                 <Property name="horizontalTextPosition" type="int" value="0"/>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
@@ -140,7 +139,6 @@
                   <action class="srl.gui.SRLGUIView" id="addRuleSet" methodName="addRuleSet"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="jButton4.text"/>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="focusable" type="boolean" value="false"/>
                 <Property name="horizontalTextPosition" type="int" value="0"/>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
@@ -159,7 +157,6 @@
                   <action class="srl.gui.SRLGUIView" id="addWordList" methodName="addWordList"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="jButton5.text"/>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="focusable" type="boolean" value="false"/>
                 <Property name="horizontalTextPosition" type="int" value="0"/>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
@@ -177,7 +174,6 @@
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
                   <action class="srl.gui.SRLGUIView" id="addCorpusDoc" methodName="addCorpusDoc"/>
                 </Property>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="focusable" type="boolean" value="false"/>
                 <Property name="horizontalTextPosition" type="int" value="0"/>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
@@ -201,7 +197,6 @@
                   <action class="srl.gui.SRLGUIView" id="tagCorpus" methodName="tagCorpus"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="jButton7.text"/>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="focusable" type="boolean" value="false"/>
                 <Property name="horizontalTextPosition" type="int" value="0"/>
                 <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
@@ -217,7 +212,6 @@
                   <action class="srl.gui.SRLGUIView" id="extractTemplates" methodName="extractTemplates"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="jButton8.text"/>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="focusable" type="boolean" value="false"/>
                 <Property name="horizontalTextPosition" type="int" value="0"/>
                 <Property name="name" type="java.lang.String" value="jButton8" noResource="true"/>
@@ -235,7 +229,6 @@
                   <action class="srl.gui.SRLGUIView" id="searchCorpus" methodName="searchCorpus"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="jButton9.text"/>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="focusable" type="boolean" value="false"/>
                 <Property name="horizontalTextPosition" type="int" value="0"/>
                 <Property name="name" type="java.lang.String" value="jButton9" noResource="true"/>
@@ -289,7 +282,6 @@
                   <action class="srl.gui.SRLGUIView" id="saveProject" methodName="saveProject"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="jMenuItem1.text"/>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="name" type="java.lang.String" value="jMenuItem1" noResource="true"/>
               </Properties>
             </MenuItem>
@@ -481,7 +473,7 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="statusMessageLabel" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="556" max="32767" attributes="0"/>
+                  <EmptySpace pref="554" max="32767" attributes="0"/>
                   <Component id="progressBar" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="statusAnimationLabel" min="-2" max="-2" attributes="0"/>

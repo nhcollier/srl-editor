@@ -23,22 +23,23 @@ public interface SrlParserConstants {
   int ENDS = 9;
   int CONTAINS = 10;
   int WORDS = 11;
-  int OPEN_PARA = 12;
-  int CLOSE_PARA = 13;
-  int OPEN_BRACE = 14;
-  int CLOSE_BRACE = 15;
-  int COMMA = 16;
-  int PERCENT = 17;
-  int IMPLIES = 18;
-  int COLON = 19;
-  int SEMICOLON = 20;
-  int STAR = 21;
-  int STRING_LITERAL = 22;
-  int WORDLIST = 23;
-  int VAR = 24;
-  int NUMBER = 25;
-  int WORD = 26;
-  int COMMENT = 27;
+  int OPTIONAL = 12;
+  int OPEN_PARA = 13;
+  int CLOSE_PARA = 14;
+  int OPEN_BRACE = 15;
+  int CLOSE_BRACE = 16;
+  int COMMA = 17;
+  int PERCENT = 18;
+  int IMPLIES = 19;
+  int COLON = 20;
+  int SEMICOLON = 21;
+  int STAR = 22;
+  int STRING_LITERAL = 23;
+  int WORDLIST = 24;
+  int VAR = 25;
+  int NUMBER = 26;
+  int WORD = 27;
+  int COMMENT = 28;
 
   int DEFAULT = 0;
 
@@ -55,6 +56,7 @@ public interface SrlParserConstants {
     "\"ends\"",
     "\"contains\"",
     "\"words\"",
+    "\"optional\"",
     "\"(\"",
     "\")\"",
     "\"{\"",

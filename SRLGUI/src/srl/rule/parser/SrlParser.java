@@ -319,6 +319,14 @@ boolean cleanHead = false;
         rule.addTypeExpr(new PartialLiteral(s1.image, 2));
         typeExpr(rule);
       break;
+    case OPTIONAL:
+      jj_consume_token(OPTIONAL);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new OptionalLiteral(s1.image));
+        typeExpr(rule);
+      break;
     case WORD:
       s1 = jj_consume_token(WORD);
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -486,6 +494,14 @@ boolean cleanHead = false;
         rule.addTypeExpr(new PartialLiteral(s1.image, 2));
        typeExpr(rule);
       break;
+    case OPTIONAL:
+      jj_consume_token(OPTIONAL);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new OptionalLiteral(s1.image));
+        typeExpr(rule);
+      break;
     case WORD:
       s1 = jj_consume_token(WORD);
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -643,6 +659,14 @@ boolean cleanHead = false;
         e.addTypeExpr(new PartialLiteral(s1.image, 2));
         entityExpr(e);
       break;
+    case OPTIONAL:
+      jj_consume_token(OPTIONAL);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        e.addTypeExpr(new OptionalLiteral(s1.image));
+        entityExpr(e);
+      break;
     case CLOSE_BRACE:
       jj_consume_token(CLOSE_BRACE);
       break;
@@ -664,7 +688,7 @@ boolean cleanHead = false;
       jj_la1_0();
    }
    private static void jj_la1_0() {
-      jj_la1_0 = new int[] {0x9000008,0x1400000,0x9000008,0x1400000,0x9000008,0x9000008,0x1400000,0x140000,0x2000000,0x2000000,0x200000,0x10000,0xc400ff9,0x2000000,0x2000000,0x200000,0x10000,0xc404ff9,0x2000000,0x2000000,0x408ff0,};
+      jj_la1_0 = new int[] {0x12000008,0x2800000,0x12000008,0x2800000,0x12000008,0x12000008,0x2800000,0x280000,0x4000000,0x4000000,0x400000,0x20000,0x18801ff9,0x4000000,0x4000000,0x400000,0x20000,0x18809ff9,0x4000000,0x4000000,0x811ff0,};
    }
 
   public SrlParser(java.io.InputStream stream) {
@@ -769,8 +793,8 @@ boolean cleanHead = false;
 
   public ParseException generateParseException() {
     jj_expentries.removeAllElements();
-    boolean[] la1tokens = new boolean[28];
-    for (int i = 0; i < 28; i++) {
+    boolean[] la1tokens = new boolean[29];
+    for (int i = 0; i < 29; i++) {
       la1tokens[i] = false;
     }
     if (jj_kind >= 0) {
@@ -786,7 +810,7 @@ boolean cleanHead = false;
         }
       }
     }
-    for (int i = 0; i < 28; i++) {
+    for (int i = 0; i < 29; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;
