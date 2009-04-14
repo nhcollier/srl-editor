@@ -17,21 +17,20 @@ import srl.corpus.SrlQuery;
 /**
  * @author John McCrae, National Institute of Informatics
  */
-public class OptionalLiteral implements TypeExpr {
+public class NegativeLiteral implements TypeExpr {
     public final String literal;
     public final StrMatch listMatcher;
     private TypeExpr next;
     private DummyNode dummy;
-    private boolean first = true;
 
-    public OptionalLiteral(String literal) {
+    public NegativeLiteral(String literal) {
         if(literal.charAt(0) == '\"') {
             this.literal = literal.toLowerCase().substring(1,literal.length()-1);
             listMatcher = null;
         } else {
             this.literal = null;
             listMatcher = new StrMatch(literal);
-            dummy = new DummyNode("optional "+literal);
+            dummy = new DummyNode("negative "+literal);
             listMatcher.setNext(dummy);
         }
     }
@@ -39,21 +38,17 @@ public class OptionalLiteral implements TypeExpr {
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
         if(literal != null) {
             if(token.termText().toLowerCase().equals(literal)) {
-                return next;
+                return null;
             } else 
                 return next.matches(token, tokenNo, stack);
         } else {
             TypeExpr te = listMatcher.matches(token,tokenNo,stack);
-            if(te == null && first)
-                return next.matches(token, tokenNo, stack);
             if(te == null)
-                return null;
-            if(te == dummy)
                 return next;
-            if(te == listMatcher) {
-                first = false;
+            if(te == dummy)
+                return null;
+            if(te == listMatcher)
                 return this;
-            }
             else
                 throw new IllegalStateException();
         }
@@ -65,9 +60,9 @@ public class OptionalLiteral implements TypeExpr {
 
     public TypeExpr copy() {
         if(literal != null)
-            return new OptionalLiteral(literal);
+            return new NegativeLiteral(literal);
         else
-            return new OptionalLiteral(listMatcher.wordListName);
+            return new NegativeLiteral(listMatcher.wordListName);
     }
 
     public void getQuery(SrlQuery query) {
@@ -76,7 +71,6 @@ public class OptionalLiteral implements TypeExpr {
     public void reset() {
         if(listMatcher != null)
             listMatcher.reset();
-        first = true;
     }
 
     public void setNext(TypeExpr te) {
@@ -88,9 +82,9 @@ public class OptionalLiteral implements TypeExpr {
     
     public String toString() {
         if(literal != null)
-            return "optional(\"" + literal + "\")";
+            return "not(\"" + literal + "\")";
         else
-            return "optional(@" + listMatcher.wordListName + ")";
+            return "not(@" + listMatcher.wordListName + ")";
     }
     
 }

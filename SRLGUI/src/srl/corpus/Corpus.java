@@ -265,7 +265,7 @@ public class Corpus {
      */
     public void addDoc(String name, String contents, boolean tagged) throws IOException, IllegalStateException, IllegalArgumentException {
         if (indexWriter == null) {
-            reopenIndex(true);
+            reopenIndex();
         }
         name = name.toLowerCase();
         if (docNames.contains(name)) {
@@ -316,7 +316,7 @@ public class Corpus {
      */
     protected void addContext(String name, String contents, String taggedContents, String pretaggedContents, String extracted) throws CorruptIndexException, IOException {
         Document d2 = new Document();
-            d2.add(new Field("contents", contents.toLowerCase(), Field.Store.YES, Field.Index.TOKENIZED));
+            d2.add(new Field("contents", contents/*.toLowerCase()*/, Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("name", name, Field.Store.YES, Field.Index.TOKENIZED));
             d2.add(new Field("uid", generateUID(), Field.Store.YES, Field.Index.TOKENIZED));
             Set<Pair<String,String>> wls = wordListForDoc(contents);
@@ -703,6 +703,12 @@ public class Corpus {
         // Empty queries match everything (!)
         System.out.println("Empty Query! This may significantly affect performance");
         for (int i = 0; i < indexSearcher.maxDoc(); i++) {
+            try {
+                indexSearcher.doc(i);
+            } catch(IllegalArgumentException x) {
+                System.err.println("Deleted document ignored");
+                continue;
+            }
             if (indexSearcher.doc(i).getField("contents") != null) {
                 collector.hit(indexSearcher.doc(i), signal);
             }

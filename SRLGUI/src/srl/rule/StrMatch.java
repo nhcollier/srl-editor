@@ -63,7 +63,7 @@ public class StrMatch implements TypeExpr {
                 currentMatch = WordListSet.getWordListSetByList(wordListName).getEntry(token.termText().toLowerCase());
             }
         } else {
-            currentMatch.addWord(token.termText());
+            currentMatch.addWord(token.termText().toLowerCase());
         }
         MatchFork mf = MatchFork.find(stack, no, this);
         if(mf != null && (mf.used == true || stack.peek() == mf)) {

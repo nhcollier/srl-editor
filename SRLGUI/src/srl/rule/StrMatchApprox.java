@@ -56,7 +56,7 @@ public class StrMatchApprox implements TypeExpr {
         }
         for(WordListEntry wle : list) {
             String s = wle.toString();
-            if(1.0 - (double)levenshteinDistance(token.termText().toCharArray(),s.toCharArray()) / 
+            if(1.0 - (double)levenshteinDistance(token.termText().toLowerCase().toCharArray(),s.toCharArray()) / 
 	       (double)Math.max(s.length(), token.termText().length())
 	       <= matchAmount) {
                 return next;

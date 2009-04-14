@@ -51,6 +51,8 @@ TOKEN : { < ENDS : "ends" > }
 TOKEN : { < CONTAINS : "contains" > }
 TOKEN : { < WORDS : "words" > }
 TOKEN : { < OPTIONAL : "optional" > }
+TOKEN : { < NOT : "not" > }
+TOKEN : { < CASE : "case" > }
 // Some of useful token types
 TOKEN : { < OPEN_PARA : "(" > }
 TOKEN : { < CLOSE_PARA : ")" > }
@@ -302,10 +304,28 @@ void typeExpr(Rule rule) :
     |
      <OPTIONAL>
      <OPEN_PARA>
-     s1 = <STRING_LITERAL>
+     ( s1 = <STRING_LITERAL> |
+       s1 = <WORDLIST> )
      <CLOSE_PARA>
      {
         rule.addTypeExpr(new OptionalLiteral(s1.image));
+        typeExpr(rule); }
+    |
+     <NOT>
+     <OPEN_PARA>
+     ( s1 = <STRING_LITERAL> |
+       s1 = <WORDLIST> )
+     <CLOSE_PARA>
+     {
+         rule.addTypeExpr(new NegativeLiteral(s1.image));
+         typeExpr(rule); }
+    |
+     <CASE>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL> 
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new CaseSensitiveLiteral(s1.image));
         typeExpr(rule); }
     |
      s1 = <WORD>
@@ -440,10 +460,28 @@ int entityBranch(Rule rule, Entity e) :
     |
      <OPTIONAL>
      <OPEN_PARA>
-     s1 = <STRING_LITERAL>
+     ( s1 = <STRING_LITERAL> |
+       s1 = <WORDLIST> )
      <CLOSE_PARA>
      {
         rule.addTypeExpr(new OptionalLiteral(s1.image));
+        typeExpr(rule); }
+    |
+     <NOT>
+     <OPEN_PARA>
+     ( s1 = <STRING_LITERAL> |
+       s1 = <WORDLIST> )
+     <CLOSE_PARA>
+     {
+         rule.addTypeExpr(new NegativeLiteral(s1.image));
+         typeExpr(rule); }
+    |
+     <CASE>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL> 
+     <CLOSE_PARA>
+     {
+        rule.addTypeExpr(new CaseSensitiveLiteral(s1.image));
         typeExpr(rule); }
     |
      s1 = <WORD>
@@ -567,10 +605,28 @@ void entityExpr(Entity e) :
     |
      <OPTIONAL>
      <OPEN_PARA>
-     s1 = <STRING_LITERAL>
+     ( s1 = <STRING_LITERAL> |
+       s1 = <WORDLIST> )
      <CLOSE_PARA>
      {
         e.addTypeExpr(new OptionalLiteral(s1.image));
+        entityExpr(e); }
+    |
+     <NOT>
+     <OPEN_PARA>
+     ( s1 = <STRING_LITERAL> |
+       s1 = <WORDLIST> )
+     <CLOSE_PARA>
+     {
+         e.addTypeExpr(new NegativeLiteral(s1.image));
+        entityExpr(e); }
+    |
+     <CASE>
+     <OPEN_PARA>
+     s1 = <STRING_LITERAL> 
+     <CLOSE_PARA>
+     {
+        e.addTypeExpr(new CaseSensitiveLiteral(s1.image));
         entityExpr(e); }
     |
      <CLOSE_BRACE>

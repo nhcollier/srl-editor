@@ -322,9 +322,47 @@ boolean cleanHead = false;
     case OPTIONAL:
       jj_consume_token(OPTIONAL);
       jj_consume_token(OPEN_PARA);
-      s1 = jj_consume_token(STRING_LITERAL);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case STRING_LITERAL:
+        s1 = jj_consume_token(STRING_LITERAL);
+        break;
+      case WORDLIST:
+        s1 = jj_consume_token(WORDLIST);
+        break;
+      default:
+        jj_la1[10] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
       jj_consume_token(CLOSE_PARA);
         rule.addTypeExpr(new OptionalLiteral(s1.image));
+        typeExpr(rule);
+      break;
+    case NOT:
+      jj_consume_token(NOT);
+      jj_consume_token(OPEN_PARA);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case STRING_LITERAL:
+        s1 = jj_consume_token(STRING_LITERAL);
+        break;
+      case WORDLIST:
+        s1 = jj_consume_token(WORDLIST);
+        break;
+      default:
+        jj_la1[11] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
+      jj_consume_token(CLOSE_PARA);
+         rule.addTypeExpr(new NegativeLiteral(s1.image));
+         typeExpr(rule);
+      break;
+    case CASE:
+      jj_consume_token(CASE);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new CaseSensitiveLiteral(s1.image));
         typeExpr(rule);
       break;
     case WORD:
@@ -334,7 +372,7 @@ boolean cleanHead = false;
         s4 = jj_consume_token(STAR);
         break;
       default:
-        jj_la1[10] = jj_gen;
+        jj_la1[12] = jj_gen;
         ;
       }
       jj_consume_token(OPEN_PARA);
@@ -345,7 +383,7 @@ boolean cleanHead = false;
         s3 = jj_consume_token(VAR);
         break;
       default:
-        jj_la1[11] = jj_gen;
+        jj_la1[13] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -370,7 +408,7 @@ boolean cleanHead = false;
         }
       break;
     default:
-      jj_la1[12] = jj_gen;
+      jj_la1[14] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -447,7 +485,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[13] = jj_gen;
+        jj_la1[15] = jj_gen;
         ;
       }
       jj_consume_token(COMMA);
@@ -456,7 +494,7 @@ boolean cleanHead = false;
         s2 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[14] = jj_gen;
+        jj_la1[16] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -497,9 +535,47 @@ boolean cleanHead = false;
     case OPTIONAL:
       jj_consume_token(OPTIONAL);
       jj_consume_token(OPEN_PARA);
-      s1 = jj_consume_token(STRING_LITERAL);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case STRING_LITERAL:
+        s1 = jj_consume_token(STRING_LITERAL);
+        break;
+      case WORDLIST:
+        s1 = jj_consume_token(WORDLIST);
+        break;
+      default:
+        jj_la1[17] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
       jj_consume_token(CLOSE_PARA);
         rule.addTypeExpr(new OptionalLiteral(s1.image));
+        typeExpr(rule);
+      break;
+    case NOT:
+      jj_consume_token(NOT);
+      jj_consume_token(OPEN_PARA);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case STRING_LITERAL:
+        s1 = jj_consume_token(STRING_LITERAL);
+        break;
+      case WORDLIST:
+        s1 = jj_consume_token(WORDLIST);
+        break;
+      default:
+        jj_la1[18] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
+      jj_consume_token(CLOSE_PARA);
+         rule.addTypeExpr(new NegativeLiteral(s1.image));
+         typeExpr(rule);
+      break;
+    case CASE:
+      jj_consume_token(CASE);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        rule.addTypeExpr(new CaseSensitiveLiteral(s1.image));
         typeExpr(rule);
       break;
     case WORD:
@@ -509,7 +585,7 @@ boolean cleanHead = false;
         s4 = jj_consume_token(STAR);
         break;
       default:
-        jj_la1[15] = jj_gen;
+        jj_la1[19] = jj_gen;
         ;
       }
       jj_consume_token(OPEN_PARA);
@@ -520,7 +596,7 @@ boolean cleanHead = false;
         s3 = jj_consume_token(VAR);
         break;
       default:
-        jj_la1[16] = jj_gen;
+        jj_la1[20] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -548,7 +624,7 @@ boolean cleanHead = false;
        {if (true) return 0;}
       break;
     default:
-      jj_la1[17] = jj_gen;
+      jj_la1[21] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -612,7 +688,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[18] = jj_gen;
+        jj_la1[22] = jj_gen;
         ;
       }
       jj_consume_token(COMMA);
@@ -621,7 +697,7 @@ boolean cleanHead = false;
         s2 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[19] = jj_gen;
+        jj_la1[23] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -662,94 +738,144 @@ boolean cleanHead = false;
     case OPTIONAL:
       jj_consume_token(OPTIONAL);
       jj_consume_token(OPEN_PARA);
-      s1 = jj_consume_token(STRING_LITERAL);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case STRING_LITERAL:
+        s1 = jj_consume_token(STRING_LITERAL);
+        break;
+      case WORDLIST:
+        s1 = jj_consume_token(WORDLIST);
+        break;
+      default:
+        jj_la1[24] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
       jj_consume_token(CLOSE_PARA);
         e.addTypeExpr(new OptionalLiteral(s1.image));
+        entityExpr(e);
+      break;
+    case NOT:
+      jj_consume_token(NOT);
+      jj_consume_token(OPEN_PARA);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case STRING_LITERAL:
+        s1 = jj_consume_token(STRING_LITERAL);
+        break;
+      case WORDLIST:
+        s1 = jj_consume_token(WORDLIST);
+        break;
+      default:
+        jj_la1[25] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
+      jj_consume_token(CLOSE_PARA);
+         e.addTypeExpr(new NegativeLiteral(s1.image));
+        entityExpr(e);
+      break;
+    case CASE:
+      jj_consume_token(CASE);
+      jj_consume_token(OPEN_PARA);
+      s1 = jj_consume_token(STRING_LITERAL);
+      jj_consume_token(CLOSE_PARA);
+        e.addTypeExpr(new CaseSensitiveLiteral(s1.image));
         entityExpr(e);
       break;
     case CLOSE_BRACE:
       jj_consume_token(CLOSE_BRACE);
       break;
     default:
-      jj_la1[20] = jj_gen;
+      jj_la1[26] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
   }
 
+  /** Generated Token Manager. */
   public SrlParserTokenManager token_source;
   SimpleCharStream jj_input_stream;
-  public Token token, jj_nt;
+  /** Current token. */
+  public Token token;
+  /** Next token. */
+  public Token jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[21];
+  final private int[] jj_la1 = new int[27];
   static private int[] jj_la1_0;
   static {
-      jj_la1_0();
+      jj_la1_init_0();
    }
-   private static void jj_la1_0() {
-      jj_la1_0 = new int[] {0x12000008,0x2800000,0x12000008,0x2800000,0x12000008,0x12000008,0x2800000,0x280000,0x4000000,0x4000000,0x400000,0x20000,0x18801ff9,0x4000000,0x4000000,0x400000,0x20000,0x18809ff9,0x4000000,0x4000000,0x811ff0,};
+   private static void jj_la1_init_0() {
+      jj_la1_0 = new int[] {0x48000008,0xa000000,0x48000008,0xa000000,0x48000008,0x48000008,0xa000000,0xa00000,0x10000000,0x10000000,0x6000000,0x6000000,0x1000000,0x80000,0x62007ff9,0x10000000,0x10000000,0x6000000,0x6000000,0x1000000,0x80000,0x62027ff9,0x10000000,0x10000000,0x6000000,0x6000000,0x2047ff0,};
    }
 
+  /** Constructor with InputStream. */
   public SrlParser(java.io.InputStream stream) {
      this(stream, null);
   }
+  /** Constructor with InputStream and supplied encoding */
   public SrlParser(java.io.InputStream stream, String encoding) {
     try { jj_input_stream = new SimpleCharStream(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source = new SrlParserTokenManager(jj_input_stream);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
   }
 
+  /** Reinitialise. */
   public void ReInit(java.io.InputStream stream) {
      ReInit(stream, null);
   }
+  /** Reinitialise. */
   public void ReInit(java.io.InputStream stream, String encoding) {
     try { jj_input_stream.ReInit(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source.ReInit(jj_input_stream);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
   }
 
+  /** Constructor. */
   public SrlParser(java.io.Reader stream) {
     jj_input_stream = new SimpleCharStream(stream, 1, 1);
     token_source = new SrlParserTokenManager(jj_input_stream);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
   }
 
+  /** Reinitialise. */
   public void ReInit(java.io.Reader stream) {
     jj_input_stream.ReInit(stream, 1, 1);
     token_source.ReInit(jj_input_stream);
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
   }
 
+  /** Constructor with generated Token Manager. */
   public SrlParser(SrlParserTokenManager tm) {
     token_source = tm;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
   }
 
+  /** Reinitialise. */
   public void ReInit(SrlParserTokenManager tm) {
     token_source = tm;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 21; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
   }
 
-  final private Token jj_consume_token(int kind) throws ParseException {
+  private Token jj_consume_token(int kind) throws ParseException {
     Token oldToken;
     if ((oldToken = token).next != null) token = token.next;
     else token = token.next = token_source.getNextToken();
@@ -763,6 +889,8 @@ boolean cleanHead = false;
     throw generateParseException();
   }
 
+
+/** Get the next Token. */
   final public Token getNextToken() {
     if (token.next != null) token = token.next;
     else token = token.next = token_source.getNextToken();
@@ -771,6 +899,7 @@ boolean cleanHead = false;
     return token;
   }
 
+/** Get the specific Token. */
   final public Token getToken(int index) {
     Token t = token;
     for (int i = 0; i < index; i++) {
@@ -780,28 +909,26 @@ boolean cleanHead = false;
     return t;
   }
 
-  final private int jj_ntk() {
+  private int jj_ntk() {
     if ((jj_nt=token.next) == null)
       return (jj_ntk = (token.next=token_source.getNextToken()).kind);
     else
       return (jj_ntk = jj_nt.kind);
   }
 
-  private java.util.Vector jj_expentries = new java.util.Vector();
+  private java.util.List jj_expentries = new java.util.ArrayList();
   private int[] jj_expentry;
   private int jj_kind = -1;
 
+  /** Generate ParseException. */
   public ParseException generateParseException() {
-    jj_expentries.removeAllElements();
-    boolean[] la1tokens = new boolean[29];
-    for (int i = 0; i < 29; i++) {
-      la1tokens[i] = false;
-    }
+    jj_expentries.clear();
+    boolean[] la1tokens = new boolean[31];
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 21; i++) {
+    for (int i = 0; i < 27; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -810,23 +937,25 @@ boolean cleanHead = false;
         }
       }
     }
-    for (int i = 0; i < 29; i++) {
+    for (int i = 0; i < 31; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;
-        jj_expentries.addElement(jj_expentry);
+        jj_expentries.add(jj_expentry);
       }
     }
     int[][] exptokseq = new int[jj_expentries.size()][];
     for (int i = 0; i < jj_expentries.size(); i++) {
-      exptokseq[i] = (int[])jj_expentries.elementAt(i);
+      exptokseq[i] = (int[])jj_expentries.get(i);
     }
     return new ParseException(token, exptokseq, tokenImage);
   }
 
+  /** Enable tracing. */
   final public void enable_tracing() {
   }
 
+  /** Disable tracing. */
   final public void disable_tracing() {
   }
 
