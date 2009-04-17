@@ -26,7 +26,7 @@ public class EndTag implements TypeExpr {
     public void getQuery(SrlQuery query) {
     }
 
-    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token instanceof EndTagToken) {
             EndTagToken ett = (EndTagToken)token;
             if(ett.type.equals(entityType))

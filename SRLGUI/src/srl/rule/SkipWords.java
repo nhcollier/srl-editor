@@ -10,6 +10,7 @@
 */
 package srl.rule;
 
+import java.util.List;
 import java.util.Stack;
 import srl.corpus.SrlQuery;
 import org.apache.lucene.analysis.Token;
@@ -41,7 +42,7 @@ public class SkipWords implements TypeExpr {
     
     public void setSkipTags(boolean value) { skipTags = value; }
     
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         // Stack: Two options if next matches 1/ Return next.next 2/ Ignore, return this
         // If this number/expr pair is not on the stack do 1/ and add to stack
         // If this number/expr pair is on top of the stack do 2/ and mark as used
@@ -72,7 +73,7 @@ public class SkipWords implements TypeExpr {
         }
         if(token instanceof EndTagToken) {
             if(!skipTags) {
-                TypeExpr te = next.matches(token, no, stack);
+                TypeExpr te = next.matches(token, no, stack, lookBackStack);
                 if((stack.empty() || stack.peek().tokenNo < no) &&
                         !(te == Rule.successState))
                     stack.push(new MatchFork(no,this));
@@ -82,7 +83,7 @@ public class SkipWords implements TypeExpr {
             if(tagDepth > 0)
                 return this;
         }
-        TypeExpr te = next.matches(token,no,stack);
+        TypeExpr te = next.matches(token,no,stack, lookBackStack);
         if(te != null) {
             if((stack.empty() || stack.peek().tokenNo < no) &&
                     !(te == Rule.successState) &&

@@ -44,7 +44,7 @@ public class StrMatchApprox implements TypeExpr {
         query.wordLists.add(wordListName);
     }
 
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         Set<WordListEntry> list;
         if(set) {
             list = new HashSet<WordListEntry>();

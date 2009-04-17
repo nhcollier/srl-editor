@@ -58,8 +58,8 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
         }
     }
 
-    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
-	current = current.matches(token, tokenNo,stack);
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
+	current = current.matches(token, tokenNo,stack, lookBackStack);
         if(current == null)
             return null;
 	if(match.beginRegion < 0) {
@@ -225,8 +225,8 @@ class EntitySuccessState implements TypeExpr {
         throw new IllegalStateException();
     }
 
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
-        TypeExpr te = next.matches(token,no,stack);
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
+        TypeExpr te = next.matches(token,no,stack, lookBackStack);
         if(te == null) 
             next.reset();
         return te;

@@ -10,6 +10,7 @@
 */
 package srl.rule;
 
+import java.util.List;
 import java.util.Stack;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
@@ -35,27 +36,31 @@ public class NegativeLiteral implements TypeExpr {
         }
     }
 
-    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(literal != null) {
-            if(token.termText().toLowerCase().equals(literal)) {
+            if(lookBackStack.isEmpty()) 
+                return next.matches(token,tokenNo,stack,lookBackStack);
+            if(lookBackStack.get(lookBackStack.size()-1).termText().toLowerCase().equals(literal)) {
                 return null;
             } else 
-                return next.matches(token, tokenNo, stack);
+                return next.matches(token, tokenNo, stack,lookBackStack);
         } else {
-            TypeExpr te = listMatcher.matches(token,tokenNo,stack);
-            if(te == null)
-                return next;
-            if(te == dummy)
-                return null;
-            if(te == listMatcher)
-                return this;
-            else
-                throw new IllegalStateException();
+            while(true) {
+                TypeExpr te = listMatcher.matches(lookBackStack.get(lookBackStack.size()-1),tokenNo,stack,lookBackStack);
+                if(te == null)
+                    return next;
+                if(te == dummy)
+                    return null;
+                if(te == listMatcher)
+                    return this;
+                else
+                    throw new IllegalStateException();
+            }
         }
     }
 
     public boolean canEnd() {
-        return true;
+        return next.canEnd();
     }
 
     public TypeExpr copy() {

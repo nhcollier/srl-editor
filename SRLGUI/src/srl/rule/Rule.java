@@ -160,6 +160,8 @@ public class Rule implements Expr {
         ListIterator<Token> iter1 = sentence.listIterator();
         LinkedList<HashMap<Entity, SrlMatchRegion>> rval = new LinkedList<HashMap<Entity, SrlMatchRegion>>();
         Stack<MatchFork> stack = new Stack<MatchFork>();
+        LinkedList<Token> lookBackStack = new LinkedList<Token>();
+        
         int i = -1;
         Token tk = null;
         MAIN: while (iter1.hasNext()) {
@@ -169,6 +171,8 @@ public class Rule implements Expr {
             // If the stack is not empty, keep looping until it is
             if(stack.empty()) {
                 // Read next token
+                if(tk != null)
+                    lookBackStack.add(tk);
                 tk = iter1.next();
                 i++;
             }
@@ -184,7 +188,7 @@ public class Rule implements Expr {
             typeExpr = body.get(0);
             resetSearch();
             // Match first token
-            if ((typeExpr = typeExpr.matches(tk, i, stack)) != null) {
+            if ((typeExpr = typeExpr.matches(tk, i, stack, lookBackStack)) != null) {
                 // Otherwise carry on matching
                 int j = i+1;
                 // Check for single token match
@@ -201,6 +205,7 @@ public class Rule implements Expr {
                     // Skip whitespace tokens
                     if (!(tk2 instanceof BeginTagToken) && !(tk2 instanceof EndTagToken) && tk2.termText().matches("\\s*")) {
                         j++;
+                        lookBackStack.add(tk2);
                         continue;
                     } else if (tk2 instanceof BeginTagToken || tk2 instanceof EndTagToken) {
                         j--;
@@ -210,15 +215,19 @@ public class Rule implements Expr {
                     } // Match failed
 
                     // Check next token
-                    typeExpr = typeExpr.matches(tk2, j++,stack);
+                    typeExpr = typeExpr.matches(tk2, j++,stack,lookBackStack);
                     if (typeExpr == successState) {
                         onMatch(rval,i + (tk instanceof BeginTagToken ? 1 : 0),j);
                         if (firstOnly) {
                             return rval;
                         }
+                        while(lookBackStack.size() > i-1)
+                            lookBackStack.removeLast();
                         continue MAIN;
                     }
                 }
+                while(lookBackStack.size() > i)
+                    lookBackStack.removeLast();
                 // Check to see if we are caught in "words(1,) <EOL>" trap
                 if (typeExpr != null && typeExpr.canEnd()) {
                     if(typeExpr instanceof Entity) {
@@ -321,7 +330,7 @@ class SuccessState implements TypeExpr {
         throw new IllegalStateException();
     }
 
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         return this;
     }
 

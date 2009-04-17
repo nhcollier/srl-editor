@@ -10,6 +10,7 @@
 */
 package srl.rule;
 
+import java.util.List;
 import java.util.Stack;
 import srl.corpus.SrlQuery;
 import org.apache.lucene.analysis.Token;
@@ -30,8 +31,8 @@ class DummyNode implements TypeExpr {
         throw new IllegalStateException();
     }
 
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
-        TypeExpr te = next.matches(token,no,stack);
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
+        TypeExpr te = next.matches(token,no,stack,lookBackStack);
         if(te == null) 
             next.reset();
         return te;

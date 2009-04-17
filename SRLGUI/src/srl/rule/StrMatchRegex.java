@@ -10,8 +10,8 @@
  */
 package srl.rule;
 
+import java.util.List;
 import java.util.Stack;
-import mccrae.tools.struct.Pair;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 
@@ -33,7 +33,7 @@ public class StrMatchRegex implements TypeExpr {
         query.query.append("\" \"");
     }
 
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termText().matches(expression)) {
             return next;
         } else {

@@ -10,6 +10,7 @@
 */
 package srl.rule;
 
+import java.util.List;
 import java.util.Stack;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
@@ -30,7 +31,7 @@ public class PartialLiteral implements TypeExpr {
         this.part = part;
     }
 
-    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termLength() < partLiteral.length()) {
             return null;
         }

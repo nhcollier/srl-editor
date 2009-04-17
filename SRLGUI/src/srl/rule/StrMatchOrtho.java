@@ -10,11 +10,11 @@
  */
 package srl.rule;
 
+import java.util.List;
 import java.util.Stack;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 import java.util.regex.*;
-import mccrae.tools.struct.Pair;
 
 /**
  *
@@ -36,7 +36,7 @@ public class StrMatchOrtho implements TypeExpr {
         query.query.append("\" \"");
     }
 
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         LOOP: for(String[] expBlock : expressions) {
             for(String exp : expBlock) {
                 if(!token.termText().matches(exp))
@@ -85,16 +85,24 @@ public class StrMatchOrtho implements TypeExpr {
                 
                 String type = "\\p{" + m.group(4) + "}";
                 if(m.group(4).equals("Np")) {
-                    type = "[0-9,.]";
-                }
-                if(number == -1 && !initial && !fixed) {
-                    rv[i] = type + "+";
-                } else if(initial && !fixed) {
-                    rv[i] = type + ".*" + (number > 1 ? ("(" + type + ".*){" + (number-1) + ",}") : "");
-                } else if(fixed) {
-                    rv[i] = type + (number > 1 ? "{" + number + "}" : "");
-                } else if(!initial) {
-                    rv[i] = ".*(" + type + ".*)" + (number > 1 ? "{" + number + ",}" : "");
+                    if(number == -1 && !initial && !fixed)
+                        rv[i] = "[0-9][0-9,.]*";
+                    else if(initial && !fixed)
+                        rv[i] = "[0-9].*" + (number > 1 ? "[0-9,.]{" + (number-1) + "}": "") + ".*";
+                    else if(fixed) 
+                        rv[i] = "[0-9]" + (number > 1 ?  "[0-9,.]{" + (number - 1) + "}": "");
+                    else if(!initial)
+                        rv[i] = ".*([0-9].*)" + (number > 1 ? "{" + number + ",}" : "");
+                } else {
+                    if(number == -1 && !initial && !fixed) {
+                        rv[i] = type + "+";
+                    } else if(initial && !fixed) {
+                        rv[i] = type + ".*" + (number > 1 ? ("(" + type + ".*){" + (number-1) + ",}") : "") + ".*";
+                    } else if(fixed) {
+                        rv[i] = type + (number > 1 ? "{" + number + "}" : "");
+                    } else if(!initial) {
+                        rv[i] = ".*(" + type + ".*)" + (number > 1 ? "{" + number + ",}" : "");
+                    }
                 }
             }
             rval[j++] = rv;

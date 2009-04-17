@@ -35,7 +35,7 @@ public class Literal implements TypeExpr {
         query.query.append(literal.replaceAll("([\\\"\\\'])", "\\$1"));
     }
 
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termText().toLowerCase().equals(literal.toLowerCase())) {
             return next;
         } else {

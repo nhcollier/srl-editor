@@ -10,6 +10,7 @@
 */
 package srl.rule;
 
+import java.util.List;
 import java.util.Stack;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
@@ -36,16 +37,16 @@ public class OptionalLiteral implements TypeExpr {
         }
     }
 
-    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(literal != null) {
             if(token.termText().toLowerCase().equals(literal)) {
                 return next;
             } else 
-                return next.matches(token, tokenNo, stack);
+                return next.matches(token, tokenNo, stack,lookBackStack);
         } else {
-            TypeExpr te = listMatcher.matches(token,tokenNo,stack);
+            TypeExpr te = listMatcher.matches(token,tokenNo,stack,lookBackStack);
             if(te == null && first)
-                return next.matches(token, tokenNo, stack);
+                return next.matches(token, tokenNo, stack,lookBackStack);
             if(te == null)
                 return null;
             if(te == dummy)
@@ -60,7 +61,7 @@ public class OptionalLiteral implements TypeExpr {
     }
 
     public boolean canEnd() {
-        return true;
+        return next.canEnd();
     }
 
     public TypeExpr copy() {

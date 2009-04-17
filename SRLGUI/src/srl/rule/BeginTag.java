@@ -33,7 +33,7 @@ public class BeginTag implements TypeExpr {
         query.entities.add(new Pair<String,String>(entityType,entityValue));
     }
 
-    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token instanceof BeginTagToken) {
             BeginTagToken btt = (BeginTagToken)token;
             if(btt.type.equals(entityType) && btt.val.equals(entityValue))

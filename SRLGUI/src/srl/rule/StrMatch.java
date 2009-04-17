@@ -46,7 +46,7 @@ public class StrMatch implements TypeExpr {
             query.wordLists.add(wordListName);
     }
 
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack) {
+    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(matches == null) {
             if(set) {
                 matches = new TreeSet<WordListEntry>();

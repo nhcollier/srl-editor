@@ -356,6 +356,24 @@ public class Corpus {
     }
     
 
+    public void clearTemplateExtractions() throws CorruptIndexException,IOException, CorpusConcurrencyException {
+        System.err.println("Check efficiency");
+        for (int i = 0; i < indexSearcher.maxDoc(); i++) {
+            if(indexSearcher == null)
+                closeIndex();
+            try {
+                if(!indexSearcher.doc(i).getField("name").stringValue().matches(".* .*"))
+                        continue;
+            } catch(IllegalArgumentException x) {
+                System.err.println("Deleted document ignored");
+                continue;
+            }
+            Document d = indexSearcher.doc(i);
+            updateContext(d, d.getField("contents").stringValue(),
+                    d.getField("taggedContents").stringValue());
+        }
+        return;
+    }
 
     private Set<Pair<String, String>> wordListForDoc(String contents) {
         Set<Pair<String, String>> rval = new HashSet<Pair<String, String>>();

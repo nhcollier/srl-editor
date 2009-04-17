@@ -10,10 +10,10 @@
  */
 package srl.rule;
 
+import java.util.List;
 import srl.corpus.*;
 import org.apache.lucene.analysis.*;
 import java.util.Stack;
-import mccrae.tools.struct.Pair;
 
 /**
  *
@@ -28,7 +28,7 @@ public interface TypeExpr {
      * @param stack The stack of backtrace points, as pairs of token numbers & entities
      * @return The next TypeExpr to be checked against the string of tokens, note this may be this object!
      */
-    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack);
+    public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack);
     /** At the end of a match reset all variables (eg skipwords number)
      */
     public void reset();

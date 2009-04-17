@@ -50,6 +50,8 @@ public class PreTokenizer extends Tokenizer {
         int oldOffset = offset;
         int i = 0;
         while((c = input.read()) != SEPERATOR && c != SPLITTER && c != -1) {
+            if(c == '<')
+                return startTagDetection();
             buf[i++] = (char)c;
             if(i == 256) {
                 System.err.println("Token exceeds maximum length!");
@@ -64,6 +66,15 @@ public class PreTokenizer extends Tokenizer {
         if(c == -1 && i == 0)
             return null;
         return new Token(buf,0,i,oldOffset, offset);
+    }
+    
+    public Token startTagDetection() {
+        char c;
+        StringBuffer tagName = new StringBuffer(), tagClass = new StringBuffer();
+        while(Character.isLetter(c = (char)input.read())) {
+            tagName.append(c);
+        }
+        if()
     }
 
     @Override

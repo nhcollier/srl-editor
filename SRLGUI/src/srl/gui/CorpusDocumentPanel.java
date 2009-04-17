@@ -259,7 +259,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
         try {
-            if(docList.getSelectedIndex() == -1)
+            if(docList.getSelectedIndex() == -1 || !modified)
                 return;
             corpus.updateDoc((String) docList.getSelectedValue(), mainPane.getText());
             modified = false;

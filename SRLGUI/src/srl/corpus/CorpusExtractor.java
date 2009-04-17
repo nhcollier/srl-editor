@@ -367,6 +367,7 @@ public class CorpusExtractor {
         if (corpus.isIndexOpen()) {
             corpus.closeIndex();
         }
+        corpus.clearTemplateExtractions();
         final HashMap<String, List<String>> allMatches =
                 new HashMap<String, List<String>>();
         int i = 0;
