@@ -31,8 +31,8 @@ import srl.corpus.*;
 
 public class PreTokenizer extends org.apache.lucene.analysis.Tokenizer {
     boolean finished = false;
-    /** If this variable is true, tokenizer will also output whitespace */
-    public boolean outputWhitespace = false;
+    
+public static char SPLITTER_CHAR = '\u00b6';
 
   /** Constructs a tokenizer for this Reader. */
   public PreTokenizer(Reader reader) {
@@ -55,19 +55,20 @@ public class PreTokenizer extends org.apache.lucene.analysis.Tokenizer {
   }
 }
 
-PARSER_END(PreTokenizer)
+PARSER_END(PreTokenizer) 
 
 TOKEN : {					  // token patterns
-  < BEGIN_TAG : "<" <ALPHANUM> " cl=\"" <ALPHANUM> "\">">
-| < END_TAG : "</" <ALPHANUM> ">" >
-| < SPACE: " " >
+  < BEGIN_TAG : "<" (<ALPHANUM>)+ " cl=\"" (<ALPHANUM>)+ "\">">
+| < END_TAG : "</" (<ALPHANUM>)+ ">" >
 | < SPLITTER: "\u00b6" >    
-| < ANYTHING: ~[] > 
+| < ANYTHING: ~[ " ", "\u00b6", "<" ] (~[ " ", "\u00b6" ])* > 
 | < #ALPHANUM : [
     "0"-"9",
     "A"-"Z",
     "a"-"z" ] >
 }
+
+SKIP : { <NOISE: " " > }
 
 /** Returns the next token in the stream, or null at EOS.
  * <p>The returned token's type is set to an element of {@link
@@ -78,16 +79,15 @@ org.apache.lucene.analysis.Token next2() throws IOException :
   Token tk = null;
 }
 {
-  (
+   (
     tk = <BEGIN_TAG> |
     tk = <END_TAG> |
-    tk = <SPACE> |
     tk = <SPLITTER> |
     tk = <ANYTHING>
    )
     {
 	return
-	    SrlToken.makeToken(tk.image,tk.kind,tk.beginColumn,tk.endColumn);
+	    SrlToken.makeToken2(tk.image,tk.kind,tk.beginColumn,tk.endColumn);
     }
    |
     <EOF>

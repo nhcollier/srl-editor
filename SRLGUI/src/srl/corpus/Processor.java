@@ -54,7 +54,7 @@ public class Processor {
         "org.apache.lucene.analysis.ru.RussianAnalyzer", 
         "org.apache.lucene.analysis.th.ThaiAnalyzer",
         "srl.corpus.jp.JapaneseAnalyzer",
-        "org.apache.lucene.analysis.standard.StandardAnalyzer",
+        "srl.corpus.pre.PreAnalyzer"
     };
     
     static final String[] tokenizers = {

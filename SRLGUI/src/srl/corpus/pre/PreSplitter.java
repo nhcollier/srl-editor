@@ -31,13 +31,15 @@ public class PreSplitter implements Splitter {
        List<SrlDocument> rv = new LinkedList<SrlDocument>();
        
        for(Token t : doc) {
-           if(t.termLength() == 1 && t.termBuffer()[0] == PreTokenizer.SPLITTER) {
+           if(t.termLength() == 1 && t.termBuffer()[0] == PreTokenizer.SPLITTER_CHAR) {
                rv.add(srlDoc);
                srlDoc = new SrlDocument(docName + " " + ++docNumber);
            } else {
                srlDoc.add(t);
            }
        }
+       if(!srlDoc.isEmpty())
+           rv.add(srlDoc);
         
        return rv;
     }

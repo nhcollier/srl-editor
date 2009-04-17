@@ -53,6 +53,6 @@ class DummyNode implements TypeExpr {
     }
 
     public TypeExpr copy() {
-        return new EntitySuccessState(next);
+        return new DummyNode(id);
     }
 }

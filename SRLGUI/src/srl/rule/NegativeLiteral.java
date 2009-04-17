@@ -45,17 +45,19 @@ public class NegativeLiteral implements TypeExpr {
             } else 
                 return next.matches(token, tokenNo, stack,lookBackStack);
         } else {
-            while(true) {
-                TypeExpr te = listMatcher.matches(lookBackStack.get(lookBackStack.size()-1),tokenNo,stack,lookBackStack);
+            
+            for(int i = lookBackStack.size()-1; i >= 0; i--) {
+                TypeExpr te = listMatcher.matches(lookBackStack.get(i),tokenNo,stack,lookBackStack);
                 if(te == null)
-                    return next;
+                    return next.matches(token, tokenNo, stack, lookBackStack);
                 if(te == dummy)
                     return null;
                 if(te == listMatcher)
-                    return this;
+                    continue;
                 else
                     throw new IllegalStateException();
             }
+            return next.matches(token, tokenNo, stack, lookBackStack);
         }
     }
 

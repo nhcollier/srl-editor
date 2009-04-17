@@ -10,7 +10,9 @@
  */
 package srl.corpus;
 
+import srl.corpus.pre.PreTokenizerConstants;
 import srl.corpus.token.*;
+
 
 /**
  * Identical to a Lucene token.
@@ -23,6 +25,16 @@ public class SrlToken extends org.apache.lucene.analysis.Token {
 	if(kind == StandardTokenizerConstants.BEGIN_TAG) {
 	    return new BeginTagToken(image, begin, end);
 	} else if(kind == StandardTokenizerConstants.END_TAG) {
+	    return new EndTagToken(image, begin, end);
+	} else {
+	    return new SrlToken(image, begin, end);
+	}
+    }
+    
+    public static SrlToken makeToken2(String image, int kind, int begin, int end) {
+	if(kind == PreTokenizerConstants.BEGIN_TAG) {
+	    return new BeginTagToken(image, begin, end);
+	} else if(kind == PreTokenizerConstants.END_TAG) {
 	    return new EndTagToken(image, begin, end);
 	} else {
 	    return new SrlToken(image, begin, end);
