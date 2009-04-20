@@ -357,11 +357,11 @@ public class Corpus {
     
 
     public void clearTemplateExtractions() throws CorruptIndexException,IOException, CorpusConcurrencyException {
-        System.err.println("Check efficiency");
+   /*     System.err.println("Check efficiency");
+        if(indexSearcher == null)
+            closeIndex();
         for (int i = 0; i < indexSearcher.maxDoc(); i++) {
-            if(indexSearcher == null)
-                closeIndex();
-            try {
+             try {
                 if(!indexSearcher.doc(i).getField("name").stringValue().matches(".* .*"))
                         continue;
             } catch(IllegalArgumentException x) {
@@ -369,10 +369,12 @@ public class Corpus {
                 continue;
             }
             Document d = indexSearcher.doc(i);
-            updateContext(d, d.getField("contents").stringValue(),
-                    d.getField("taggedContents").stringValue());
+            d.removeFields("extracted");
+            if(indexSearcher == null)
+                closeIndex();
+           
         }
-        return;
+        return;*/
     }
 
     private Set<Pair<String, String>> wordListForDoc(String contents) {

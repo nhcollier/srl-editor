@@ -221,12 +221,12 @@ public class Rule implements Expr {
                         if (firstOnly) {
                             return rval;
                         }
-                        while(lookBackStack.size() > i-1)
+                        while(lookBackStack.size() > i && !lookBackStack.isEmpty())
                             lookBackStack.removeLast();
                         continue MAIN;
                     }
                 }
-                while(lookBackStack.size() > i)
+                while(lookBackStack.size() > i && !lookBackStack.isEmpty())
                     lookBackStack.removeLast();
                 // Check to see if we are caught in "words(1,) <EOL>" trap
                 if (typeExpr != null && typeExpr.canEnd()) {

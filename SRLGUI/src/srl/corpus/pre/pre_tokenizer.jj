@@ -61,7 +61,7 @@ TOKEN : {					  // token patterns
   < BEGIN_TAG : "<" (<ALPHANUM>)+ " cl=\"" (<ALPHANUM>)+ "\">">
 | < END_TAG : "</" (<ALPHANUM>)+ ">" >
 | < SPLITTER: "\u00b6" >    
-| < ANYTHING: ~[ " ", "\u00b6", "<" ] (~[ " ", "\u00b6" ])* > 
+| < ANYTHING: ~[ " ", "\u00b6" ] (~[ " ", "\u00b6" ])* > 
 | < #ALPHANUM : [
     "0"-"9",
     "A"-"Z",
