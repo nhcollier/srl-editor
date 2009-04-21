@@ -90,6 +90,8 @@ public class OptionalLiteral implements TypeExpr {
     public String toString() {
         if(literal != null)
             return "optional(\"" + literal + "\")";
+        else if(listMatcher.set) 
+            return "optional(%" + listMatcher.wordListName + ")";
         else
             return "optional(@" + listMatcher.wordListName + ")";
     }

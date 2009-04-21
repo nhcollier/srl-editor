@@ -41,7 +41,7 @@ public interface PreTokenizerConstants {
     "<EOF>",
     "<BEGIN_TAG>",
     "<END_TAG>",
-    "\"\\u00b6\"",
+    "<SPLITTER>",
     "<ANYTHING>",
     "<ALPHANUM>",
     "\" \"",

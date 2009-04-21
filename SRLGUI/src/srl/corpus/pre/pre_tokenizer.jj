@@ -32,7 +32,7 @@ import srl.corpus.*;
 public class PreTokenizer extends org.apache.lucene.analysis.Tokenizer {
     boolean finished = false;
     
-public static char SPLITTER_CHAR = '\u00b6';
+public static char SPLITTER_CHAR1 = '\n', SPLITTER_CHAR2 = '\r';
 
   /** Constructs a tokenizer for this Reader. */
   public PreTokenizer(Reader reader) {
@@ -60,8 +60,8 @@ PARSER_END(PreTokenizer)
 TOKEN : {					  // token patterns
   < BEGIN_TAG : "<" (<ALPHANUM>)+ " cl=\"" (<ALPHANUM>)+ "\">">
 | < END_TAG : "</" (<ALPHANUM>)+ ">" >
-| < SPLITTER: "\u00b6" >    
-| < ANYTHING: ~[ " ", "\u00b6" ] (~[ " ", "\u00b6" ])* > 
+| < SPLITTER: [ "\n", "\r" ] >    
+| < ANYTHING: ~[ " ", "\n", "\r" ] (~[ " ", "\n", "\r" ])* > 
 | < #ALPHANUM : [
     "0"-"9",
     "A"-"Z",

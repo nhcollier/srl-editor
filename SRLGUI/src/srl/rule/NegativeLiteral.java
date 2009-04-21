@@ -90,6 +90,8 @@ public class NegativeLiteral implements TypeExpr {
     public String toString() {
         if(literal != null)
             return "not(\"" + literal + "\")";
+        else if(listMatcher.set)
+            return "not(%" + listMatcher.wordListName + ")";
         else
             return "not(@" + listMatcher.wordListName + ")";
     }

@@ -43,8 +43,6 @@ private int jjMoveStringLiteralDfa0_0()
 {
    switch(curChar)
    {
-      case 182:
-         return jjStopAtPos(0, 3);
       default :
          return jjMoveNfa_0(0, 0);
    }
@@ -53,12 +51,12 @@ static final long[] jjbitVec0 = {
    0xfffffffffffffffeL, 0xffffffffffffffffL, 0xffffffffffffffffL, 0xffffffffffffffffL
 };
 static final long[] jjbitVec2 = {
-   0x0L, 0x0L, 0xffbfffffffffffffL, 0xffffffffffffffffL
+   0x0L, 0x0L, 0xffffffffffffffffL, 0xffffffffffffffffL
 };
 private int jjMoveNfa_0(int startState, int curPos)
 {
    int startsAt = 0;
-   jjnewStateCnt = 15;
+   jjnewStateCnt = 16;
    int i = 1;
    jjstateSet[0] = startState;
    int kind = 0x7fffffff;
@@ -74,11 +72,16 @@ private int jjMoveNfa_0(int startState, int curPos)
             switch(jjstateSet[--i])
             {
                case 0:
-                  if ((0xfffffffeffffffffL & l) != 0L)
+                  if ((0xfffffffeffffdbffL & l) != 0L)
                   {
                      if (kind > 4)
                         kind = 4;
-                     jjCheckNAdd(14);
+                     jjCheckNAdd(15);
+                  }
+                  else if ((0x2400L & l) != 0L)
+                  {
+                     if (kind > 3)
+                        kind = 3;
                   }
                   if (curChar == 60)
                      jjstateSet[jjnewStateCnt++] = 10;
@@ -130,11 +133,15 @@ private int jjMoveNfa_0(int startState, int curPos)
                      jjstateSet[jjnewStateCnt++] = 10;
                   break;
                case 14:
-                  if ((0xfffffffeffffffffL & l) == 0L)
+                  if ((0x2400L & l) != 0L)
+                     kind = 3;
+                  break;
+               case 15:
+                  if ((0xfffffffeffffdbffL & l) == 0L)
                      break;
                   if (kind > 4)
                      kind = 4;
-                  jjCheckNAdd(14);
+                  jjCheckNAdd(15);
                   break;
                default : break;
             }
@@ -148,10 +155,10 @@ private int jjMoveNfa_0(int startState, int curPos)
             switch(jjstateSet[--i])
             {
                case 0:
-               case 14:
+               case 15:
                   if (kind > 4)
                      kind = 4;
-                  jjCheckNAdd(14);
+                  jjCheckNAdd(15);
                   break;
                case 1:
                   if ((0x7fffffe07fffffeL & l) != 0L)
@@ -189,12 +196,12 @@ private int jjMoveNfa_0(int startState, int curPos)
             switch(jjstateSet[--i])
             {
                case 0:
-               case 14:
+               case 15:
                   if (!jjCanMove_0(hiByte, i1, i2, l1, l2))
                      break;
                   if (kind > 4)
                      kind = 4;
-                  jjCheckNAdd(14);
+                  jjCheckNAdd(15);
                   break;
                default : break;
             }
@@ -207,7 +214,7 @@ private int jjMoveNfa_0(int startState, int curPos)
          kind = 0x7fffffff;
       }
       ++curPos;
-      if ((i = jjnewStateCnt) == (startsAt = 15 - (jjnewStateCnt = startsAt)))
+      if ((i = jjnewStateCnt) == (startsAt = 16 - (jjnewStateCnt = startsAt)))
          return curPos;
       try { curChar = input_stream.readChar(); }
       catch(java.io.IOException e) { return curPos; }
@@ -231,7 +238,7 @@ private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, lo
 
 /** Token literal values. */
 public static final String[] jjstrLiteralImages = {
-"", null, null, "\266", null, null, null, };
+"", null, null, null, null, null, null, };
 
 /** Lexer state names. */
 public static final String[] lexStateNames = {
@@ -244,8 +251,8 @@ static final long[] jjtoSkip = {
    0x40L, 
 };
 protected CharStream input_stream;
-private final int[] jjrounds = new int[15];
-private final int[] jjstateSet = new int[30];
+private final int[] jjrounds = new int[16];
+private final int[] jjstateSet = new int[32];
 protected char curChar;
 /** Constructor. */
 public PreTokenizerTokenManager(CharStream stream){
@@ -270,7 +277,7 @@ private void ReInitRounds()
 {
    int i;
    jjround = 0x80000001;
-   for (i = 15; i-- > 0;)
+   for (i = 16; i-- > 0;)
       jjrounds[i] = 0x80000000;
 }
 

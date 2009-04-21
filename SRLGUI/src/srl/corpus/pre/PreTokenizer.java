@@ -16,7 +16,7 @@ import srl.corpus.*;
 public class PreTokenizer extends org.apache.lucene.analysis.Tokenizer implements PreTokenizerConstants {
     boolean finished = false;
 
-public static char SPLITTER_CHAR = '\u00b6';
+public static char SPLITTER_CHAR1 = '\n', SPLITTER_CHAR2 = '\r';
 
   /** Constructs a tokenizer for this Reader. */
   public PreTokenizer(Reader reader) {

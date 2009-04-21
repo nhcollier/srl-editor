@@ -31,8 +31,9 @@ public class PreSplitter implements Splitter {
        List<SrlDocument> rv = new LinkedList<SrlDocument>();
        
        for(Token t : doc) {
-           if(t.termLength() == 1 && t.termBuffer()[0] == PreTokenizer.SPLITTER_CHAR) {
-               rv.add(srlDoc);
+           if(t.termLength() == 1 && (t.termBuffer()[0] == PreTokenizer.SPLITTER_CHAR1 || t.termBuffer()[0] == PreTokenizer.SPLITTER_CHAR2)) {
+               if(srlDoc.size() != 0)
+                    rv.add(srlDoc);
                srlDoc = new SrlDocument(docName + " " + ++docNumber);
            } else {
                srlDoc.add(t);

@@ -225,6 +225,7 @@ public class Rule implements Expr {
                             lookBackStack.removeLast();
                         continue MAIN;
                     }
+                    lookBackStack.add(tk2);
                 }
                 while(lookBackStack.size() > i && !lookBackStack.isEmpty())
                     lookBackStack.removeLast();
