@@ -7,6 +7,7 @@
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="2"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
     <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="2"/>
@@ -57,7 +58,7 @@
                   <Component id="jScrollPane1" min="-2" pref="99" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane2" pref="289" max="32767" attributes="0"/>
+              <Component id="jScrollPane2" pref="284" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="removeEntityButton" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -136,6 +137,7 @@
     </Container>
     <Component class="javax.swing.JButton" name="removeEntityButton">
       <Properties>
+        <Property name="icon" type="javax.swing.Icon" resourceKey="removeEntityButton.icon"/>
         <Property name="text" type="java.lang.String" resourceKey="removeEntityButton.text"/>
         <Property name="toolTipText" type="java.lang.String" resourceKey="removeEntityButton.toolTipText"/>
         <Property name="name" type="java.lang.String" value="removeEntityButton" noResource="true"/>
@@ -146,6 +148,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="addEntityButton">
       <Properties>
+        <Property name="icon" type="javax.swing.Icon" resourceKey="addEntityButton.icon"/>
         <Property name="text" type="java.lang.String" resourceKey="addEntityButton.text"/>
         <Property name="toolTipText" type="java.lang.String" resourceKey="addEntityButton.toolTipText"/>
         <Property name="name" type="java.lang.String" value="addEntityButton" noResource="true"/>

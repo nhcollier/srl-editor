@@ -72,9 +72,10 @@ public class NewProjectDialog extends javax.swing.JDialog {
         projectPathField.setText(resourceMap.getString("projectPathField.text")); // NOI18N
         projectPathField.setName("projectPathField"); // NOI18N
 
-        analyzerCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "English", "Brazilian", "Chinese", "CJK", "Czech", "Dutch", "French", "German", "Greek", "Russian", "Thai", "Japanese", "Pre-tokenized" }));
+        analyzerCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "English", "Brazilian", "Chinese", "CJK", "Czech", "Dutch", "French", "German", "Greek", "Russian", "Thai", "Japanese" }));
         analyzerCombo.setName("analyzerCombo"); // NOI18N
 
+        projectPathBrowseButton.setIcon(resourceMap.getIcon("projectPathBrowseButton.icon")); // NOI18N
         projectPathBrowseButton.setText(resourceMap.getString("projectPathBrowseButton.text")); // NOI18N
         projectPathBrowseButton.setName("projectPathBrowseButton"); // NOI18N
         projectPathBrowseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -83,6 +84,7 @@ public class NewProjectDialog extends javax.swing.JDialog {
             }
         });
 
+        analyzerBrowseButton.setIcon(resourceMap.getIcon("analyzerBrowseButton.icon")); // NOI18N
         analyzerBrowseButton.setText(resourceMap.getString("analyzerBrowseButton.text")); // NOI18N
         analyzerBrowseButton.setName("analyzerBrowseButton"); // NOI18N
 
@@ -119,8 +121,8 @@ public class NewProjectDialog extends javax.swing.JDialog {
                             .add(jLabel2))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(analyzerCombo, 0, 257, Short.MAX_VALUE)
-                            .add(projectPathField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 257, Short.MAX_VALUE))
+                            .add(analyzerCombo, 0, 231, Short.MAX_VALUE)
+                            .add(projectPathField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 231, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(projectPathBrowseButton)

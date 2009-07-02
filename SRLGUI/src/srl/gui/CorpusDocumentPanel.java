@@ -116,6 +116,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         saveButton.setText(resourceMap.getString("saveButton.text")); // NOI18N
         saveButton.setToolTipText(resourceMap.getString("saveButton.toolTipText")); // NOI18N
         saveButton.setName("saveButton"); // NOI18N
+        saveButton.setPreferredSize(new java.awt.Dimension(70, 28));
         saveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveButtonActionPerformed(evt);
@@ -143,6 +144,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         deleteButton.setText(resourceMap.getString("deleteButton.text")); // NOI18N
         deleteButton.setToolTipText(resourceMap.getString("deleteButton.toolTipText")); // NOI18N
         deleteButton.setName("deleteButton"); // NOI18N
+        deleteButton.setPreferredSize(new java.awt.Dimension(80, 28));
         deleteButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteButtonActionPerformed(evt);
@@ -153,6 +155,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         addButton.setText(resourceMap.getString("addButton.text")); // NOI18N
         addButton.setToolTipText(resourceMap.getString("addButton.toolTipText")); // NOI18N
         addButton.setName("addButton"); // NOI18N
+        addButton.setPreferredSize(new java.awt.Dimension(65, 28));
         addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addButtonActionPerformed(evt);
@@ -212,7 +215,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 606, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 630, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(textRadio)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -221,14 +224,14 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                         .add(tagRadio)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(templatesRadio)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 241, Short.MAX_VALUE)
-                        .add(addButton)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 120, Short.MAX_VALUE)
+                        .add(addButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(deleteButton)
+                        .add(deleteButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(saveButton))
+                        .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(jLabel1)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 606, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 630, Short.MAX_VALUE)
                     .add(jLabel2))
                 .addContainerGap())
         );
@@ -243,18 +246,17 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(saveButton)
-                            .add(deleteButton))
-                        .add(addButton))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                        .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(deleteButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(addButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(textRadio)
                         .add(tokenRadio)
                         .add(tagRadio)
                         .add(templatesRadio)))
-                .add(13, 13, 13))
+                .add(18, 18, 18))
         );
     }// </editor-fold>//GEN-END:initComponents
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed

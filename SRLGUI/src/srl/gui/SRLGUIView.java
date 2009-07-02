@@ -378,7 +378,6 @@ public class SRLGUIView extends FrameView {
 
         jButton3.setAction(actionMap.get("saveProject")); // NOI18N
         jButton3.setText(resourceMap.getString("jButton3.text")); // NOI18N
-        jButton3.setEnabled(false);
         jButton3.setFocusable(false);
         jButton3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton3.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -518,27 +517,21 @@ public class SRLGUIView extends FrameView {
         fileMenu.setName("fileMenu"); // NOI18N
 
         newProjectMenuItem.setAction(actionMap.get("newProject")); // NOI18N
-        newProjectMenuItem.setMnemonic('n');
         newProjectMenuItem.setText(resourceMap.getString("newProjectMenuItem.text")); // NOI18N
         newProjectMenuItem.setName("newProjectMenuItem"); // NOI18N
         fileMenu.add(newProjectMenuItem);
 
         jMenuItem2.setAction(actionMap.get("openProject")); // NOI18N
-        jMenuItem2.setMnemonic('o');
         jMenuItem2.setText(resourceMap.getString("jMenuItem2.text")); // NOI18N
         jMenuItem2.setName("jMenuItem2"); // NOI18N
         fileMenu.add(jMenuItem2);
 
         jMenuItem1.setAction(actionMap.get("saveProject")); // NOI18N
-        jMenuItem1.setMnemonic('s');
         jMenuItem1.setText(resourceMap.getString("jMenuItem1.text")); // NOI18N
-        jMenuItem1.setEnabled(false);
         jMenuItem1.setName("jMenuItem1"); // NOI18N
         fileMenu.add(jMenuItem1);
 
         jMenuItem23.setAction(actionMap.get("saveProjectAs")); // NOI18N
-        jMenuItem23.setMnemonic('a');
-        jMenuItem23.setEnabled(false);
         jMenuItem23.setName("jMenuItem23"); // NOI18N
         fileMenu.add(jMenuItem23);
 
@@ -556,13 +549,11 @@ public class SRLGUIView extends FrameView {
         jMenu2.setName("jMenu2"); // NOI18N
 
         jMenuItem15.setAction(actionMap.get("undo")); // NOI18N
-        jMenuItem15.setMnemonic('u');
         jMenuItem15.setText(resourceMap.getString("jMenuItem15.text")); // NOI18N
         jMenuItem15.setName("jMenuItem15"); // NOI18N
         jMenu2.add(jMenuItem15);
 
         jMenuItem16.setAction(actionMap.get("redo")); // NOI18N
-        jMenuItem16.setMnemonic('r');
         jMenuItem16.setText(resourceMap.getString("jMenuItem16.text")); // NOI18N
         jMenuItem16.setName("jMenuItem16"); // NOI18N
         jMenu2.add(jMenuItem16);
@@ -578,17 +569,14 @@ public class SRLGUIView extends FrameView {
         jMenu3.setName("jMenu3"); // NOI18N
 
         jMenuItem3.setAction(actionMap.get("addRuleSet")); // NOI18N
-        jMenuItem3.setMnemonic('a');
         jMenuItem3.setName("jMenuItem3"); // NOI18N
         jMenu3.add(jMenuItem3);
 
         jMenuItem12.setAction(actionMap.get("importRuleSet")); // NOI18N
-        jMenuItem12.setMnemonic('i');
         jMenuItem12.setName("jMenuItem12"); // NOI18N
         jMenu3.add(jMenuItem12);
 
         jMenuItem22.setAction(actionMap.get("deleteRuleSet")); // NOI18N
-        jMenuItem22.setMnemonic('d');
         jMenuItem22.setName("jMenuItem22"); // NOI18N
         jMenu3.add(jMenuItem22);
 
@@ -596,14 +584,10 @@ public class SRLGUIView extends FrameView {
         jMenu3.add(jSeparator5);
 
         jMenuItem20.setAction(actionMap.get("addRule")); // NOI18N
-        jMenuItem20.setMnemonic('l');
-        jMenuItem20.setEnabled(false);
         jMenuItem20.setName("jMenuItem20"); // NOI18N
         jMenu3.add(jMenuItem20);
 
         jMenuItem21.setAction(actionMap.get("removeRule")); // NOI18N
-        jMenuItem21.setMnemonic('v');
-        jMenuItem21.setEnabled(false);
         jMenuItem21.setName("jMenuItem21"); // NOI18N
         jMenu3.add(jMenuItem21);
 
@@ -615,12 +599,10 @@ public class SRLGUIView extends FrameView {
         jMenu4.setName("jMenu4"); // NOI18N
 
         jMenuItem4.setAction(actionMap.get("addWordList")); // NOI18N
-        jMenuItem4.setMnemonic('a');
         jMenuItem4.setName("jMenuItem4"); // NOI18N
         jMenu4.add(jMenuItem4);
 
         jMenuItem13.setAction(actionMap.get("importWordList")); // NOI18N
-        jMenuItem13.setMnemonic('i');
         jMenuItem13.setName("jMenuItem13"); // NOI18N
         jMenu4.add(jMenuItem13);
 
@@ -628,14 +610,10 @@ public class SRLGUIView extends FrameView {
         jMenu4.add(jSeparator8);
 
         jMenuItem24.setAction(actionMap.get("addWordListToSet")); // NOI18N
-        jMenuItem24.setMnemonic('w');
-        jMenuItem24.setEnabled(false);
         jMenuItem24.setName("jMenuItem24"); // NOI18N
         jMenu4.add(jMenuItem24);
 
         jMenuItem25.setAction(actionMap.get("removeWordListFromSet")); // NOI18N
-        jMenuItem25.setMnemonic('v');
-        jMenuItem25.setEnabled(false);
         jMenuItem25.setName("jMenuItem25"); // NOI18N
         jMenu4.add(jMenuItem25);
 
@@ -647,18 +625,15 @@ public class SRLGUIView extends FrameView {
         jMenu5.setName("jMenu5"); // NOI18N
 
         jMenuItem5.setAction(actionMap.get("addCorpusDoc")); // NOI18N
-        jMenuItem5.setMnemonic('a');
         jMenuItem5.setText(resourceMap.getString("jMenuItem5.text")); // NOI18N
         jMenuItem5.setName("jMenuItem5"); // NOI18N
         jMenu5.add(jMenuItem5);
 
         jMenuItem6.setAction(actionMap.get("tagCorpus")); // NOI18N
-        jMenuItem6.setMnemonic('e');
         jMenuItem6.setName("jMenuItem6"); // NOI18N
         jMenu5.add(jMenuItem6);
 
         jMenuItem7.setAction(actionMap.get("extractTemplates")); // NOI18N
-        jMenuItem7.setMnemonic('x');
         jMenuItem7.setName("jMenuItem7"); // NOI18N
         jMenu5.add(jMenuItem7);
 
@@ -666,7 +641,6 @@ public class SRLGUIView extends FrameView {
         jMenu5.add(jSeparator9);
 
         jMenuItem8.setAction(actionMap.get("searchCorpus")); // NOI18N
-        jMenuItem8.setMnemonic('s');
         jMenuItem8.setName("jMenuItem8"); // NOI18N
         jMenu5.add(jMenuItem8);
 
@@ -674,17 +648,14 @@ public class SRLGUIView extends FrameView {
         jMenu5.add(jSeparator10);
 
         jMenuItem14.setAction(actionMap.get("importTagged")); // NOI18N
-        jMenuItem14.setMnemonic('i');
         jMenuItem14.setName("jMenuItem14"); // NOI18N
         jMenu5.add(jMenuItem14);
 
         jMenuItem11.setAction(actionMap.get("writeTagged")); // NOI18N
-        jMenuItem11.setMnemonic('d');
         jMenuItem11.setName("jMenuItem11"); // NOI18N
         jMenu5.add(jMenuItem11);
 
         jMenuItem10.setAction(actionMap.get("writeTemplates")); // NOI18N
-        jMenuItem10.setMnemonic('t');
         jMenuItem10.setName("jMenuItem10"); // NOI18N
         jMenu5.add(jMenuItem10);
 
@@ -695,12 +666,10 @@ public class SRLGUIView extends FrameView {
         jMenu6.setName("jMenu6"); // NOI18N
 
         jMenuItem27.setAction(actionMap.get("openPlugInDialog")); // NOI18N
-        jMenuItem27.setMnemonic('p');
         jMenuItem27.setName("jMenuItem27"); // NOI18N
         jMenu6.add(jMenuItem27);
 
         jMenuItem28.setAction(actionMap.get("openSettings")); // NOI18N
-        jMenuItem28.setMnemonic('s');
         jMenuItem28.setName("jMenuItem28"); // NOI18N
         jMenu6.add(jMenuItem28);
 
@@ -710,12 +679,10 @@ public class SRLGUIView extends FrameView {
         helpMenu.setName("helpMenu"); // NOI18N
 
         jMenuItem9.setAction(actionMap.get("openWiki")); // NOI18N
-        jMenuItem9.setMnemonic('w');
         jMenuItem9.setName("jMenuItem9"); // NOI18N
         helpMenu.add(jMenuItem9);
 
         jMenuItem26.setAction(actionMap.get("openLanguageDescription")); // NOI18N
-        jMenuItem26.setMnemonic('l');
         jMenuItem26.setName("jMenuItem26"); // NOI18N
         helpMenu.add(jMenuItem26);
 

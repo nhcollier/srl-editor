@@ -46,8 +46,8 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="analyzerCombo" pref="257" max="32767" attributes="1"/>
-                          <Component id="projectPathField" alignment="0" pref="257" max="32767" attributes="1"/>
+                          <Component id="analyzerCombo" pref="231" max="32767" attributes="1"/>
+                          <Component id="projectPathField" alignment="0" pref="231" max="32767" attributes="1"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="1" attributes="0">
@@ -127,6 +127,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="projectPathBrowseButton">
       <Properties>
+        <Property name="icon" type="javax.swing.Icon" resourceKey="projectPathBrowseButton.icon"/>
         <Property name="text" type="java.lang.String" resourceKey="projectPathBrowseButton.text"/>
         <Property name="name" type="java.lang.String" value="projectPathBrowseButton" noResource="true"/>
       </Properties>
@@ -136,6 +137,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="analyzerBrowseButton">
       <Properties>
+        <Property name="icon" type="javax.swing.Icon" resourceKey="analyzerBrowseButton.icon"/>
         <Property name="text" type="java.lang.String" resourceKey="analyzerBrowseButton.text"/>
         <Property name="name" type="java.lang.String" value="analyzerBrowseButton" noResource="true"/>
       </Properties>

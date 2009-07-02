@@ -27,7 +27,7 @@
                   <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="matchesLabel" min="-2" max="-2" attributes="1"/>
-                      <EmptySpace pref="510" max="32767" attributes="0"/>
+                      <EmptySpace pref="326" max="32767" attributes="0"/>
                       <Component id="showMatchButton" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="1">
@@ -35,12 +35,12 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane4" pref="550" max="32767" attributes="0"/>
+                      <Component id="jScrollPane4" pref="366" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jButton1" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jScrollPane3" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
-                  <Component id="jScrollPane2" alignment="0" pref="653" max="32767" attributes="1"/>
+                  <Component id="jScrollPane2" alignment="0" pref="469" max="32767" attributes="1"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
           </Group>
@@ -169,28 +169,27 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
+              <Group type="102" alignment="1" attributes="0">
+                  <EmptySpace max="-2" attributes="0"/>
                   <Component id="jLabel2" pref="236" max="32767" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="addButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="removeButton" min="-2" max="-2" attributes="0"/>
               </Group>
-              <Component id="jScrollPane1" alignment="0" pref="294" max="32767" attributes="1"/>
+              <Component id="jScrollPane1" alignment="0" pref="478" max="32767" attributes="1"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                          <Component id="removeButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="addButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="removeButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="addButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="jScrollPane1" pref="469" max="32767" attributes="1"/>
+                  <Component id="jScrollPane1" pref="464" max="32767" attributes="1"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -204,6 +203,7 @@
         </Component>
         <Component class="javax.swing.JButton" name="removeButton">
           <Properties>
+            <Property name="icon" type="javax.swing.Icon" resourceKey="removeButton.icon"/>
             <Property name="text" type="java.lang.String" resourceKey="removeButton.text"/>
             <Property name="toolTipText" type="java.lang.String" resourceKey="removeButton.toolTipText"/>
             <Property name="name" type="java.lang.String" value="removeButton" noResource="true"/>
@@ -214,6 +214,7 @@
         </Component>
         <Component class="javax.swing.JButton" name="addButton">
           <Properties>
+            <Property name="icon" type="javax.swing.Icon" resourceKey="addButton.icon"/>
             <Property name="text" type="java.lang.String" resourceKey="addButton.text"/>
             <Property name="toolTipText" type="java.lang.String" resourceKey="addButton.toolTipText"/>
             <Property name="name" type="java.lang.String" value="addButton" noResource="true"/>
