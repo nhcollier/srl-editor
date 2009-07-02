@@ -15,6 +15,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 import srl.wordlist.*;
 import java.util.*;
 import javax.swing.event.DocumentListener;
@@ -35,7 +37,7 @@ public class WordListPanel extends javax.swing.JPanel {
         wl = wordList;
         initComponents();
         int i = 0;
-        TreeSet<String> wordLists = new TreeSet<String>(wl.wordLists.keySet());
+        TreeSet<String> wordLists = new TreeSet<String>(wl.getLists());
         for (String s : wordLists) {
             listCombo.insertItemAt(s, i++);
             if (i == 1) {
@@ -53,7 +55,7 @@ public class WordListPanel extends javax.swing.JPanel {
 
             public void insertUpdate(DocumentEvent e) {
                 String list = (String) listCombo.getSelectedItem();
-                if (!wl.wordLists.containsKey(list)) {
+                if (!wl.getLists().contains(list)) {
                     return;
                 }
                 wl.comment.put(list, commentField.getText());
@@ -61,7 +63,7 @@ public class WordListPanel extends javax.swing.JPanel {
 
             public void removeUpdate(DocumentEvent e) {
                 String list = (String) listCombo.getSelectedItem();
-                if (!wl.wordLists.containsKey(list)) {
+                if (!wl.getLists().contains(list)) {
                     return;
                 }
                 wl.comment.put(list, commentField.getText());
@@ -69,12 +71,16 @@ public class WordListPanel extends javax.swing.JPanel {
 
             public void changedUpdate(DocumentEvent e) {
                 String list = (String) listCombo.getSelectedItem();
-                if (!wl.wordLists.containsKey(list)) {
+                if (!wl.getLists().contains(list)) {
                     return;
                 }
                 wl.comment.put(list, commentField.getText());
             }
         });
+    }
+
+    void deleteListAction() {
+        deleteListActionPerformed(null);
     }
 
     /** This method is called from within the constructor to
@@ -214,7 +220,7 @@ public class WordListPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
     private void deleteListActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteListActionPerformed
         String list = (String) listCombo.getSelectedItem();
-        if (!wl.wordLists.containsKey(list)) {
+        if (!wl.getLists().contains(list)) {
             return;
         }
         if(listCombo.getItemCount() == 2) {
@@ -222,12 +228,16 @@ public class WordListPanel extends javax.swing.JPanel {
             listCombo.setSelectedIndex(-1);
             userChangeFlag = true;
         }
+        removeList(list);
+        switchToSelectedList();
+        SRLGUIApp.getApplication().addUndoableEdit(new RemoveListEdit(list));
+    }//GEN-LAST:event_deleteListActionPerformed
+
+    private void removeList(String list) {
         DefaultComboBoxModel dcbm = (DefaultComboBoxModel) listCombo.getModel();
         dcbm.removeElement(list);
-        wl.wordLists.remove(list);
-        switchToSelectedList();
-        SRLGUIApp.getApplication().setModified();
-    }//GEN-LAST:event_deleteListActionPerformed
+        wl.removeList(list);
+    }
     int lastSelectedListIndex = -1;
 
     private void listComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listComboActionPerformed
@@ -247,12 +257,9 @@ public class WordListPanel extends javax.swing.JPanel {
                     return;
                 }
 
-                listCombo.insertItemAt(name, listCombo.getItemCount() - 1);
-                listCombo.setSelectedItem(name);
-                jButton1.setEnabled(true);
-                jButton2.setEnabled(true);
-                SRLGUIApp.getApplication().setModified();
-                SRLGUIApp.getApplication().proj.corpus.listenToWordList(name, wl.wordLists.get(name));
+                addList(name);
+                SRLGUIApp.getApplication().addUndoableEdit(new NewListEdit(name));
+                SRLGUIApp.getApplication().proj.corpus.listenToWordList(name, WordListSet.getWordList(name));
             } else {
                 listCombo.setSelectedIndex(lastSelectedListIndex);
             }
@@ -260,10 +267,40 @@ public class WordListPanel extends javax.swing.JPanel {
         switchToSelectedList();
     }//GEN-LAST:event_listComboActionPerformed
 
+    void addListAction() {
+         String name = JOptionPane.showInputDialog(this, "List name ", "");
+            if (name != null && name.length() > 0) {
+                if (!name.matches("[A-Za-z0-9_]+")) {
+                    JOptionPane.showMessageDialog(this, name + " is not a valid list name. Must contain only alphanumeric characters and underscores", "Could not add list", JOptionPane.WARNING_MESSAGE);
+                    listCombo.setSelectedIndex(-1);
+                    return;
+                }
+                if (!wl.addList(name)) {
+                    JOptionPane.showMessageDialog(this, "There is already a list named " + name, "Could not add list", JOptionPane.WARNING_MESSAGE);
+                    listCombo.setSelectedIndex(-1);
+                    return;
+                }
+
+                addList(name);
+                SRLGUIApp.getApplication().addUndoableEdit(new NewListEdit(name));
+                SRLGUIApp.getApplication().proj.corpus.listenToWordList(name, WordListSet.getWordList(name));
+            } else {
+                listCombo.setSelectedIndex(lastSelectedListIndex);
+            }
+         switchToSelectedList();
+    }
+
+    private void addList(String name) {
+         listCombo.insertItemAt(name, listCombo.getItemCount() - 1);
+         listCombo.setSelectedItem(name);
+         jButton1.setEnabled(true);
+         jButton2.setEnabled(true);
+    }
+
     private void mainListKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_mainListKeyPressed
         if (evt.getKeyCode() == evt.VK_DELETE) {
             String list = (String) listCombo.getSelectedItem();
-            if (!wl.wordLists.containsKey(list)) {
+            if (!wl.getLists().contains(list)) {
                 return;
             }
             int idx = mainList.getSelectedRow();
@@ -273,7 +310,7 @@ public class WordListPanel extends javax.swing.JPanel {
             String oldVal = oldTable.get(idx);
             WordListEntry oldWle = wl.getEntry(oldVal);
 
-            Set<WordListEntry> wordList = wl.wordLists.get(list);
+            Set<WordListEntry> wordList = WordListSet.getWordList(list);
             if (!wordList.contains(oldWle)) {
                 return;
             }
@@ -281,7 +318,7 @@ public class WordListPanel extends javax.swing.JPanel {
             ((DefaultTableModel) mainList.getModel()).removeRow(idx);
             wordList.remove(oldWle);
             oldTable.remove(oldVal);
-            SRLGUIApp.getApplication().setModified();
+            SRLGUIApp.getApplication().addUndoableEdit(new ChangeListEdit(idx, oldVal, "",(String)listCombo.getSelectedItem()));
             userChangeFlag = true;
         }
     }//GEN-LAST:event_mainListKeyPressed
@@ -290,7 +327,9 @@ public class WordListPanel extends javax.swing.JPanel {
         userChangeFlag = false;
         lastSelectedListIndex = listCombo.getSelectedIndex();
         String list = (String) listCombo.getSelectedItem();
-        if (!wl.wordLists.containsKey(list)) {
+        if(list == null)
+            return;
+        if (!wl.getLists().contains(list)) {
             if(list.equals("")) {
                 jButton1.setEnabled(false);
                 jButton2.setEnabled(false);
@@ -303,7 +342,7 @@ public class WordListPanel extends javax.swing.JPanel {
         dlm.setRowCount(0);
         oldTable.clear();
         int i = 0;
-        TreeSet<WordListEntry> l = new TreeSet<WordListEntry>(wl.wordLists.get(list));
+        TreeSet<WordListEntry> l = new TreeSet<WordListEntry>(WordListSet.getWordList(list));
         for (WordListEntry s : l) {
             String[] rowData = {s.toString()};
             dlm.insertRow(i++, rowData);
@@ -320,40 +359,72 @@ public class WordListPanel extends javax.swing.JPanel {
         if (!userChangeFlag) {
             return;
         }
-        System.out.println(oldTable);
         String list = (String) listCombo.getSelectedItem();
-        if (!wl.wordLists.containsKey(list)) {
+        if (!wl.getLists().contains(list)) {
             return;
         }
         int idx = e.getFirstRow();
         String oldVal, newVal = (String) mainList.getValueAt(idx, 0);
+        oldVal = oldTable.get(idx);
+        changeElem(idx, oldVal, newVal,null);
+        SRLGUIApp.getApplication().addUndoableEdit(new ChangeListEdit(idx, oldVal, newVal, (String)listCombo.getSelectedItem()));
+    }
+
+    @org.jdesktop.application.Action
+    public void addElem() {
+        String s = JOptionPane.showInputDialog(this, "Element", "");
+        if (s != null && !s.equals("")) {
+            DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
+            int idx = dlm.getRowCount() - 1;
+            changeElem(idx, "", s,(String)listCombo.getSelectedItem());
+            SRLGUIApp.getApplication().addUndoableEdit(new ChangeListEdit(idx, "", s, (String)listCombo.getSelectedItem()));
+        }
+    }
+
+    @org.jdesktop.application.Action
+    public void removeElem() {
+        DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
+        int idx = mainList.getSelectedRow();
+        if (idx == -1 || idx == mainList.getRowCount() - 1) {
+            return;
+        }
+        changeElem(idx, (String)mainList.getValueAt(idx,0), "", (String)listCombo.getSelectedItem());
+        SRLGUIApp.getApplication().addUndoableEdit(new ChangeListEdit(idx, (String)mainList.getValueAt(idx,0), "", (String)listCombo.getSelectedItem()));
+    }
+
+    private void changeElem(int idx, String oldVal, String newVal, String list) {
+        boolean changeUI = list.equals((String) listCombo.getSelectedItem());
+        if (!wl.getLists().contains(list)) {
+            return;
+        }
 
         WordListEntry oldWle;
         try {
-            oldVal = oldTable.get(idx);
             oldWle = wl.getEntry(oldVal);
             if (newVal.length() == 0) {
-                Set<WordListEntry> wordList = wl.wordLists.get(list);
+                Set<WordListEntry> wordList = WordListSet.getWordList(list);
                 if (!wordList.contains(oldWle)) {
                     return;
                 }
                 userChangeFlag = false;
-                ((DefaultTableModel) mainList.getModel()).removeRow(idx);
+                if(changeUI)
+                    ((DefaultTableModel) mainList.getModel()).removeRow(idx);
                 wordList.remove(oldWle);
-                oldTable.remove(idx);
-                SRLGUIApp.getApplication().setModified();
+                if(changeUI)
+                    oldTable.remove(idx);
                 userChangeFlag = true;
                 return;
             }
             if (oldVal.length() != 0) {
-                wl.wordLists.get(list).remove(oldWle);
+                WordListSet.getWordList(list).remove(oldWle);
             } else {
                 userChangeFlag = false;
                 DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
-                if (!oldTable.get(oldTable.size() - 1).equals("") || oldTable.size() - 1 == idx) {
+                if (changeUI && (!oldTable.get(oldTable.size() - 1).equals("") || oldTable.size() - 1 == idx)) {
                     String[] rowData = {""};
                     dlm.addRow(rowData);
                     oldTable.add("");
+                    dlm.setValueAt(newVal,idx,0);
                 }
                 userChangeFlag = true;
             }
@@ -361,59 +432,11 @@ public class WordListPanel extends javax.swing.JPanel {
             x.printStackTrace();
             return;
         }
-        if(wl.getEntry(newVal).equals(""))
-            throw new RuntimeException();
-        wl.wordLists.get(list).add(wl.getEntry(newVal));
-        oldTable.set(idx, newVal);
-        SRLGUIApp.getApplication().setModified();
+        WordListSet.getWordList(list).add(wl.getEntry(newVal));
+        if(changeUI)
+            oldTable.set(idx, newVal);
     }
-
-    @org.jdesktop.application.Action
-    public void addElem() {
-        String s = JOptionPane.showInputDialog(this, "Element", "");
-        if (s != null && !s.equals("")) {
-            String list = (String) listCombo.getSelectedItem();
-            if (!wl.wordLists.containsKey(list)) {
-                return;
-            }
-            userChangeFlag = false;
-            DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
-            int idx = dlm.getRowCount() - 1;
-            String[] rowData = {""};
-            dlm.addRow(rowData);
-            oldTable.add("");
-            dlm.setValueAt(s, idx, 0);
-            userChangeFlag = true;
-            if(s.equals(""))
-                throw new RuntimeException();
-            wl.wordLists.get(list).add(wl.getEntry(s));
-            oldTable.set(idx, s);
-        }
-    }
-
-    @org.jdesktop.application.Action
-    public void removeElem() {
-        DefaultTableModel dlm = (DefaultTableModel) mainList.getModel();
-        String list = (String) listCombo.getSelectedItem();
-        if (!wl.wordLists.containsKey(list)) {
-            return;
-        }
-        int idx = mainList.getSelectedRow();
-        if (idx == -1 || idx == mainList.getRowCount() - 1) {
-            return;
-        }
-        Set<WordListEntry> wordList = wl.wordLists.get(list);
-        WordListEntry oldWle = wl.getEntry((String) mainList.getValueAt(idx, 0));
-        if (!wordList.contains(oldWle)) {
-            return;
-        }
-        userChangeFlag = false;
-        ((DefaultTableModel) mainList.getModel()).removeRow(idx);
-        wordList.remove(oldWle);
-        oldTable.remove(idx);
-        SRLGUIApp.getApplication().setModified();
-        userChangeFlag = true;
-    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextArea commentField;
     private javax.swing.JButton deleteList;
@@ -426,53 +449,83 @@ public class WordListPanel extends javax.swing.JPanel {
     private javax.swing.JComboBox listCombo;
     private javax.swing.JTable mainList;
     // End of variables declaration//GEN-END:variables
-    /*  private class WordListTableModel extends AbstractTableModel {
-    @Override
-    public String getColumnName(int column) {
-    if(column == 0)
-    return "Words";
-    else
-    return null;
+
+    private class NewListEdit extends SimpleUndoableEdit {
+        String listName;
+
+        public NewListEdit(String listName) {
+            this.listName = listName;
+        }
+
+        public String getPresentationName() {
+            return "Add list " + listName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            addList(listName);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            removeList(listName);
+        }
     }
-    public int getRowCount() {
-    String list = (String)listCombo.getSelectedItem(); 
-    if(!wl.wordLists.containsKey(list)) 
-    return 0;
-    else
-    return wl.wordLists.get(list).size();
+
+    private class RemoveListEdit extends SimpleUndoableEdit {
+        String listName;
+
+        public RemoveListEdit(String listName) {
+            this.listName = listName;
+        }
+
+        public String getPresentationName() {
+            return "Remove list " + listName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone =false;
+            removeList(listName);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            addList(listName);
+        }
     }
-    public int getColumnCount() {
-    return 1;
+
+    private class ChangeListEdit extends SimpleUndoableEdit {
+        int idx;
+        String oldVal, newVal;
+        String listName;
+
+        public ChangeListEdit(int idx, String oldVal, String newVal, String listName) {
+            this.idx = idx;
+            this.oldVal = oldVal;
+            this.newVal = newVal;
+            this.listName = listName;
+        }
+
+
+
+        public String getPresentationName() {
+            if(oldVal.equals("")) {
+                return "Add element " + newVal + " to list";
+            }
+            if(newVal.equals("")) {
+                return "Remove element " + oldVal + " from list";
+            }
+            return "Change " + oldVal + " to " + newVal + " in list";
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            changeElem(idx, oldVal, newVal, listName);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            changeElem(idx, newVal, oldVal, listName);
+        }
     }
-    public Object getValueAt(int rowIndex, int columnIndex) {
-    if(columnIndex != 1)
-    return null;
-    String list = (String)listCombo.getSelectedItem(); 
-    if(!wl.wordLists.containsKey(list)) 
-    return null;
-    Iterator iter = wl.wordLists.get(list).iterator();
-    for(int i = 0; i < rowIndex; i++) {
-    if(i == rowIndex)
-    return iter.next();
-    else
-    iter.next();
-    }
-    return null;                           
-    }
-    @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-    return true;
-    }
-    @Override
-    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-    if(columnIndex != 1)
-    return;
-    String list = (String)listCombo.getSelectedItem(); 
-    if(!wl.wordLists.containsKey(list)) 
-    return;
-    String s = (String)getValueAt(rowIndex, columnIndex);
-    wl.wordLists.get(list).remove(s);
-    wl.wordLists.get(list).add(s);
-    }
-    }*/
 }

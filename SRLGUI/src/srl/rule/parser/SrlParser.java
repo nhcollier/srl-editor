@@ -45,7 +45,48 @@ boolean cleanHead = false;
         // First read the head, then the main body
              ruleID = jj_consume_token(VAR);
         jj_consume_token(COLON);
-        ruleHead = jj_consume_token(WORD);
+        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case WORD:
+          ruleHead = jj_consume_token(WORD);
+          break;
+        case STRMATCH:
+          ruleHead = jj_consume_token(STRMATCH);
+          break;
+        case STRMATCH_APPROX:
+          ruleHead = jj_consume_token(STRMATCH_APPROX);
+          break;
+        case STRMATCH_REGEX:
+          ruleHead = jj_consume_token(STRMATCH_REGEX);
+          break;
+        case STRMATCH_ORTH:
+          ruleHead = jj_consume_token(STRMATCH_ORTH);
+          break;
+        case BEGINS:
+          ruleHead = jj_consume_token(BEGINS);
+          break;
+        case ENDS:
+          ruleHead = jj_consume_token(ENDS);
+          break;
+        case CONTAINS:
+          ruleHead = jj_consume_token(CONTAINS);
+          break;
+        case WORDS:
+          ruleHead = jj_consume_token(WORDS);
+          break;
+        case OPTIONAL:
+          ruleHead = jj_consume_token(OPTIONAL);
+          break;
+        case NOT:
+          ruleHead = jj_consume_token(NOT);
+          break;
+        case CASE:
+          ruleHead = jj_consume_token(CASE);
+          break;
+        default:
+          jj_la1[1] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
         jj_consume_token(OPEN_PARA);
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case VAR:
@@ -57,7 +98,7 @@ boolean cleanHead = false;
         cleanHead = true;
           break;
         default:
-          jj_la1[1] = jj_gen;
+          jj_la1[2] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -80,7 +121,7 @@ boolean cleanHead = false;
        comment = new StringBuffer();
         break;
       default:
-        jj_la1[2] = jj_gen;
+        jj_la1[3] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -91,7 +132,48 @@ boolean cleanHead = false;
     Rule rule;
     Token ruleHead, ruleHeadVar;
     boolean cleanHead = false;
-    ruleHead = jj_consume_token(WORD);
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case WORD:
+      ruleHead = jj_consume_token(WORD);
+      break;
+    case STRMATCH:
+      ruleHead = jj_consume_token(STRMATCH);
+      break;
+    case STRMATCH_APPROX:
+      ruleHead = jj_consume_token(STRMATCH_APPROX);
+      break;
+    case STRMATCH_REGEX:
+      ruleHead = jj_consume_token(STRMATCH_REGEX);
+      break;
+    case STRMATCH_ORTH:
+      ruleHead = jj_consume_token(STRMATCH_ORTH);
+      break;
+    case BEGINS:
+      ruleHead = jj_consume_token(BEGINS);
+      break;
+    case ENDS:
+      ruleHead = jj_consume_token(ENDS);
+      break;
+    case CONTAINS:
+      ruleHead = jj_consume_token(CONTAINS);
+      break;
+    case WORDS:
+      ruleHead = jj_consume_token(WORDS);
+      break;
+    case OPTIONAL:
+      ruleHead = jj_consume_token(OPTIONAL);
+      break;
+    case NOT:
+      ruleHead = jj_consume_token(NOT);
+      break;
+    case CASE:
+      ruleHead = jj_consume_token(CASE);
+      break;
+    default:
+      jj_la1[4] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
     jj_consume_token(OPEN_PARA);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case VAR:
@@ -103,7 +185,7 @@ boolean cleanHead = false;
         cleanHead = true;
       break;
     default:
-      jj_la1[3] = jj_gen;
+      jj_la1[5] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -128,7 +210,7 @@ boolean cleanHead = false;
         ;
         break;
       default:
-        jj_la1[4] = jj_gen;
+        jj_la1[6] = jj_gen;
         break label_2;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -153,7 +235,7 @@ boolean cleanHead = false;
        comment = new StringBuffer();
         break;
       default:
-        jj_la1[5] = jj_gen;
+        jj_la1[7] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -176,7 +258,48 @@ boolean cleanHead = false;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case SEMICOLON:
       jj_consume_token(SEMICOLON);
-      ruleHead = jj_consume_token(WORD);
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case WORD:
+        ruleHead = jj_consume_token(WORD);
+        break;
+      case STRMATCH:
+        ruleHead = jj_consume_token(STRMATCH);
+        break;
+      case STRMATCH_APPROX:
+        ruleHead = jj_consume_token(STRMATCH_APPROX);
+        break;
+      case STRMATCH_REGEX:
+        ruleHead = jj_consume_token(STRMATCH_REGEX);
+        break;
+      case STRMATCH_ORTH:
+        ruleHead = jj_consume_token(STRMATCH_ORTH);
+        break;
+      case BEGINS:
+        ruleHead = jj_consume_token(BEGINS);
+        break;
+      case ENDS:
+        ruleHead = jj_consume_token(ENDS);
+        break;
+      case CONTAINS:
+        ruleHead = jj_consume_token(CONTAINS);
+        break;
+      case WORDS:
+        ruleHead = jj_consume_token(WORDS);
+        break;
+      case OPTIONAL:
+        ruleHead = jj_consume_token(OPTIONAL);
+        break;
+      case NOT:
+        ruleHead = jj_consume_token(NOT);
+        break;
+      case CASE:
+        ruleHead = jj_consume_token(CASE);
+        break;
+      default:
+        jj_la1[8] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
       jj_consume_token(OPEN_PARA);
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case VAR:
@@ -188,7 +311,7 @@ boolean cleanHead = false;
        cleanHead = true;
         break;
       default:
-        jj_la1[6] = jj_gen;
+        jj_la1[9] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -201,7 +324,7 @@ boolean cleanHead = false;
       typeExpr(rule);
       break;
     default:
-      jj_la1[7] = jj_gen;
+      jj_la1[10] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -272,7 +395,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[8] = jj_gen;
+        jj_la1[11] = jj_gen;
         ;
       }
       jj_consume_token(COMMA);
@@ -281,7 +404,7 @@ boolean cleanHead = false;
         s2 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[9] = jj_gen;
+        jj_la1[12] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -330,7 +453,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(WORDLIST);
         break;
       default:
-        jj_la1[10] = jj_gen;
+        jj_la1[13] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -349,7 +472,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(WORDLIST);
         break;
       default:
-        jj_la1[11] = jj_gen;
+        jj_la1[14] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -372,7 +495,7 @@ boolean cleanHead = false;
         s4 = jj_consume_token(STAR);
         break;
       default:
-        jj_la1[12] = jj_gen;
+        jj_la1[15] = jj_gen;
         ;
       }
       jj_consume_token(OPEN_PARA);
@@ -383,7 +506,7 @@ boolean cleanHead = false;
         s3 = jj_consume_token(VAR);
         break;
       default:
-        jj_la1[13] = jj_gen;
+        jj_la1[16] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -408,7 +531,7 @@ boolean cleanHead = false;
         }
       break;
     default:
-      jj_la1[14] = jj_gen;
+      jj_la1[17] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -485,7 +608,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[15] = jj_gen;
+        jj_la1[18] = jj_gen;
         ;
       }
       jj_consume_token(COMMA);
@@ -494,7 +617,7 @@ boolean cleanHead = false;
         s2 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[16] = jj_gen;
+        jj_la1[19] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -543,7 +666,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(WORDLIST);
         break;
       default:
-        jj_la1[17] = jj_gen;
+        jj_la1[20] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -562,7 +685,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(WORDLIST);
         break;
       default:
-        jj_la1[18] = jj_gen;
+        jj_la1[21] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -585,7 +708,7 @@ boolean cleanHead = false;
         s4 = jj_consume_token(STAR);
         break;
       default:
-        jj_la1[19] = jj_gen;
+        jj_la1[22] = jj_gen;
         ;
       }
       jj_consume_token(OPEN_PARA);
@@ -596,7 +719,7 @@ boolean cleanHead = false;
         s3 = jj_consume_token(VAR);
         break;
       default:
-        jj_la1[20] = jj_gen;
+        jj_la1[23] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -624,7 +747,7 @@ boolean cleanHead = false;
        {if (true) return 0;}
       break;
     default:
-      jj_la1[21] = jj_gen;
+      jj_la1[24] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -688,7 +811,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[22] = jj_gen;
+        jj_la1[25] = jj_gen;
         ;
       }
       jj_consume_token(COMMA);
@@ -697,7 +820,7 @@ boolean cleanHead = false;
         s2 = jj_consume_token(NUMBER);
         break;
       default:
-        jj_la1[23] = jj_gen;
+        jj_la1[26] = jj_gen;
         ;
       }
       jj_consume_token(CLOSE_PARA);
@@ -746,7 +869,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(WORDLIST);
         break;
       default:
-        jj_la1[24] = jj_gen;
+        jj_la1[27] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -765,7 +888,7 @@ boolean cleanHead = false;
         s1 = jj_consume_token(WORDLIST);
         break;
       default:
-        jj_la1[25] = jj_gen;
+        jj_la1[28] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -785,7 +908,7 @@ boolean cleanHead = false;
       jj_consume_token(CLOSE_BRACE);
       break;
     default:
-      jj_la1[26] = jj_gen;
+      jj_la1[29] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -800,13 +923,13 @@ boolean cleanHead = false;
   public Token jj_nt;
   private int jj_ntk;
   private int jj_gen;
-  final private int[] jj_la1 = new int[27];
+  final private int[] jj_la1 = new int[30];
   static private int[] jj_la1_0;
   static {
       jj_la1_init_0();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x48000008,0xa000000,0x48000008,0xa000000,0x48000008,0x48000008,0xa000000,0xa00000,0x10000000,0x10000000,0x6000000,0x6000000,0x1000000,0x80000,0x62007ff9,0x10000000,0x10000000,0x6000000,0x6000000,0x1000000,0x80000,0x62027ff9,0x10000000,0x10000000,0x6000000,0x6000000,0x2047ff0,};
+      jj_la1_0 = new int[] {0x48000008,0x20007ff0,0xa000000,0x48000008,0x20007ff0,0xa000000,0x48000008,0x48000008,0x20007ff0,0xa000000,0xa00000,0x10000000,0x10000000,0x6000000,0x6000000,0x1000000,0x80000,0x62007ff9,0x10000000,0x10000000,0x6000000,0x6000000,0x1000000,0x80000,0x62027ff9,0x10000000,0x10000000,0x6000000,0x6000000,0x2047ff0,};
    }
 
   /** Constructor with InputStream. */
@@ -820,7 +943,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -834,7 +957,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Constructor. */
@@ -844,7 +967,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -854,7 +977,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Constructor with generated Token Manager. */
@@ -863,7 +986,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -872,7 +995,7 @@ boolean cleanHead = false;
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 27; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 30; i++) jj_la1[i] = -1;
   }
 
   private Token jj_consume_token(int kind) throws ParseException {
@@ -928,7 +1051,7 @@ boolean cleanHead = false;
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 30; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {

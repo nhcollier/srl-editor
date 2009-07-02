@@ -17,6 +17,8 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 import org.apache.lucene.document.Document;
 import org.jdesktop.application.Action;
 import srl.rule.*;
@@ -26,6 +28,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.undo.UndoableEdit;
 import mccrae.tools.process.StopSignal;
 import mccrae.tools.strings.Strings;
 import mccrae.tools.struct.Pair;
@@ -84,14 +87,15 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             commentField.setEnabled(true);
             onRuleSelect();
         }
-        
+
         matchesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
             public void valueChanged(ListSelectionEvent e) {
-                if(e.getFirstIndex() == -1)
+                if (e.getFirstIndex() == -1) {
                     showMatchButton.setEnabled(false);
-                else 
+                } else {
                     showMatchButton.setEnabled(true);
+                }
             }
         });
         ruleEditor.addActionListener(new ActionListener() {
@@ -101,9 +105,12 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             }
         });
     }
-
     private boolean dontMatch = false;
-    
+
+    void addRule() {
+        addButtonActionPerformed(null);
+    }
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -323,16 +330,26 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         );
     }// </editor-fold>//GEN-END:initComponents
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
-        DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
+
         String ruleID = JOptionPane.showInputDialog(this, "Rule ID:", "");
         if (ruleID == null) {
             return;
         }
-        if(!isRuleID(ruleID)) {
-            JOptionPane.showMessageDialog(this, "Rule ID must start with an uppercase letter and contain only word characters", "Invalid Rule ID", 
+        if (!isRuleID(ruleID)) {
+            JOptionPane.showMessageDialog(this, "Rule ID must start with an uppercase letter and contain only word characters", "Invalid Rule ID",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
+        addRule(ruleID);
+        SRLGUIApp.getApplication().addUndoableEdit(new AddRuleEdit(ruleID, ruleIDList.getModel().getSize() - 1));
+    }
+
+    private void addRule(String ruleID) {
+        addRule(ruleID, ruleIDList.getModel().getSize());
+    }
+
+    private void addRule(String ruleID, int idx) {
+        DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
         if (ruleLookup.containsKey(ruleID)) {
             JOptionPane.showMessageDialog(this, "ID already exists");
             return;
@@ -342,16 +359,29 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         if (ruleSet.ruleType == Rule.TEMPLATE_RULE) {
             rule.addHead("head", "X");
         }
-        ruleSet.rules.add(new Pair<String, Rule>((String) ruleID, rule));
+        ruleSet.rules.add(idx, new Pair<String, Rule>((String) ruleID, rule));
         ruleLookup.put(ruleID, rule);
-        dlm.addElement(ruleID + ": " + rule.toString());
-        SRLGUIApp.getApplication().setModified();
+        dlm.add(idx, ruleID + ": " + rule.toString());
         dontMatch = false;
     }//GEN-LAST:event_addButtonActionPerformed
 
+    void removeRule() {
+        removeButtonActionPerformed(null);
+    }
+
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
-        userChangeFlag = false;
         int idx = ruleIDList.getSelectedIndex();
+        if (idx < 0) {
+            return;
+        }
+        RemoveRuleEdit rre = new RemoveRuleEdit(ruleSet.rules.get(idx).first, idx,
+                ruleSet.rules.get(idx).second.toString(), ruleSet.rules.get(idx).second.comment);
+        removeRule(idx);
+        SRLGUIApp.getApplication().addUndoableEdit(rre);
+    }
+
+    private void removeRule(int idx) {
+        userChangeFlag = false;
         if (idx < 0) {
             return;
         }
@@ -366,7 +396,6 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         matchesLabel.setText("Matches");
         DefaultTableModel dtm = (DefaultTableModel) matchesTable.getModel();
         dtm.setRowCount(0);
-        SRLGUIApp.getApplication().setModified();
         userChangeFlag = true;
         oldSelectIndex = -1;
     }//GEN-LAST:event_removeButtonActionPerformed
@@ -425,156 +454,182 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
     }//GEN-LAST:event_ruleIDListValueChanged
 
     private boolean isRuleID(String s) {
-        if(!s.matches("\\w+") || 
+        if (!s.matches("\\w+") ||
                 !Character.isUpperCase(s.charAt(0))) {
             return false;
-        } 
+        }
         return true;
     }
-    
-private void idEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_idEditorActionPerformed
-    if (ruleIDList.getSelectedIndex() == -1) {
-        return;
-    }
-    String ruleID = idEditor.getText();
-    if(!isRuleID(ruleID)) {
-        JOptionPane.showMessageDialog(this, "Rule ID must start with an uppercase letter and contain only word characters", "Invalid Rule ID", 
-                JOptionPane.WARNING_MESSAGE);
-        return;
-    }
-    ruleSet.rules.get(ruleIDList.getSelectedIndex()).first = ruleID;
-    DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
-    dlm.setElementAt(ruleID + ": " + ruleEditor.getText(), ruleIDList.getSelectedIndex());
-    SRLGUIApp.getApplication().setModified();
-}//GEN-LAST:event_idEditorActionPerformed
 
-private void ruleEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ruleEditorActionPerformed
-                                       
+private void idEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_idEditorActionPerformed
         if (ruleIDList.getSelectedIndex() == -1) {
             return;
         }
-        Rule rule;
+        String oldRuleID = ruleSet.rules.get(ruleIDList.getSelectedIndex()).first;
+        String ruleID = idEditor.getText();
+        if (!isRuleID(ruleID)) {
+            JOptionPane.showMessageDialog(this, "Rule ID must start with an uppercase letter and contain only word characters", "Invalid Rule ID",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        changeRuleID(ruleIDList.getSelectedIndex(), ruleID);
+        SRLGUIApp.getApplication().addUndoableEdit(new RuleIDChangeEdit(ruleIDList.getSelectedIndex(), oldRuleID, ruleID));
+    }
+
+    private void changeRuleID(int idx, String ruleID) {
+        ruleSet.rules.get(idx).first = ruleID;
+        DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
+        dlm.setElementAt(ruleID + ": " + ruleEditor.getText(), idx);
+}//GEN-LAST:event_idEditorActionPerformed
+
+private void ruleEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ruleEditorActionPerformed
+    if (ruleIDList.getSelectedIndex() == -1) {
+        return;
+    }
+    Rule rule;
+    try {
+        String oldRule = ruleSet.rules.get(ruleIDList.getSelectedIndex()).second.toString();
+        rule = Rule.ruleFromString(ruleEditor.getText(), ruleSet.ruleType);
+        ruleSet.rules.get(ruleIDList.getSelectedIndex()).second = rule;
+        DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
+        String ruleID = ruleSet.rules.get(ruleIDList.getSelectedIndex()).first;
+        dlm.setElementAt(ruleID + ": " + rule.toString(), ruleIDList.getSelectedIndex());
+        rule.comment = commentField.getText();
+        validateRule(rule);
+        SRLGUIApp.getApplication().addUndoableEdit(new RuleChangeEdit(ruleID,
+                ruleIDList.getSelectedIndex(), oldRule, ruleEditor.getText(), rule.comment));
+        if (matcherThread != null && matcherThread.isAlive()) {
+            matchFinder.sig.stop();
+        }
+        matcherThread = new Thread(matchFinder = new RuleMatchFinder(rule));
+        matchesLabel.setText("Matching...");
+        if (!rule.body.isEmpty()) {
+            matcherThread.start();
+        }
+    } catch (ParseException x) {
+        JOptionPane.showMessageDialog(this, x.getMessage(), "Rule error", JOptionPane.WARNING_MESSAGE);
+    }
+
+}//GEN-LAST:event_ruleEditorActionPerformed
+
+    private void changeRule(String ruleID, int ruleIdx, String rule, String comment) {
+        if (ruleIdx == ruleIDList.getSelectedIndex()) { // Changing selected rule
+            ruleEditor.setText(rule);
+            ruleEditorActionPerformed(null);
+            return;
+        }
+
         try {
-            rule = Rule.ruleFromString(ruleEditor.getText(), ruleSet.ruleType);
-            ruleSet.rules.get(ruleIDList.getSelectedIndex()).second = rule;
+            Rule newRule = Rule.ruleFromString(rule, ruleSet.ruleType);
+            ruleSet.rules.get(ruleIdx).second = newRule;
             DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
-            String ruleID = ruleSet.rules.get(ruleIDList.getSelectedIndex()).first;
-            dlm.setElementAt(ruleID + ": " + rule.toString(), ruleIDList.getSelectedIndex());
-            rule.comment = commentField.getText();
-            validateRule(rule);
-            SRLGUIApp.getApplication().setModified();
-            if (matcherThread != null && matcherThread.isAlive()) {
-                matchFinder.sig.stop();
-            }
-            matcherThread = new Thread(matchFinder = new RuleMatchFinder(rule));
-            matchesLabel.setText("Matching...");
-            if (!rule.body.isEmpty()) {
-                matcherThread.start();
-            }
+            dlm.setElementAt(ruleID + ": " + newRule.toString(), ruleIdx);
+            newRule.comment = comment;
+            validateRule(newRule);
         } catch (ParseException x) {
             JOptionPane.showMessageDialog(this, x.getMessage(), "Rule error", JOptionPane.WARNING_MESSAGE);
         }
-    
-}//GEN-LAST:event_ruleEditorActionPerformed
+    }
 
-@Action
-public void showMatch() {
-    int selectedRow = matchesTable.getSelectedRow();
-        if(selectedRow == -1)
+    @Action
+    public void showMatch() {
+        int selectedRow = matchesTable.getSelectedRow();
+        if (selectedRow == -1) {
             return;
-        String[] ss = ((String)matchesTable.getValueAt(selectedRow, 0)).split(" ");
-        HashMap<Entity,SrlMatchRegion> match = results.get((String)matchesTable.getValueAt(selectedRow, 0) + "###" 
-                + (String)matchesTable.getValueAt(selectedRow, 1));
-        TreeSet<DocHighlight> highlights = getHighlights(match, 
+        }
+        String[] ss = ((String) matchesTable.getValueAt(selectedRow, 0)).split(" ");
+        HashMap<Entity, SrlMatchRegion> match = results.get((String) matchesTable.getValueAt(selectedRow, 0) + "###" + (String) matchesTable.getValueAt(selectedRow, 1));
+        TreeSet<DocHighlight> highlights = getHighlights(match,
                 Integer.parseInt(ss[1]));
-        ((SRLGUIView)SRLGUIApp.getApplication().getMainView()).openShowDocPane(
-                ss[0], highlights, 
+        ((SRLGUIView) SRLGUIApp.getApplication().getMainView()).openShowDocPane(
+                ss[0], highlights,
                 ruleSet.ruleType == Rule.ENTITY_RULE ? ShowDocPanel.TEXT : ShowDocPanel.TAGGED,
                 "Match " + idEditor.getText());
-}
+    }
 
 private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_matchesTableMouseClicked
-    if(evt.getClickCount() == 2 &&
+    if (evt.getClickCount() == 2 &&
             evt.getButton() == MouseEvent.BUTTON1) {
         showMatch();
     }
-           
+
 }//GEN-LAST:event_matchesTableMouseClicked
-
-
-static final Color[] colors = { Color.BLUE, Color.RED, Color.YELLOW, Color.ORANGE, Color.PINK, Color.MAGENTA, Color.GREEN,
+    static final Color[] colors = {Color.BLUE, Color.RED, Color.YELLOW, Color.ORANGE, Color.PINK, Color.MAGENTA, Color.GREEN,
         new Color(0xda70d6), new Color(0x800080), new Color(0x00ffff), new Color(0xfa8072), new Color(0x6495ed),
-        new Color(0x008080), new Color(0x00ff7f) };
+        new Color(0x008080), new Color(0x00ff7f)};
 
-    private TreeSet<DocHighlight> getHighlights(HashMap<Entity,SrlMatchRegion> match, int sentence) {
-        HashMap<Entity,SrlMatchRegion> match2 = new HashMap<Entity,SrlMatchRegion>(match);
+    private TreeSet<DocHighlight> getHighlights(HashMap<Entity, SrlMatchRegion> match, int sentence) {
+        HashMap<Entity, SrlMatchRegion> match2 = new HashMap<Entity, SrlMatchRegion>(match);
         TreeSet<DocHighlight> rv = new TreeSet<DocHighlight>();
-        if(match.size() == 0)
+        if (match.size() == 0) {
             return rv;
+        }
         int begin = match.values().iterator().next().ruleBegin;
         int end = match.values().iterator().next().ruleEnd;
         Color base = new Color(0x808000);
         Vector<String> entityNames = new Vector<String>();
-        while(!match2.isEmpty()) {
+        while (!match2.isEmpty()) {
             Entity e = null;
             SrlMatchRegion r = null;
             int token = Integer.MAX_VALUE;
-            for(Map.Entry<Entity,SrlMatchRegion> entry : match2.entrySet()) {
-                if(entry.getValue().beginRegion < token) {
+            for (Map.Entry<Entity, SrlMatchRegion> entry : match2.entrySet()) {
+                if (entry.getValue().beginRegion < token) {
                     e = entry.getKey();
                     r = entry.getValue();
                     token = entry.getValue().beginRegion;
                 }
             }
-            
-            if(begin != token)
+
+            if (begin != token) {
                 rv.add(new DocHighlight(sentence, begin, token, base));
+            }
             entityNames.add(e.entityType + " " + e.entityValue);
-            rv.add(new DocHighlight(sentence, r.beginRegion, r.endRegion, 
+            rv.add(new DocHighlight(sentence, r.beginRegion, r.endRegion,
                     colors[entityNames.indexOf(e.entityType + " " + e.entityValue) % colors.length]));
             begin = r.endRegion;
             match2.remove(e);
         }
-        if(begin != end)
+        if (begin != end) {
             rv.add(new DocHighlight(sentence, begin, end, base));
+        }
         return rv;
     }
 
     private void validateRule(Rule rule) {
-        for(TypeExpr te : rule.body) {
-            if(te instanceof Literal) {
-                Literal l = (Literal)te;
+        for (TypeExpr te : rule.body) {
+            if (te instanceof Literal) {
+                Literal l = (Literal) te;
                 TokenStream ts = SRLGUIApp.getApplication().proj.corpus.getProcessor().getTokenStream(l.getVal());
                 List<String> tokens = new LinkedList<String>();
-                while(true) {
+                while (true) {
                     try {
                         org.apache.lucene.analysis.Token s = ts.next();
-                        if(s == null)
+                        if (s == null) {
                             break;
+                        }
                         tokens.add(s.termText());
-                    } catch(IOException x) {
+                    } catch (IOException x) {
                         x.printStackTrace();
                         break;
                     }
                 }
-                if(tokens.size() != 1) {
+                if (tokens.size() != 1) {
                     JOptionPane.showMessageDialog(this, "Literal is not single token so will not match: \n\"" + l.getVal() +
                             "\" should be \"" + Strings.join("\" \"", tokens) + "\"", "Invalid literal", JOptionPane.WARNING_MESSAGE);
                 }
-            } else if(te instanceof Entity) {
-                Pair<String,String> ent = new Pair<String,String>(((Entity)te).entityType, ((Entity)te).entityValue);
-                if(!SRLGUIApp.getApplication().proj.entities.contains(ent)) {
-                    int opt = JOptionPane.showConfirmDialog(this, "Unknown entity type/value: " + ent.first + "/" + ent.second + ". Add to project?", 
+            } else if (te instanceof Entity) {
+                Pair<String, String> ent = new Pair<String, String>(((Entity) te).entityType, ((Entity) te).entityValue);
+                if (!SRLGUIApp.getApplication().proj.entities.contains(ent)) {
+                    int opt = JOptionPane.showConfirmDialog(this, "Unknown entity type/value: " + ent.first + "/" + ent.second + ". Add to project?",
                             "Unknown entity", JOptionPane.YES_NO_OPTION);
-                    if(opt == JOptionPane.YES_OPTION) {
+                    if (opt == JOptionPane.YES_OPTION) {
                         SRLGUIApp.getApplication().proj.entities.add(ent);
                     }
                 }
             }
         }
     }
-
-private Thread matcherThread;
+    private Thread matcherThread;
     private RuleMatchFinder matchFinder;
 
     private void onRuleSelect() {
@@ -593,7 +648,7 @@ private Thread matcherThread;
         if (matcherThread != null && matcherThread.isAlive()) {
             matchFinder.sig.stop();
         }
-        if(!dontMatch) {
+        if (!dontMatch) {
             matcherThread = new Thread(matchFinder = new RuleMatchFinder(r));
             if (!r.body.isEmpty()) {
                 matchesLabel.setText("Matching...");
@@ -601,23 +656,25 @@ private Thread matcherThread;
             }
         }
         oldSelectIndex = ruleIDList.getSelectedIndex();
-            ruleEditor.setEnabled(true);
-            ruleEditor.setEditable(true);
-            idEditor.setEnabled(true);
-            idEditor.setEditable(true);
-            commentField.setEnabled(true);
-            commentField.setEditable(true);
-    }
-    
-    private void onCommentChange() {
-        if(ruleIDList.getSelectedIndex() < 0)
-            return;
-        ruleSet.rules.get(ruleIDList.getSelectedIndex()).second.comment =
-                commentField.getText();
+        ruleEditor.setEnabled(true);
+        ruleEditor.setEditable(true);
+        idEditor.setEnabled(true);
+        idEditor.setEditable(true);
+        commentField.setEnabled(true);
+        commentField.setEditable(true);
     }
 
-    public HashMap<String,HashMap<Entity, SrlMatchRegion>> results = new HashMap<String,HashMap<Entity,SrlMatchRegion>>();
-    
+    private void onCommentChange() {
+        if (ruleIDList.getSelectedIndex() < 0) {
+            return;
+        }
+        String oldComment = ruleSet.rules.get(ruleIDList.getSelectedIndex()).second.comment;
+        ruleSet.rules.get(ruleIDList.getSelectedIndex()).second.comment =
+                commentField.getText();
+        SRLGUIApp.getApplication().addUndoableEdit(new RuleCommentChangeEdit(ruleSet.rules.get(ruleIDList.getSelectedIndex()).first, ruleIDList.getSelectedIndex(), oldComment, commentField.getText()));
+    }
+    public HashMap<String, HashMap<Entity, SrlMatchRegion>> results = new HashMap<String, HashMap<Entity, SrlMatchRegion>>();
+
     private class RuleMatchFinder implements Runnable {
 
         Rule rule;
@@ -635,7 +692,7 @@ private Thread matcherThread;
                 final List<String> docs = new LinkedList<String>();
                 final List<String> vars = new LinkedList<String>();
                 sig = new StopSignal();
-                results = new HashMap<String,HashMap<Entity,SrlMatchRegion>>();
+                results = new HashMap<String, HashMap<Entity, SrlMatchRegion>>();
                 corpus.query(rule.getCorpusQuery(), new Corpus.QueryHit() {
 
                     public void hit(Document d, StopSignal signal) {
@@ -674,7 +731,7 @@ private Thread matcherThread;
                     dtm.addRow(rowData);
                 }
                 matchesLabel.setText("Matches: " + docs.size());
-                
+
             } catch (IOException x) {
                 JOptionPane.showMessageDialog(RuleSetPanel.this, x.getMessage(), "Disk Error", JOptionPane.ERROR_MESSAGE);
             } catch (CorpusConcurrencyException x) {
@@ -686,6 +743,170 @@ private Thread matcherThread;
     @Action
     public void acceptRule() {
         ruleEditorActionPerformed(null);
+    }
+
+    // Undoable Edits
+    private class AddRuleEdit extends SimpleUndoableEdit {
+
+        String ruleName;
+        int ruleID;
+
+        public AddRuleEdit(String ruleName, int ruleID) {
+            this.ruleName = ruleName;
+            this.ruleID = ruleID;
+        }
+
+        public String getPresentationName() {
+            return "Add rule " + ruleName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            addRule(ruleName);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            removeRule(ruleID);
+        }
+    }
+
+    private class RemoveRuleEdit extends SimpleUndoableEdit {
+
+        String ruleName;
+        int ruleID;
+        String ruleText;
+        String comment;
+
+        public RemoveRuleEdit(String ruleName, int ruleID, String ruleText, String comment) {
+            this.ruleName = ruleName;
+            this.ruleID = ruleID;
+            this.ruleText = ruleText;
+            this.comment = comment;
+        }
+
+        public String getPresentationName() {
+            return "Remove Rule " + ruleName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            removeRule(ruleID);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            addRule(ruleName, ruleID);
+            changeRule(ruleName, ruleID, ruleText, comment);
+        }
+    }
+
+    private class RuleIDChangeEdit extends SimpleUndoableEdit {
+
+        int ruleIdx;
+        String oldVal, newVal;
+
+        public RuleIDChangeEdit(int ruleIdx, String oldVal, String newVal) {
+            this.ruleIdx = ruleIdx;
+            this.oldVal = oldVal;
+            this.newVal = newVal;
+        }
+
+        public String getPresentationName() {
+            return "Rename rule " + oldVal + " to " + newVal;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+                idEditor.setText(newVal);
+            }
+            changeRuleID(ruleIdx, newVal);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+                idEditor.setText(oldVal);
+            }
+            changeRuleID(ruleIdx, oldVal);
+        }
+    }
+
+    private class RuleChangeEdit extends SimpleUndoableEdit {
+
+        String ruleID;
+        int ruleIdx;
+        String newRule;
+        String oldRule;
+        String comment;
+
+        public RuleChangeEdit(String ruleID, int ruleIdx, String newRule, String oldRule, String comment) {
+            this.ruleID = ruleID;
+            this.ruleIdx = ruleIdx;
+            this.newRule = newRule;
+            this.oldRule = oldRule;
+            this.comment = comment;
+        }
+
+        public String getPresentationName() {
+            return "Change to rule " + ruleID;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+                ruleEditor.setText(newRule);
+            }
+            changeRule(ruleID, ruleIdx, newRule, comment);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+                ruleEditor.setText(oldRule);
+            }
+            changeRule(ruleID, ruleIdx, oldRule, comment);
+        }
+    }
+
+    private class RuleCommentChangeEdit extends SimpleUndoableEdit {
+
+        String ruleID;
+        int ruleIdx;
+        String oldComment;
+        String newComment;
+
+        public RuleCommentChangeEdit(String ruleID, int ruleIdx, String oldComment, String newComment) {
+            this.ruleID = ruleID;
+            this.ruleIdx = ruleIdx;
+            this.oldComment = oldComment;
+            this.newComment = newComment;
+        }
+
+        public String getPresentationName() {
+            return "Change to rule " + ruleID + "'s comments";
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+                userChangeFlag = false;
+                commentField.setText(newComment);
+                userChangeFlag = true;
+            }
+            ruleSet.rules.get(ruleIdx).second.comment = newComment;
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+                userChangeFlag = false;
+                commentField.setText(oldComment);
+                userChangeFlag = true;
+            }
+            ruleSet.rules.get(ruleIdx).second.comment = oldComment;
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

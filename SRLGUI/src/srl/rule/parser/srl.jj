@@ -92,7 +92,31 @@ boolean cleanHead = false;
      // First read the head, then the main body
      ruleID = <VAR>
      <COLON>
+     (
      ruleHead = <WORD>
+     |
+     ruleHead = <STRMATCH>
+     |
+     ruleHead = <STRMATCH_APPROX>
+     |
+     ruleHead = <STRMATCH_REGEX>
+     |
+     ruleHead = <STRMATCH_ORTH>
+     |
+     ruleHead = <BEGINS>
+     |
+     ruleHead = <ENDS>
+     |
+     ruleHead = <CONTAINS>
+     |
+     ruleHead = <WORDS>
+     |
+     ruleHead = <OPTIONAL>
+     |
+     ruleHead = <NOT>
+     |
+     ruleHead = <CASE>
+     )
      <OPEN_PARA>
      (ruleHeadVar = <VAR>
       { cleanHead = false; } 
@@ -127,7 +151,31 @@ Rule readTRRule() :
     boolean cleanHead = false;
 }
 {
+      (
      ruleHead = <WORD>
+     |
+     ruleHead = <STRMATCH>
+     |
+     ruleHead = <STRMATCH_APPROX>
+     |
+     ruleHead = <STRMATCH_REGEX>
+     |
+     ruleHead = <STRMATCH_ORTH>
+     |
+     ruleHead = <BEGINS>
+     |
+     ruleHead = <ENDS>
+     |
+     ruleHead = <CONTAINS>
+     |
+     ruleHead = <WORDS>
+     |
+     ruleHead = <OPTIONAL>
+     |
+     ruleHead = <NOT>
+     |
+     ruleHead = <CASE>
+     )
      <OPEN_PARA>
      (
       ruleHeadVar = <VAR>
@@ -194,7 +242,31 @@ boolean cleanHead = false;
 }
 {
     <SEMICOLON>
-    ruleHead = <WORD>
+     (
+     ruleHead = <WORD>
+     |
+     ruleHead = <STRMATCH>
+     |
+     ruleHead = <STRMATCH_APPROX>
+     |
+     ruleHead = <STRMATCH_REGEX>
+     |
+     ruleHead = <STRMATCH_ORTH>
+     |
+     ruleHead = <BEGINS>
+     |
+     ruleHead = <ENDS>
+     |
+     ruleHead = <CONTAINS>
+     |
+     ruleHead = <WORDS>
+     |
+     ruleHead = <OPTIONAL>
+     |
+     ruleHead = <NOT>
+     |
+     ruleHead = <CASE>
+     )
     <OPEN_PARA>
     (ruleHeadVar = <VAR> 
       { cleanHead = false; }

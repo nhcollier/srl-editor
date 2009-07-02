@@ -27,7 +27,7 @@ import srl.corpus.Processor;
  */
 public class WordListSet {
     /** This represents the wordlists. It is a map indexed by the wordlist names */
-    public ListenableMap<String,ListenableSet<WordListEntry>> wordLists;
+    private ListenableMap<String,ListenableSet<WordListEntry>> wordLists;
     /** The name of this word list set */
     public final String name;
     /** The linguistic processor */
@@ -151,6 +151,28 @@ public class WordListSet {
         allWordSets.put(name, this);
         return true;
     }
+
+    /**
+     * Remove a list from the set of word lists
+     * @param name The identifier of the list
+     * @return True if the list was successfully removed
+     */
+    public boolean removeList(String name) {
+        if(allWordLists.get(name) == null)
+            return false;
+        wordLists.remove(name);
+        allWordLists.remove(name);
+        allWordSets.remove(name);
+        return true;
+    }
+
+    /**
+     * Get the list in the set
+     * @return A set of wordlist names
+     */
+    public Set<String> getLists() {
+        return wordLists.keySet();
+    }
     
     static Map<String,ListenableSet<WordListEntry>> allWordLists = new HashMap<String,ListenableSet<WordListEntry>>();
     static Map<String,WordListSet> allWordSets = new HashMap<String,WordListSet>();
@@ -250,5 +272,23 @@ public class WordListSet {
     
     public Set<Map.Entry<String, ListenableSet<WordListEntry>>> getWordListSets() {
         return wordLists.entrySet();
+    }
+
+    /**
+     * Call this when you wish to delete a word list from the project
+     */
+    public void die() {
+        for(String s : wordLists.keySet()) {
+            allWordLists.remove(s);
+        }
+        allWordListSets.remove(name);
+    }
+
+    /**
+     * Undoes a die() action
+     */
+    public void restore() {
+        allWordListSets.put(name, this);
+        allWordLists.putAll(wordLists);
     }
 }

@@ -763,6 +763,24 @@ public class Corpus {
             return null;
         }
     }
+    
+    public Hits queryNoEscape(String query)throws IOException, CorpusConcurrencyException {
+        if (query.equals("")) {
+            return null;
+        }
+        if (indexSearcher == null) {
+            closeIndex();
+        }
+        try {
+            QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
+            qp.setDefaultOperator(QueryParser.Operator.AND);
+            Query q = qp.parse(query.toLowerCase());
+            return indexSearcher.search(q);
+        } catch (Exception x) {
+            x.printStackTrace();
+            return null;
+        }
+    }
 
     /** Make a literal string not cause problems for the indexer, i.e., Put to lower case and bs all reserved terms */
     protected static String cleanQuery(String s) {

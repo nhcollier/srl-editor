@@ -48,8 +48,9 @@ public class StrMatchApprox implements TypeExpr {
         Set<WordListEntry> list;
         if(set) {
             list = new HashSet<WordListEntry>();
-            for(Set<WordListEntry> wle : WordListSet.getWordListSetByName(wordListName).wordLists.values()) {
-                list.addAll(wle);
+            //for(Set<WordListEntry> wle : WordListSet.getWordListSetByName(wordListName).wordLists.values()) {
+            for(String wle : WordListSet.getWordListSetByName(wordListName).getLists()) {
+                list.addAll(WordListSet.getWordList(wle));
             }
         } else {
             list = WordListSet.getWordList(wordListName);

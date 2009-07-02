@@ -12,6 +12,9 @@ package srl.gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 import org.jdesktop.application.Action;
 import org.jdesktop.application.ResourceMap;
 import org.jdesktop.application.SingleFrameApplication;
@@ -29,8 +32,14 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.zip.ZipException;
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultEditorKit;
 import javax.swing.tree.*;
+import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEdit;
+import mccrae.tools.jar.JarClassLoader;
 import mccrae.tools.struct.ListenableSet;
 import srl.corpus.Corpus;
 import srl.corpus.CorpusConcurrencyException;
@@ -45,9 +54,11 @@ import srl.wordlist.WordListEntry;
  */
 public class SRLGUIView extends FrameView {
 
+    private static SRLGUIView singleton;
+
     public SRLGUIView(SingleFrameApplication app) {
         super(app);
-
+        singleton = this;
         initComponents();
 
         // status bar initialization - message timeout, idle icon and busy animation, etc
@@ -80,6 +91,9 @@ public class SRLGUIView extends FrameView {
         corpusIcon = resourceMap.getIcon("srl.corpusIcon");
         closeTabIcon = resourceMap.getIcon("srl.closeTabIcon");
         searchIcon = resourceMap.getIcon("srl.searchTabIcon");
+        copyIcon = resourceMap.getIcon("srl.copyIcon");
+        cutIcon = resourceMap.getIcon("srl.cutIcon");
+        pasteIcon = resourceMap.getIcon("srl.pasteIcon");
 
         // connecting action tasks to status bar via TaskMonitor
         TaskMonitor taskMonitor = new TaskMonitor(getApplication().getContext());
@@ -112,6 +126,120 @@ public class SRLGUIView extends FrameView {
                 }
             }
         });
+
+        JMenuItem cutMenu = new JMenuItem(new DefaultEditorKit.CutAction());
+        cutMenu.setText("Cut");
+        cutMenu.setMnemonic(KeyEvent.VK_T);
+        cutMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK));
+        cutMenu.setIcon(cutIcon);
+        jMenu2.add(cutMenu);
+
+        JMenuItem copyMenu = new JMenuItem(new DefaultEditorKit.CopyAction());
+        copyMenu.setText("Copy");
+        copyMenu.setMnemonic(KeyEvent.VK_C);
+        copyMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
+        copyMenu.setIcon(copyIcon);
+        jMenu2.add(copyMenu);
+
+        JMenuItem pasteMenu = new JMenuItem(new DefaultEditorKit.PasteAction());
+        pasteMenu.setText("Paste");
+        pasteMenu.setMnemonic(KeyEvent.VK_P);
+        pasteMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
+        pasteMenu.setIcon(pasteIcon);
+        jMenu2.add(pasteMenu);
+
+        JButton cutButton = new JButton(new DefaultEditorKit.CutAction());
+        cutButton.setText("");
+        cutButton.setIcon(cutIcon);
+        cutButton.setFocusable(false);
+        cutButton.setPreferredSize(new Dimension(28,28));
+        jToolBar1.add(cutButton,7);
+
+        JButton copyButton = new JButton(new DefaultEditorKit.CopyAction());
+        copyButton.setText("");
+        copyButton.setIcon(copyIcon);
+        copyButton.setFocusable(false);
+        copyButton.setPreferredSize(new Dimension(28,28));
+        jToolBar1.add(copyButton,8);
+
+        JButton pasteButton = new JButton(new DefaultEditorKit.PasteAction());
+        pasteButton.setText("");
+        pasteButton.setIcon(pasteIcon);
+        pasteButton.setFocusable(false);
+        pasteButton.setPreferredSize(new Dimension(28,28));
+        jToolBar1.add(pasteButton,9);
+
+        if(SRLGUIApp.getApplication().getPreference("ON_START_LOAD_PROJECT_TOGGLE").equals("true")) {
+             try {
+                SRLGUIApp.getApplication().proj = SrlProject.openSrlProject(new File(SRLGUIApp.getApplication().getPreference("ON_START_LOAD_PROJECT_PATH")));
+                SrlProject proj = SRLGUIApp.getApplication().proj;
+                for (WordListSet wl : proj.wordlists) {
+                    proj.corpus.listenToWordListSet(wl);
+                    for (String l : wl.getLists()) {
+                        proj.corpus.listenToWordList(l, WordListSet.getWordList(l));
+                    }
+                }
+                reloadProject();
+            } catch (RuntimeException x) {
+                if (x.getMessage().matches("Lock obtain timed out: SimpleFSLock.*")) {
+                    JOptionPane.showMessageDialog(this.getFrame(), "Corpus locked! This may occur if SRL Editor failed to shut down properly.\nPlease ensure no other copies of SRL Editor are running and\ndelete the file corpus/write.lock from your project directory.",
+                            "Corpus Lock", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    x.printStackTrace();
+                    JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open project", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception x) {
+                x.printStackTrace();
+                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open project", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        String[] pluginJARs = SRLGUIApp.getApplication().getIndexedPreferences(SRLGUIApp.PLUGIN_LOAD_JAR_KEY);
+        String[] pluginClasses = SRLGUIApp.getApplication().getIndexedPreferences(SRLGUIApp.PLUGIN_LOAD_CLASS_KEY);
+
+        for(int i = 0; i < pluginJARs.length; i++) {
+            try {
+                JarClassLoader jcl = new JarClassLoader(pluginJARs[i]);
+                Class c = jcl.loadClass(pluginClasses[i]);
+                SRLPlugin instance = (SRLPlugin)c.getConstructor().newInstance();
+                SRLGUIApp.getApplication().addPlugin(instance, pluginJARs[i], pluginClasses[i]);
+            } catch(IOException x) {
+                System.err.println("The JAR file " + pluginJARs[i] + " is missing or corrupted. " +
+                        "Removing auto-load for " + pluginClasses[i]);
+                x.printStackTrace();
+                SRLGUIApp.getApplication().removeIndexedPreference(SRLGUIApp.PLUGIN_LOAD_CLASS_KEY, i);
+                SRLGUIApp.getApplication().removeIndexedPreference(SRLGUIApp.PLUGIN_LOAD_JAR_KEY, i);
+            } catch(Exception x) {
+                System.err.println("Error loading plug-in " + pluginClasses[i]);
+                x.printStackTrace();
+            }
+        }
+
+        rightPane.addChangeListener(new ChangeListener() {
+
+            public void stateChanged(ChangeEvent arg0) {
+                Component c = rightPane.getSelectedComponent();
+                if(c instanceof RuleSetPanel) {
+                    jMenuItem20.setEnabled(true);
+                    jMenuItem21.setEnabled(true);
+                    jMenuItem24.setEnabled(false);
+                    jMenuItem25.setEnabled(false);
+                } else if(c instanceof WordListPanel) {
+                    jMenuItem20.setEnabled(false);
+                    jMenuItem21.setEnabled(false);
+                    jMenuItem24.setEnabled(true);
+                    jMenuItem25.setEnabled(true);
+                } else {
+                    jMenuItem20.setEnabled(false);
+                    jMenuItem21.setEnabled(false);
+                    jMenuItem24.setEnabled(false);
+                    jMenuItem25.setEnabled(false);
+                }
+            }
+        });
+    }
+
+    public static SRLGUIView getView() {
+        return singleton;
     }
 
     @Action
@@ -141,6 +269,10 @@ public class SRLGUIView extends FrameView {
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jSeparator3 = new javax.swing.JToolBar.Separator();
+        jButton10 = new javax.swing.JButton();
+        jButton11 = new javax.swing.JButton();
+        jSeparator11 = new javax.swing.JToolBar.Separator();
+        jSeparator12 = new javax.swing.JToolBar.Separator();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
@@ -149,31 +281,49 @@ public class SRLGUIView extends FrameView {
         jButton8 = new javax.swing.JButton();
         jSeparator6 = new javax.swing.JToolBar.Separator();
         jButton9 = new javax.swing.JButton();
+        jSeparator13 = new javax.swing.JToolBar.Separator();
+        jButton15 = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         newProjectMenuItem = new javax.swing.JMenuItem();
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenuItem1 = new javax.swing.JMenuItem();
+        jMenuItem23 = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         javax.swing.JMenuItem exitMenuItem = new javax.swing.JMenuItem();
-        jMenu1 = new javax.swing.JMenu();
-        jMenuItem3 = new javax.swing.JMenuItem();
-        jMenuItem4 = new javax.swing.JMenuItem();
-        jMenuItem5 = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+        jMenuItem15 = new javax.swing.JMenuItem();
+        jMenuItem16 = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JSeparator();
+        jMenu3 = new javax.swing.JMenu();
+        jMenuItem3 = new javax.swing.JMenuItem();
+        jMenuItem12 = new javax.swing.JMenuItem();
+        jMenuItem22 = new javax.swing.JMenuItem();
+        jSeparator5 = new javax.swing.JSeparator();
+        jMenuItem20 = new javax.swing.JMenuItem();
+        jMenuItem21 = new javax.swing.JMenuItem();
+        jMenu4 = new javax.swing.JMenu();
+        jMenuItem4 = new javax.swing.JMenuItem();
+        jMenuItem13 = new javax.swing.JMenuItem();
+        jSeparator8 = new javax.swing.JSeparator();
+        jMenuItem24 = new javax.swing.JMenuItem();
+        jMenuItem25 = new javax.swing.JMenuItem();
+        jMenu5 = new javax.swing.JMenu();
+        jMenuItem5 = new javax.swing.JMenuItem();
         jMenuItem6 = new javax.swing.JMenuItem();
         jMenuItem7 = new javax.swing.JMenuItem();
-        jSeparator5 = new javax.swing.JSeparator();
-        jMenuItem8 = new javax.swing.JMenuItem();
-        jSeparator8 = new javax.swing.JSeparator();
-        jMenuItem12 = new javax.swing.JMenuItem();
-        jMenuItem13 = new javax.swing.JMenuItem();
-        jMenuItem14 = new javax.swing.JMenuItem();
         jSeparator9 = new javax.swing.JSeparator();
+        jMenuItem8 = new javax.swing.JMenuItem();
+        jSeparator10 = new javax.swing.JSeparator();
+        jMenuItem14 = new javax.swing.JMenuItem();
         jMenuItem11 = new javax.swing.JMenuItem();
         jMenuItem10 = new javax.swing.JMenuItem();
+        jMenu6 = new javax.swing.JMenu();
+        jMenuItem27 = new javax.swing.JMenuItem();
+        jMenuItem28 = new javax.swing.JMenuItem();
         javax.swing.JMenu helpMenu = new javax.swing.JMenu();
         jMenuItem9 = new javax.swing.JMenuItem();
+        jMenuItem26 = new javax.swing.JMenuItem();
         jSeparator7 = new javax.swing.JSeparator();
         javax.swing.JMenuItem aboutMenuItem = new javax.swing.JMenuItem();
         statusPanel = new javax.swing.JPanel();
@@ -181,13 +331,14 @@ public class SRLGUIView extends FrameView {
         statusMessageLabel = new javax.swing.JLabel();
         statusAnimationLabel = new javax.swing.JLabel();
         progressBar = new javax.swing.JProgressBar();
+        jSeparator14 = new javax.swing.JSeparator();
 
         mainPanel.setName("mainPanel"); // NOI18N
 
         jScrollPane1.setName("jScrollPane1"); // NOI18N
 
-        mainTree.setEnabled(false);
         mainTree.setModel(new DefaultTreeModel(SRLGUIApp.getApplication().getMainTreeNode()));
+        mainTree.setEnabled(false);
         mainTree.setName("mainTree"); // NOI18N
         mainTree.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
@@ -239,9 +390,32 @@ public class SRLGUIView extends FrameView {
         jSeparator3.setName("jSeparator3"); // NOI18N
         jToolBar1.add(jSeparator3);
 
+        jButton10.setAction(actionMap.get("undo")); // NOI18N
+        jButton10.setText(resourceMap.getString("jButton10.text")); // NOI18N
+        jButton10.setFocusable(false);
+        jButton10.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton10.setName("jButton10"); // NOI18N
+        jButton10.setPreferredSize(new java.awt.Dimension(28, 28));
+        jButton10.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButton10);
+
+        jButton11.setAction(actionMap.get("redo")); // NOI18N
+        jButton11.setText(resourceMap.getString("jButton11.text")); // NOI18N
+        jButton11.setFocusable(false);
+        jButton11.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton11.setName("jButton11"); // NOI18N
+        jButton11.setPreferredSize(new java.awt.Dimension(28, 28));
+        jButton11.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButton11);
+
+        jSeparator11.setName("jSeparator11"); // NOI18N
+        jToolBar1.add(jSeparator11);
+
+        jSeparator12.setName("jSeparator12"); // NOI18N
+        jToolBar1.add(jSeparator12);
+
         jButton4.setAction(actionMap.get("addRuleSet")); // NOI18N
         jButton4.setText(resourceMap.getString("jButton4.text")); // NOI18N
-        jButton4.setEnabled(false);
         jButton4.setFocusable(false);
         jButton4.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton4.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -252,7 +426,6 @@ public class SRLGUIView extends FrameView {
 
         jButton5.setAction(actionMap.get("addWordList")); // NOI18N
         jButton5.setText(resourceMap.getString("jButton5.text")); // NOI18N
-        jButton5.setEnabled(false);
         jButton5.setFocusable(false);
         jButton5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton5.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -262,7 +435,6 @@ public class SRLGUIView extends FrameView {
         jToolBar1.add(jButton5);
 
         jButton6.setAction(actionMap.get("addCorpusDoc")); // NOI18N
-        jButton6.setEnabled(false);
         jButton6.setFocusable(false);
         jButton6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton6.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -276,7 +448,6 @@ public class SRLGUIView extends FrameView {
 
         jButton7.setAction(actionMap.get("tagCorpus")); // NOI18N
         jButton7.setText(resourceMap.getString("jButton7.text")); // NOI18N
-        jButton7.setEnabled(false);
         jButton7.setFocusable(false);
         jButton7.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton7.setMinimumSize(new java.awt.Dimension(20, 20));
@@ -286,10 +457,10 @@ public class SRLGUIView extends FrameView {
 
         jButton8.setAction(actionMap.get("extractTemplates")); // NOI18N
         jButton8.setText(resourceMap.getString("jButton8.text")); // NOI18N
-        jButton8.setEnabled(false);
         jButton8.setFocusable(false);
         jButton8.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton8.setName("jButton8"); // NOI18N
+        jButton8.setPreferredSize(new java.awt.Dimension(28, 28));
         jButton8.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         jToolBar1.add(jButton8);
 
@@ -298,12 +469,24 @@ public class SRLGUIView extends FrameView {
 
         jButton9.setAction(actionMap.get("searchCorpus")); // NOI18N
         jButton9.setText(resourceMap.getString("jButton9.text")); // NOI18N
-        jButton9.setEnabled(false);
         jButton9.setFocusable(false);
         jButton9.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton9.setName("jButton9"); // NOI18N
+        jButton9.setPreferredSize(new java.awt.Dimension(28, 28));
         jButton9.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         jToolBar1.add(jButton9);
+
+        jSeparator13.setName("jSeparator13"); // NOI18N
+        jToolBar1.add(jSeparator13);
+
+        jButton15.setAction(actionMap.get("openWiki")); // NOI18N
+        jButton15.setText(resourceMap.getString("jButton15.text")); // NOI18N
+        jButton15.setFocusable(false);
+        jButton15.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton15.setName("jButton15"); // NOI18N
+        jButton15.setPreferredSize(new java.awt.Dimension(28, 28));
+        jButton15.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(jButton15);
 
         org.jdesktop.layout.GroupLayout mainPanelLayout = new org.jdesktop.layout.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
@@ -323,31 +506,41 @@ public class SRLGUIView extends FrameView {
                 .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, rightPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, rightPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
         menuBar.setName("menuBar"); // NOI18N
 
+        fileMenu.setMnemonic('f');
         fileMenu.setText(resourceMap.getString("fileMenu.text")); // NOI18N
         fileMenu.setName("fileMenu"); // NOI18N
 
         newProjectMenuItem.setAction(actionMap.get("newProject")); // NOI18N
+        newProjectMenuItem.setMnemonic('n');
         newProjectMenuItem.setText(resourceMap.getString("newProjectMenuItem.text")); // NOI18N
         newProjectMenuItem.setName("newProjectMenuItem"); // NOI18N
         fileMenu.add(newProjectMenuItem);
 
         jMenuItem2.setAction(actionMap.get("openProject")); // NOI18N
+        jMenuItem2.setMnemonic('o');
         jMenuItem2.setText(resourceMap.getString("jMenuItem2.text")); // NOI18N
         jMenuItem2.setName("jMenuItem2"); // NOI18N
         fileMenu.add(jMenuItem2);
 
         jMenuItem1.setAction(actionMap.get("saveProject")); // NOI18N
+        jMenuItem1.setMnemonic('s');
         jMenuItem1.setText(resourceMap.getString("jMenuItem1.text")); // NOI18N
         jMenuItem1.setEnabled(false);
         jMenuItem1.setName("jMenuItem1"); // NOI18N
         fileMenu.add(jMenuItem1);
+
+        jMenuItem23.setAction(actionMap.get("saveProjectAs")); // NOI18N
+        jMenuItem23.setMnemonic('a');
+        jMenuItem23.setEnabled(false);
+        jMenuItem23.setName("jMenuItem23"); // NOI18N
+        fileMenu.add(jMenuItem23);
 
         jSeparator2.setName("jSeparator2"); // NOI18N
         fileMenu.add(jSeparator2);
@@ -358,75 +551,173 @@ public class SRLGUIView extends FrameView {
 
         menuBar.add(fileMenu);
 
-        jMenu1.setText(resourceMap.getString("jMenu1.text")); // NOI18N
-        jMenu1.setEnabled(false);
-        jMenu1.setName("jMenu1"); // NOI18N
+        jMenu2.setMnemonic('e');
+        jMenu2.setText(resourceMap.getString("jMenu2.text")); // NOI18N
+        jMenu2.setName("jMenu2"); // NOI18N
 
-        jMenuItem3.setAction(actionMap.get("addRuleSet")); // NOI18N
-        jMenuItem3.setName("jMenuItem3"); // NOI18N
-        jMenu1.add(jMenuItem3);
+        jMenuItem15.setAction(actionMap.get("undo")); // NOI18N
+        jMenuItem15.setMnemonic('u');
+        jMenuItem15.setText(resourceMap.getString("jMenuItem15.text")); // NOI18N
+        jMenuItem15.setName("jMenuItem15"); // NOI18N
+        jMenu2.add(jMenuItem15);
 
-        jMenuItem4.setAction(actionMap.get("addWordList")); // NOI18N
-        jMenuItem4.setName("jMenuItem4"); // NOI18N
-        jMenu1.add(jMenuItem4);
-
-        jMenuItem5.setAction(actionMap.get("addCorpusDoc")); // NOI18N
-        jMenuItem5.setText(resourceMap.getString("jMenuItem5.text")); // NOI18N
-        jMenuItem5.setName("jMenuItem5"); // NOI18N
-        jMenu1.add(jMenuItem5);
+        jMenuItem16.setAction(actionMap.get("redo")); // NOI18N
+        jMenuItem16.setMnemonic('r');
+        jMenuItem16.setText(resourceMap.getString("jMenuItem16.text")); // NOI18N
+        jMenuItem16.setName("jMenuItem16"); // NOI18N
+        jMenu2.add(jMenuItem16);
 
         jSeparator1.setName("jSeparator1"); // NOI18N
-        jMenu1.add(jSeparator1);
+        jMenu2.add(jSeparator1);
 
-        jMenuItem6.setAction(actionMap.get("tagCorpus")); // NOI18N
-        jMenuItem6.setName("jMenuItem6"); // NOI18N
-        jMenu1.add(jMenuItem6);
+        menuBar.add(jMenu2);
 
-        jMenuItem7.setAction(actionMap.get("extractTemplates")); // NOI18N
-        jMenuItem7.setName("jMenuItem7"); // NOI18N
-        jMenu1.add(jMenuItem7);
+        jMenu3.setMnemonic('r');
+        jMenu3.setText(resourceMap.getString("jMenu3.text")); // NOI18N
+        jMenu3.setEnabled(false);
+        jMenu3.setName("jMenu3"); // NOI18N
 
-        jSeparator5.setName("jSeparator5"); // NOI18N
-        jMenu1.add(jSeparator5);
-
-        jMenuItem8.setAction(actionMap.get("searchCorpus")); // NOI18N
-        jMenuItem8.setName("jMenuItem8"); // NOI18N
-        jMenu1.add(jMenuItem8);
-
-        jSeparator8.setName("jSeparator8"); // NOI18N
-        jMenu1.add(jSeparator8);
+        jMenuItem3.setAction(actionMap.get("addRuleSet")); // NOI18N
+        jMenuItem3.setMnemonic('a');
+        jMenuItem3.setName("jMenuItem3"); // NOI18N
+        jMenu3.add(jMenuItem3);
 
         jMenuItem12.setAction(actionMap.get("importRuleSet")); // NOI18N
+        jMenuItem12.setMnemonic('i');
         jMenuItem12.setName("jMenuItem12"); // NOI18N
-        jMenu1.add(jMenuItem12);
+        jMenu3.add(jMenuItem12);
+
+        jMenuItem22.setAction(actionMap.get("deleteRuleSet")); // NOI18N
+        jMenuItem22.setMnemonic('d');
+        jMenuItem22.setName("jMenuItem22"); // NOI18N
+        jMenu3.add(jMenuItem22);
+
+        jSeparator5.setName("jSeparator5"); // NOI18N
+        jMenu3.add(jSeparator5);
+
+        jMenuItem20.setAction(actionMap.get("addRule")); // NOI18N
+        jMenuItem20.setMnemonic('l');
+        jMenuItem20.setEnabled(false);
+        jMenuItem20.setName("jMenuItem20"); // NOI18N
+        jMenu3.add(jMenuItem20);
+
+        jMenuItem21.setAction(actionMap.get("removeRule")); // NOI18N
+        jMenuItem21.setMnemonic('v');
+        jMenuItem21.setEnabled(false);
+        jMenuItem21.setName("jMenuItem21"); // NOI18N
+        jMenu3.add(jMenuItem21);
+
+        menuBar.add(jMenu3);
+
+        jMenu4.setMnemonic('w');
+        jMenu4.setText(resourceMap.getString("jMenu4.text")); // NOI18N
+        jMenu4.setEnabled(false);
+        jMenu4.setName("jMenu4"); // NOI18N
+
+        jMenuItem4.setAction(actionMap.get("addWordList")); // NOI18N
+        jMenuItem4.setMnemonic('a');
+        jMenuItem4.setName("jMenuItem4"); // NOI18N
+        jMenu4.add(jMenuItem4);
 
         jMenuItem13.setAction(actionMap.get("importWordList")); // NOI18N
+        jMenuItem13.setMnemonic('i');
         jMenuItem13.setName("jMenuItem13"); // NOI18N
-        jMenu1.add(jMenuItem13);
+        jMenu4.add(jMenuItem13);
 
-        jMenuItem14.setAction(actionMap.get("importTagged")); // NOI18N
-        jMenuItem14.setName("jMenuItem14"); // NOI18N
-        jMenu1.add(jMenuItem14);
+        jSeparator8.setName("jSeparator8"); // NOI18N
+        jMenu4.add(jSeparator8);
+
+        jMenuItem24.setAction(actionMap.get("addWordListToSet")); // NOI18N
+        jMenuItem24.setMnemonic('w');
+        jMenuItem24.setEnabled(false);
+        jMenuItem24.setName("jMenuItem24"); // NOI18N
+        jMenu4.add(jMenuItem24);
+
+        jMenuItem25.setAction(actionMap.get("removeWordListFromSet")); // NOI18N
+        jMenuItem25.setMnemonic('v');
+        jMenuItem25.setEnabled(false);
+        jMenuItem25.setName("jMenuItem25"); // NOI18N
+        jMenu4.add(jMenuItem25);
+
+        menuBar.add(jMenu4);
+
+        jMenu5.setMnemonic('c');
+        jMenu5.setText(resourceMap.getString("jMenu5.text")); // NOI18N
+        jMenu5.setEnabled(false);
+        jMenu5.setName("jMenu5"); // NOI18N
+
+        jMenuItem5.setAction(actionMap.get("addCorpusDoc")); // NOI18N
+        jMenuItem5.setMnemonic('a');
+        jMenuItem5.setText(resourceMap.getString("jMenuItem5.text")); // NOI18N
+        jMenuItem5.setName("jMenuItem5"); // NOI18N
+        jMenu5.add(jMenuItem5);
+
+        jMenuItem6.setAction(actionMap.get("tagCorpus")); // NOI18N
+        jMenuItem6.setMnemonic('e');
+        jMenuItem6.setName("jMenuItem6"); // NOI18N
+        jMenu5.add(jMenuItem6);
+
+        jMenuItem7.setAction(actionMap.get("extractTemplates")); // NOI18N
+        jMenuItem7.setMnemonic('x');
+        jMenuItem7.setName("jMenuItem7"); // NOI18N
+        jMenu5.add(jMenuItem7);
 
         jSeparator9.setName("jSeparator9"); // NOI18N
-        jMenu1.add(jSeparator9);
+        jMenu5.add(jSeparator9);
+
+        jMenuItem8.setAction(actionMap.get("searchCorpus")); // NOI18N
+        jMenuItem8.setMnemonic('s');
+        jMenuItem8.setName("jMenuItem8"); // NOI18N
+        jMenu5.add(jMenuItem8);
+
+        jSeparator10.setName("jSeparator10"); // NOI18N
+        jMenu5.add(jSeparator10);
+
+        jMenuItem14.setAction(actionMap.get("importTagged")); // NOI18N
+        jMenuItem14.setMnemonic('i');
+        jMenuItem14.setName("jMenuItem14"); // NOI18N
+        jMenu5.add(jMenuItem14);
 
         jMenuItem11.setAction(actionMap.get("writeTagged")); // NOI18N
+        jMenuItem11.setMnemonic('d');
         jMenuItem11.setName("jMenuItem11"); // NOI18N
-        jMenu1.add(jMenuItem11);
+        jMenu5.add(jMenuItem11);
 
         jMenuItem10.setAction(actionMap.get("writeTemplates")); // NOI18N
+        jMenuItem10.setMnemonic('t');
         jMenuItem10.setName("jMenuItem10"); // NOI18N
-        jMenu1.add(jMenuItem10);
+        jMenu5.add(jMenuItem10);
 
-        menuBar.add(jMenu1);
+        menuBar.add(jMenu5);
+
+        jMenu6.setMnemonic('t');
+        jMenu6.setText(resourceMap.getString("jMenu6.text")); // NOI18N
+        jMenu6.setName("jMenu6"); // NOI18N
+
+        jMenuItem27.setAction(actionMap.get("openPlugInDialog")); // NOI18N
+        jMenuItem27.setMnemonic('p');
+        jMenuItem27.setName("jMenuItem27"); // NOI18N
+        jMenu6.add(jMenuItem27);
+
+        jMenuItem28.setAction(actionMap.get("openSettings")); // NOI18N
+        jMenuItem28.setMnemonic('s');
+        jMenuItem28.setName("jMenuItem28"); // NOI18N
+        jMenu6.add(jMenuItem28);
+
+        menuBar.add(jMenu6);
 
         helpMenu.setText(resourceMap.getString("helpMenu.text")); // NOI18N
         helpMenu.setName("helpMenu"); // NOI18N
 
         jMenuItem9.setAction(actionMap.get("openWiki")); // NOI18N
+        jMenuItem9.setMnemonic('w');
         jMenuItem9.setName("jMenuItem9"); // NOI18N
         helpMenu.add(jMenuItem9);
+
+        jMenuItem26.setAction(actionMap.get("openLanguageDescription")); // NOI18N
+        jMenuItem26.setMnemonic('l');
+        jMenuItem26.setName("jMenuItem26"); // NOI18N
+        helpMenu.add(jMenuItem26);
 
         jSeparator7.setName("jSeparator7"); // NOI18N
         helpMenu.add(jSeparator7);
@@ -456,7 +747,7 @@ public class SRLGUIView extends FrameView {
             .add(statusPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(statusMessageLabel)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 556, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 558, Short.MAX_VALUE)
                 .add(progressBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(statusAnimationLabel)
@@ -473,6 +764,8 @@ public class SRLGUIView extends FrameView {
                     .add(progressBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(3, 3, 3))
         );
+
+        jSeparator14.setName("jSeparator1"); // NOI18N
 
         setComponent(mainPanel);
         setMenuBar(menuBar);
@@ -532,8 +825,20 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             removeItem.setAction(new AbstractAction("Remove rule set \"" + name + "\"") {
 
                 public void actionPerformed(ActionEvent e) {
+                    SrlProject proj = SRLGUIApp.getApplication().proj;
+                    List<RuleSet> ruleSetList = (ruleType == Rule.ENTITY_RULE ? proj.entityRulesets : proj.templateRulesets);
+                    Iterator<RuleSet> rsIter = ruleSetList.iterator();
+                    RuleSet rs = null;
+                    while (rsIter.hasNext()) {
+                        RuleSet rs2 = rsIter.next();
+                        if (rs2.name.equals(name)) {
+                            rs = rs2;
+                            break;
+                        }
+                    }
                     removeRuleSet(ruleType, name,
                             (DefaultMutableTreeNode) path.getLastPathComponent());
+                    SRLGUIApp.getApplication().addUndoableEdit(new RemoveRuleSetEdit(name, ruleType, rs));
                 }
             });
             menu.add(removeItem);
@@ -558,7 +863,6 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                             try {
                                 SRLGUIApp.getApplication().proj.corpus.resupport();
                                 JOptionPane.showMessageDialog(getFrame(), "Corpus re-initialized", "Corpus", JOptionPane.INFORMATION_MESSAGE);
-                                SRLGUIApp.getApplication().setModified();
                             } catch (IOException x) {
                                 error(x, "Cannot re-initialize corpus");
                             } catch(CorpusConcurrencyException x) {
@@ -594,7 +898,11 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             removeItem.setAction(new AbstractAction("Remove word list \"" + name + "\"") {
 
                 public void actionPerformed(ActionEvent e) {
+                    DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+                    String name = (String)node.getUserObject();
+                    WordListSet wls = WordListSet.getWordListSetByName(name);
                     removeWordList((DefaultMutableTreeNode) path.getLastPathComponent());
+                    SRLGUIApp.getApplication().addUndoableEdit(new RemoveWordListSetEdit(name, node, wls));
                 }
             });
             menu.add(removeItem);
@@ -812,10 +1120,24 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                     }
                     break;
                 default:
-                    throw new IllegalArgumentException();
+                    for(SRLPlugin plugin : SRLGUIApp.getApplication().plugins) {
+                        if(plugin.panelIs(c, name))
+                            return (JPanel)c;
+                    }
             }
         }
         return null;
+    }
+
+    public void addPanel(String title, JPanel c, int id) {
+        rightPane.addTab(title, ruleSetIcon, c);
+            try {
+                rightPane.setTabComponentAt(rightPane.getTabCount() - 1, new CloseTabButton(id,title,ruleSetIcon));
+            } catch(NoSuchMethodError e) {
+                // Java 1.5 compatibility
+                rightPane.setIconAt(rightPane.getTabCount() - 1, new CloseTabIcon());
+            }
+            rightPane.setSelectedComponent(c);
     }
 
     public void closeTab(int type, String name) {
@@ -904,6 +1226,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             }
             SRLGUIApp.getApplication().proj = proj;
             reloadProject();
+            SRLGUIApp.getApplication().setModified();
         }
     }
 
@@ -948,9 +1271,13 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         jButton7.setEnabled(true);
         jButton8.setEnabled(true);
         jButton9.setEnabled(true);
-        jMenu1.setEnabled(true);
+        jMenu3.setEnabled(true);
+        jMenu4.setEnabled(true);
+        jMenu5.setEnabled(true);
         rightPane.setEnabled(true);
         rightPane.add(new ProjectPanel(proj));
+        SRLGUIApp.getApplication().clearAllEdits();
+ //       SRLGUIApp.getApplication().addUndoableEdit(new NullEdit());
     }
 
     @Action
@@ -995,8 +1322,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 proj = SRLGUIApp.getApplication().proj;
                 for (WordListSet wl : proj.wordlists) {
                     proj.corpus.listenToWordListSet(wl);
-                    for (Map.Entry<String, ListenableSet<WordListEntry>> l : wl.wordLists.entrySet()) {
-                        proj.corpus.listenToWordList(l.getKey(), l.getValue());
+                    for(String l : wl.getLists()) {
+                        proj.corpus.listenToWordList(l, WordListSet.getWordList(l));
                     }
                 }
                 reloadProject();
@@ -1065,13 +1392,18 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 return;
             }
         }
-        RuleSet rs = new RuleSet(ruleType, name);
+        DefaultMutableTreeNode dmtn = addRuleSet(name, ruleType, new RuleSet(ruleType, name));
+        SRLGUIApp.getApplication().addUndoableEdit(new AddRuleSetEdit(name, ruleType, dmtn));
+    }
+
+    private DefaultMutableTreeNode addRuleSet(String name, int ruleType, RuleSet rs) {
+        SrlProject proj = SRLGUIApp.getApplication().proj;
+        
         if (ruleType == Rule.ENTITY_RULE) {
             proj.entityRulesets.add(rs);
         } else {
             proj.templateRulesets.add(rs);
         }
-        SRLGUIApp.getApplication().setModified();
         if (ruleType == Rule.ENTITY_RULE) {
             SRLGUIApp.getApplication().entityRuleSets.put(name, rs);
         } else {
@@ -1083,9 +1415,15 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 ruleSet,
                 ruleSet.getChildCount());
         mainTree.scrollPathToVisible(new TreePath(node.getPath()));
+        return node;
     }
 
     public void removeRuleSet(int ruleType, String setName, DefaultMutableTreeNode node) {
+        JPanel panel = getPanel(ruleType+1, setName);
+        if(panel != null) {
+            mainPanel.remove(panel);
+        }
+
         SrlProject proj = SRLGUIApp.getApplication().proj;
         List<RuleSet> ruleSetList = (ruleType == Rule.ENTITY_RULE ? proj.entityRulesets : proj.templateRulesets);
         Iterator<RuleSet> rsIter = ruleSetList.iterator();
@@ -1103,7 +1441,6 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         }
         DefaultTreeModel dtm = (DefaultTreeModel) mainTree.getModel();
         dtm.removeNodeFromParent(node);
-        SRLGUIApp.getApplication().setModified();
     }
 
     @Action
@@ -1125,26 +1462,53 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 return;
             }
         }
-        WordListSet wl = new WordListSet(name, proj.corpus.getProcessor());
+        DefaultMutableTreeNode node = addWordList(name, new WordListSet(name, proj.corpus.getProcessor()));
+        SRLGUIApp.getApplication().addUndoableEdit(new AddWordListSetEdit(name, node));
+    }
+
+    private DefaultMutableTreeNode addWordList(String name, WordListSet wl) {
+        SrlProject proj = SRLGUIApp.getApplication().proj;
         proj.corpus.listenToWordListSet(wl);
         proj.wordlists.add(wl);
-        SRLGUIApp.getApplication().setModified();
+        wl.restore();
         SRLGUIApp.getApplication().wordLists.put(name, wl);
         DefaultMutableTreeNode node = new DefaultMutableTreeNode(name);
         ((DefaultTreeModel) mainTree.getModel()).insertNodeInto(node,
                 SRLGUIApp.getApplication().wordList,
                 SRLGUIApp.getApplication().wordList.getChildCount());
         mainTree.scrollPathToVisible(new TreePath(node.getPath()));
+        return node;
     }
 
     public void removeWordList(DefaultMutableTreeNode node) {
         String name = node.getUserObject().toString();
+        JPanel panel = getPanel(SRLGUIApp.SRL_WORDLIST, name);
+        if(panel != null) {
+            mainPanel.remove(panel);
+        }
         SrlProject proj = SRLGUIApp.getApplication().proj;
         WordListSet wl = SRLGUIApp.getApplication().wordLists.get(name);
+        wl.die();
         proj.wordlists.remove(wl);
-        SRLGUIApp.getApplication().setModified();
         SRLGUIApp.getApplication().wordLists.remove(name);
         ((DefaultTreeModel) mainTree.getModel()).removeNodeFromParent(node);
+    }
+
+    void addPlugin(SRLPlugin plugin) {
+        JMenuItem pluginMenu = plugin.getMenu();
+        if(pluginMenu == null)
+            return;
+        int idx;
+        for(idx = 0; idx < jMenu6.getComponentCount(); idx++) {
+            if(jMenu6.getComponent(idx) instanceof JSeparator) {
+                break;
+            }
+        }
+        if(idx == jMenu6.getComponentCount()) {
+            idx = 0;
+            jMenu6.add(new JSeparator(),0);
+        }
+        jMenu6.add(pluginMenu,idx);
     }
 
     private class CustomEncodingFilter extends javax.swing.filechooser.FileFilter {
@@ -1324,6 +1688,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     public void enableSave() {
         jButton3.setEnabled(true);
         jMenuItem1.setEnabled(true);
+        jMenuItem23.setEnabled(true);
     }
     
     public void disableSave() {
@@ -1569,8 +1934,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             } else {
                 proj.templateRulesets.add(rs);
             }
-            SRLGUIApp.getApplication().setModified();
-            if (ruleType == Rule.ENTITY_RULE) {
+           if (ruleType == Rule.ENTITY_RULE) {
                 SRLGUIApp.getApplication().entityRuleSets.put(name, rs);
             } else {
                 SRLGUIApp.getApplication().templateRuleSets.put(name, rs);
@@ -1581,6 +1945,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 ruleSet,
                 ruleSet.getChildCount());
             mainTree.scrollPathToVisible(new TreePath(node.getPath()));
+            SRLGUIApp.getApplication().addUndoableEdit(new ImportRuleSetEdit(name, ruleType, node, rs));
         } catch(Exception x) { 
             x.printStackTrace();
             JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not import ruleset", JOptionPane.ERROR_MESSAGE);
@@ -1626,13 +1991,13 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             WordListSet wl = WordListSet.loadFromFile(f, proj.processor);
             proj.corpus.listenToWordListSet(wl);
             proj.wordlists.add(wl);
-            SRLGUIApp.getApplication().setModified();
             SRLGUIApp.getApplication().wordLists.put(name, wl);
             DefaultMutableTreeNode node = new DefaultMutableTreeNode(name);
             ((DefaultTreeModel) mainTree.getModel()).insertNodeInto(node,
                     SRLGUIApp.getApplication().wordList,
                     SRLGUIApp.getApplication().wordList.getChildCount());
             mainTree.scrollPathToVisible(new TreePath(node.getPath()));
+            SRLGUIApp.getApplication().addUndoableEdit(new ImportWordListSetEdit(name, node, wl));
         } catch(Exception x) {
             x.printStackTrace();
             JOptionPane.showMessageDialog(getFrame(), x.getMessage(), "Could not import word list", JOptionPane.ERROR_MESSAGE);
@@ -1692,10 +2057,353 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         }
     }
 
-    
+    void onUndoableEditAdd() {
+        UndoManager undoManager = SRLGUIApp.getApplication().undoManager;
+        jButton10.setEnabled(undoManager.canUndo());
+        jButton10.setToolTipText(undoManager.canUndo() ? undoManager.getUndoPresentationName() : "Cannot undo");
+        jMenuItem15.setEnabled(undoManager.canUndo());
+        jMenuItem15.setToolTipText(undoManager.canUndo() ? undoManager.getUndoPresentationName() : "Cannot undo");
+        jButton11.setEnabled(undoManager.canRedo());
+        jButton11.setToolTipText(undoManager.canRedo() ? undoManager.getRedoPresentationName() : "Cannot redo");
+        jMenuItem16.setEnabled(undoManager.canRedo());
+        jMenuItem16.setToolTipText(undoManager.canRedo() ? undoManager.getRedoPresentationName() : "Cannot redo");
+    }
+
+    @Action
+    public void undo() {
+        UndoManager undoManager = SRLGUIApp.getApplication().undoManager;
+        if(undoManager.canUndo()) {
+            undoManager.undo();
+        } else {
+            JOptionPane.showMessageDialog(this.getComponent(), "The last action cannot be undone. (Please file bug report)", "Undo Not Possible", JOptionPane.WARNING_MESSAGE);
+        }
+        SRLGUIApp.getApplication().proj.setModified();
+        enableSave();
+       onUndoableEditAdd();
+    }
+
+    @Action
+    public void redo() {
+        UndoManager undoManager = SRLGUIApp.getApplication().undoManager;
+        if(undoManager.canRedo()) {
+            undoManager.redo();
+        } else {
+            JOptionPane.showMessageDialog(this.getComponent(), "The last action cannot be undone. (Please file bug report)", "Undo Not Possible", JOptionPane.WARNING_MESSAGE);
+        }
+        SRLGUIApp.getApplication().proj.setModified();
+        enableSave();
+        onUndoableEditAdd();
+    }
+
+    @Action
+    public void cut() {
+    }
+
+    @Action
+    public void copy() {
+
+    }
+
+    @Action
+    public void paste() {
+    }
+
+    @Action
+    public void deleteRuleSet() {
+        TreePath path = mainTree.getSelectionPath();
+        if(path == null || path.getPath() == null || path.getPath().length != 3)
+            return;
+        Object o = ((DefaultMutableTreeNode)path.getPath()[1]).getUserObject();
+        int ruleType;
+        if(o.equals("Template Rules"))
+            ruleType = Rule.TEMPLATE_RULE;
+        else if(o.equals("Entity Rules"))
+            ruleType = Rule.ENTITY_RULE;
+        else
+            return;
+        String setName = (String)((DefaultMutableTreeNode)path.getPath()[2]).getUserObject();
+        if(JOptionPane.showConfirmDialog(this.getFrame(), "Remove " + (ruleType == Rule.TEMPLATE_RULE ? "template" : "entity")
+               + " rule set " + setName + "?", "Remove Rule Set", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION)
+           return;
+        List<RuleSet> rsList = ruleType == Rule.TEMPLATE_RULE ? SRLGUIApp.getApplication().proj.templateRulesets :
+            SRLGUIApp.getApplication().proj.entityRulesets;
+        RuleSet rs = null;
+        for(RuleSet rs2 : rsList) {
+            if(rs2.name.equals(setName))
+                rs = rs2;
+        }
+        removeRuleSet(ruleType, setName, (DefaultMutableTreeNode)path.getPath()[2]);
+        SRLGUIApp.getApplication().addUndoableEdit(new RemoveRuleSetEdit(setName, ruleType, rs));
+    }
+
+    @Action
+    public void addRule() {
+        Component c = rightPane.getSelectedComponent();
+        if(c == null || !(c instanceof RuleSetPanel))
+            return;
+        RuleSetPanel panel = (RuleSetPanel)c;
+        panel.addRule();
+    }
+
+    @Action
+    public void removeRule() {
+        Component c = rightPane.getSelectedComponent();
+        if(c == null || !(c instanceof RuleSetPanel))
+            return;
+        RuleSetPanel panel = (RuleSetPanel)c;
+        panel.removeRule();
+    }
+
+    @Action
+    public void saveProjectAs() {
+        SrlProject proj = SRLGUIApp.getApplication().proj;
+        jfc.setSelectedFile(proj.getPath());
+        if(jfc.showSaveDialog(getFrame()) != JFileChooser.APPROVE_OPTION)
+            return;
+        if (proj != null && proj.isModified()) {
+            try {
+                proj.writeProject(jfc.getSelectedFile());
+                    SRLGUIApp.getApplication().clearModified();
+            } catch (IOException x) {
+                x.printStackTrace();
+                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+            } catch (CorpusConcurrencyException x) {
+                x.printStackTrace();
+                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    @Action
+    public void addWordListToSet() {
+        Component c = rightPane.getSelectedComponent();
+        if(c == null || !(c instanceof WordListPanel))
+            return;
+        WordListPanel panel = (WordListPanel)c;
+        panel.addListAction();
+    }
+
+    @Action
+    public void removeWordListFromSet() {
+        Component c = rightPane.getSelectedComponent();
+        if(c == null || !(c instanceof WordListPanel))
+            return;
+        WordListPanel panel = (WordListPanel)c;
+        panel.deleteListAction();
+    }
+
+    @Action
+    public void openLanguageDescription() {
+         try {
+            Desktop.getDesktop().browse(new URI("http://code.google.com/p/srl-editor/wiki/SRLLanguageDescription"));
+        } catch(Exception x) {
+            JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open external browser", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private class NullEdit extends SimpleUndoableEdit {
+        public NullEdit() {}
+
+        public String getPresentationName() {
+            return "";
+        }
+
+        public void redo() throws CannotRedoException {
+            throw new CannotRedoException();
+        }
+
+        public void undo() throws CannotUndoException {
+            throw new CannotUndoException();
+        }
+
+        public boolean canRedo() {
+            return false;
+        }
+
+        public boolean canUndo() {
+            return false;
+        }
+    }
+
+    private class AddRuleSetEdit extends SimpleUndoableEdit {
+        String ruleSetName;
+        int ruleType;
+        DefaultMutableTreeNode dmtn;
+
+        public AddRuleSetEdit(String ruleSetName, int ruleType, DefaultMutableTreeNode dmtn) {
+            this.ruleSetName = ruleSetName;
+            this.ruleType = ruleType;
+            this.dmtn = dmtn;
+        }
+
+        public String getPresentationName() {
+            return "Add rule set " + ruleSetName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            dmtn = addRuleSet(ruleSetName, ruleType, new RuleSet(ruleType, ruleSetName));
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            removeRuleSet(ruleType, ruleSetName, dmtn);
+        }
+    }
+
+     private class ImportRuleSetEdit extends SimpleUndoableEdit {
+        String ruleSetName;
+        int ruleType;
+        DefaultMutableTreeNode dmtn;
+        RuleSet rs;
+
+        public ImportRuleSetEdit(String ruleSetName, int ruleType, DefaultMutableTreeNode dmtn, RuleSet rs) {
+            this.ruleSetName = ruleSetName;
+            this.ruleType = ruleType;
+            this.dmtn = dmtn;
+            this.rs = rs;
+        }
+
+
+        public String getPresentationName() {
+            return "Import rule set " + ruleSetName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            dmtn = addRuleSet(ruleSetName, ruleType, rs);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            removeRuleSet(ruleType, ruleSetName, dmtn);
+        }
+    }
+
+    private class RemoveRuleSetEdit extends SimpleUndoableEdit {
+        String ruleSetName;
+        int ruleType;
+        DefaultMutableTreeNode node;
+        RuleSet rs;
+
+        public RemoveRuleSetEdit(String ruleSetName, int ruleType, RuleSet rs) {
+            this.ruleSetName = ruleSetName;
+            this.ruleType = ruleType;
+            this.node = null;
+            this.rs = rs;
+        }
+
+        public String getPresentationName() {
+            return "Remove rule set " + ruleSetName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            removeRuleSet(ruleType, ruleSetName, node);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            node = addRuleSet(ruleSetName, ruleType, rs);
+        }
+    }
+
+    private class AddWordListSetEdit extends SimpleUndoableEdit {
+        String wordListName;
+        DefaultMutableTreeNode node;
+
+        public AddWordListSetEdit(String wordListName, DefaultMutableTreeNode node) {
+            this.wordListName = wordListName;
+            this.node = node;
+        }
+
+        public String getPresentationName() {
+            return "Add Word List Set " + wordListName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            node = addWordList(wordListName, new WordListSet(wordListName, SRLGUIApp.getApplication().proj.processor));
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            removeWordList(node);
+        }
+    }
+
+    private class ImportWordListSetEdit extends SimpleUndoableEdit {
+        String wordListName;
+        DefaultMutableTreeNode node;
+        WordListSet wls;
+
+        public ImportWordListSetEdit(String wordListName, DefaultMutableTreeNode node, WordListSet wls) {
+            this.wordListName = wordListName;
+            this.node = node;
+            this.wls = wls;
+        }
+
+        public String getPresentationName() {
+            return "Add Word List Set " + wordListName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            node = addWordList(wordListName, wls);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            removeWordList(node);
+        }
+    }
+
+    private class RemoveWordListSetEdit extends SimpleUndoableEdit {
+        String wordListName;
+        DefaultMutableTreeNode node;
+        WordListSet set;
+
+        public RemoveWordListSetEdit(String wordListName, DefaultMutableTreeNode node, WordListSet set) {
+            this.wordListName = wordListName;
+            this.node = node;
+            this.set = set;
+        }
+
+
+        public String getPresentationName() {
+            return "Remove Word List Set " + wordListName;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            removeWordList(node);
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            node = addWordList(wordListName, set);
+        }
+
+
+    }
+
+    @Action
+    public void openPlugInDialog() {
+        PluginManagerDialog manager = new PluginManagerDialog();
+        manager.setVisible(true);
+    }
+
+    @Action
+    public void openSettings() {
+        SettingsDialog dialog = new SettingsDialog(this.getFrame(), true);
+        dialog.setVisible(true);
+    }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton10;
+    private javax.swing.JButton jButton11;
+    private javax.swing.JButton jButton15;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
@@ -1704,14 +2412,29 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
-    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenu jMenu3;
+    private javax.swing.JMenu jMenu4;
+    private javax.swing.JMenu jMenu5;
+    private javax.swing.JMenu jMenu6;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem10;
     private javax.swing.JMenuItem jMenuItem11;
     private javax.swing.JMenuItem jMenuItem12;
     private javax.swing.JMenuItem jMenuItem13;
     private javax.swing.JMenuItem jMenuItem14;
+    private javax.swing.JMenuItem jMenuItem15;
+    private javax.swing.JMenuItem jMenuItem16;
     private javax.swing.JMenuItem jMenuItem2;
+    private javax.swing.JMenuItem jMenuItem20;
+    private javax.swing.JMenuItem jMenuItem21;
+    private javax.swing.JMenuItem jMenuItem22;
+    private javax.swing.JMenuItem jMenuItem23;
+    private javax.swing.JMenuItem jMenuItem24;
+    private javax.swing.JMenuItem jMenuItem25;
+    private javax.swing.JMenuItem jMenuItem26;
+    private javax.swing.JMenuItem jMenuItem27;
+    private javax.swing.JMenuItem jMenuItem28;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
@@ -1721,6 +2444,11 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JMenuItem jMenuItem9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator10;
+    private javax.swing.JToolBar.Separator jSeparator11;
+    private javax.swing.JToolBar.Separator jSeparator12;
+    private javax.swing.JToolBar.Separator jSeparator13;
+    private javax.swing.JSeparator jSeparator14;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JToolBar.Separator jSeparator3;
     private javax.swing.JToolBar.Separator jSeparator4;
@@ -1749,6 +2477,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private final Icon corpusIcon;
     private final Icon closeTabIcon;
     private final Icon searchIcon;
+    private final Icon copyIcon;
+    private final Icon cutIcon;
+    private final Icon pasteIcon;
     private int busyIconIndex = 0;
     private JDialog aboutBox;
 }

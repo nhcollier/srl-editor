@@ -7,6 +7,7 @@
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="2"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="true"/>
+    <AuxValue name="FormSettings_generateFQN" type="java.lang.Boolean" value="true"/>
     <AuxValue name="FormSettings_generateMnemonicsCode" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_i18nAutoMode" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_layoutCodeTarget" type="java.lang.Integer" value="2"/>
@@ -39,7 +40,7 @@
                       <Component id="jButton1" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jScrollPane3" alignment="0" min="0" pref="0" max="32767" attributes="1"/>
-                  <Component id="jScrollPane2" alignment="0" pref="651" max="32767" attributes="1"/>
+                  <Component id="jScrollPane2" alignment="0" pref="653" max="32767" attributes="1"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
           </Group>
@@ -175,7 +176,7 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="removeButton" min="-2" max="-2" attributes="0"/>
               </Group>
-              <Component id="jScrollPane1" alignment="0" pref="290" max="32767" attributes="1"/>
+              <Component id="jScrollPane1" alignment="0" pref="294" max="32767" attributes="1"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">

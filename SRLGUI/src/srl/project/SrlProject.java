@@ -14,11 +14,9 @@ import srl.rule.*;
 import srl.wordlist.*;
 import srl.corpus.*;
 import java.io.*;
-import java.net.*;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.*;
-import javax.xml.parsers.*;
-import javax.xml.transform.*;
-import javax.xml.transform.stream.*;
 import mccrae.tools.strings.Strings;
 import mccrae.tools.struct.ListenableList;
 import mccrae.tools.struct.Pair;
@@ -204,6 +202,83 @@ public class SrlProject {
         modified = false;
     }
 
+    public void writeProject(File location) throws IOException, CorpusConcurrencyException {
+        if(path.equals(location)) {
+            writeProject();
+            return;
+        }
+         if (location.exists()) {
+            if (!location.isDirectory()) {
+                throw new IllegalArgumentException(location.toString() + " is not a directory!");
+            } else if (location.listFiles().length != 0) {
+                throw new IllegalArgumentException(location.toString() + " is not empty!");
+            }
+        } else if (!location.mkdir()) {
+            throw new IOException("Could not create directory " + location);
+        }
+
+        if(!(new File(location, "corpus").mkdir())) {
+            throw new IOException("Could not create directory " + location.toString() + "corpus");
+        }
+        File[] corpusFiles = (new File(path, "corpus")).listFiles();
+        for(File f : corpusFiles) {
+            copy(f, new File(new File(location, "corpus"),f.getName()));
+        }
+        corpus.saveCorpus();
+         corpus = Corpus.openCorpus(new File(location, "corpus"), processor, false);
+         path = location;
+        if (!(new File(path, "entity_rules")).mkdir()) {
+            throw new IOException("Could not create directory " + path.toString() + "entity_rules");
+        }
+        if (!(new File(path, "template_rules")).mkdir()) {
+            throw new IOException("Could not create directory " + path.toString() + "template_rules");
+        }
+        if (!(new File(path, "wordlists")).mkdir()) {
+            throw new IOException("Could not create directory " + path.toString() + "wordlists");
+        }
+        modified = true;
+        for (WordListSet wl : wordlists) {
+            File f = new File(new File(path, "wordlists"), wl.name + ".wordlist.srl");
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+            wl.write(f);
+        }
+        for (RuleSet rs : entityRulesets) {
+            File f = new File(new File(path, "entity_rules"), rs.name + ".rule.srl");
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+            rs.write(f);
+        }
+        for (RuleSet rs : templateRulesets) {
+            File f = new File(new File(path, "template_rules"), rs.name + ".rule.srl");
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+            rs.write(f);
+        }
+        corpus.saveCorpus();
+        writeXML();
+        modified = false;
+    }
+  public static void copy(File source, File dest) throws IOException {
+        FileChannel in = null, out = null;
+        try {
+            in = new FileInputStream(source).getChannel();
+            out = new FileOutputStream(dest).getChannel();
+
+            long size = in.size();
+            MappedByteBuffer buf = in.map(FileChannel.MapMode.READ_ONLY, 0, size);
+
+            out.write(buf);
+
+        } finally {
+            if (in != null) in.close();
+            if (out != null) out.close();
+        }
+    }
+
     private void writeXML() throws IOException {
         PrintStream ps = new PrintStream(new File(path, "project.xml"));
         ps.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -215,9 +290,7 @@ public class SrlProject {
         ps.println("\t<!ELEMENT template_rulesets (ruleset*)>");
         ps.println("\t<!ELEMENT wordlists (wordlist*)>");
         ps.println("\t<!ELEMENT corpus EMPTY>");
-        ps.println("\t<!ATTLIST corpus analyzer CDATA #REQUIRED> ");
-        ps.println("\t<!ATTLIST corpus tokenizer CDATA #REQUIRED>");
-        ps.println("\t<!ATTLIST corpus splitter CDATA #REQUIRED>");
+        ps.println("\t<!ATTLIST corpus processor CDATA #REQUIRED>");
         ps.println("\t<!ELEMENT ruleset (#PCDATA)>");
         ps.println("\t<!ELEMENT wordlist (#PCDATA)>");
         ps.println("\t<!ELEMENT entities (entity*)>");
@@ -227,9 +300,8 @@ public class SrlProject {
         ps.println("]>");
         ps.println("<srlproject name=\"" + Strings.chomp(name.toString()) + "\">");
         ps.println("<description>" + Strings.chomp(description.toString()) + "</description>");
-        ps.println("\t<corpus analyzer=\"" + corpus.getProcessor().getAnalyzerName() + 
-                "\" tokenizer=\"" + corpus.getProcessor().getTokenizerName() +
-                "\" splitter=\"" + corpus.getProcessor().getSplitterName() + "\"/>");
+        ps.println("\t<corpus processor=\"" + corpus.getProcessor().getName() +
+                "\"/>");
         ps.println("\t<entities>");
         for(Pair<String,String> entity : entities) {
             ps.println("\t\t<entity>");
@@ -261,9 +333,16 @@ public class SrlProject {
     }
 
     /**
-     * Set the project to be modified
+     * Set the project to be modified. SRLGUIApp manages this variable through
+     * the use of addUndoableEdit(UndoableEdit).
      */
     public void setModified() {
         modified = true;
     }
+
+    public File getPath() {
+        return path;
+    }
+
+
 }

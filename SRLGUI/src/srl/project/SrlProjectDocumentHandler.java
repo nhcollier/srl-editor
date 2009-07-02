@@ -61,11 +61,14 @@ public class SrlProjectDocumentHandler extends DefaultHandler {
             tag = wordlists;
         } else if (localName.toLowerCase().equals("corpus")) {
             tag = corpus;
-            String analyzerClassName = attributes.getValue(uri, "analyzer");
-            String tokenizerClassName = attributes.getValue(uri, "tokenizer");
-            String splitterClassName = attributes.getValue(uri, "splitter");
+            String processorName = attributes.getValue(uri, "processor");
+            // 0.1.7a to 1.0rc1 transition code
+            if(processorName == null) {
+                String analyzerClassName = attributes.getValue(uri, "analyzer");
+                processorName = Processor.getLang(analyzerClassName);
+            }
             try {
-                proj.processor = new Processor(analyzerClassName, tokenizerClassName, splitterClassName);
+                proj.processor = Processor.getProcessor(processorName);
                 if(!dontOpenCorpus)
                     proj.openCorpus(proj.processor);
             } catch (Exception x) {

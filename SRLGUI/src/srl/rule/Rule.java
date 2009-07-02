@@ -33,7 +33,7 @@ import srl.corpus.SrlQuery;
  * matching of rules
  * @author john
  */
-public class Rule implements Expr {
+public class Rule implements Expr, Comparable<Rule> {
     /** A list of the heads of the rules. That is everything before the ":-" */
     public ListenableSet<Head> heads;
     /** A list of the body elements of the rules. That is everything
@@ -322,8 +322,35 @@ public class Rule implements Expr {
     public List<TypeExpr> getBody() {
         return body;
     }
-    
-    
+
+    public int compareTo(Rule arg0) {
+        Iterator<Head> argIter = arg0.heads.iterator();
+        for(Head h : heads) {
+            if(!argIter.hasNext()) {
+                return -1;
+            }
+            String s1 = h.toString();
+            String s2 = argIter.next().toString();
+            int i = s1.compareTo(s2);
+            if(i != 0)
+                return i;
+        }
+        if(argIter.hasNext())
+            return 1;
+        Iterator<TypeExpr> bodyIter = arg0.body.iterator();
+        for(TypeExpr te : body) {
+            if(!bodyIter.hasNext())
+                return -1;
+            String s1 = te.toString();
+            String s2 = bodyIter.next().toString();
+            int i = s1.compareTo(s2);
+            if(i != 0)
+                return i;
+        }
+        if(argIter.hasNext())
+            return 1;
+        return 0;
+    }
 }
 class SuccessState implements TypeExpr {
 

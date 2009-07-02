@@ -13,6 +13,9 @@ package srl.gui;
 import java.util.*;
 import javax.swing.event.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.AbstractDocument.ElementEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 import mccrae.tools.struct.CollectionChangeEvent;
 import mccrae.tools.struct.CollectionChangeListener;
 import mccrae.tools.struct.Pair;
@@ -23,15 +26,16 @@ import srl.project.SrlProject;
  * @author  john
  */
 public class ProjectPanel extends javax.swing.JPanel {
-    
     SrlProject proj;
-    
+
+    private String lastProjectName, lastDescription;
+
     /** Creates new form ProjectPanel */
     public ProjectPanel(SrlProject proj) {
         initComponents();
         this.proj = proj;
-      //  projectNameField.setText(proj.name);
-       // descriptionField.setText(proj.description);
+        lastProjectName = proj.name.toString();
+        lastDescription = proj.description.toString();
         for(Pair<String,String> entity : proj.entities) {
             String[] ss = { entity.first, entity.second };
             ((DefaultTableModel)entityTable.getModel()).addRow(ss);
@@ -57,13 +61,22 @@ public class ProjectPanel extends javax.swing.JPanel {
         projectNameField.getDocument().addDocumentListener(new DocumentListener() {
 
             public void insertUpdate(DocumentEvent e) {
+
                 SRLGUIApp.getApplication().proj.name.replace(0, SRLGUIApp.getApplication().proj.name.length(), projectNameField.getText());
-                SRLGUIApp.getApplication().setModified();
+                if(userChangeFlag) {
+                    SRLGUIApp.getApplication().addUndoableEdit(new NameEdit(lastProjectName, projectNameField.getText()));
+                    lastProjectName = projectNameField.getText();
+                }
+                SrlProject proj = SRLGUIApp.getApplication().proj;
             }
 
             public void removeUpdate(DocumentEvent e) {
                 SRLGUIApp.getApplication().proj.name.replace(0, SRLGUIApp.getApplication().proj.name.length(), projectNameField.getText());
-                SRLGUIApp.getApplication().setModified();
+                if(userChangeFlag) {
+                    SRLGUIApp.getApplication().addUndoableEdit(new NameEdit(lastProjectName, projectNameField.getText()));
+                    lastProjectName = projectNameField.getText();
+                }
+                SrlProject proj = SRLGUIApp.getApplication().proj;
             }
 
             public void changedUpdate(DocumentEvent e) {
@@ -73,12 +86,18 @@ public class ProjectPanel extends javax.swing.JPanel {
 
             public void insertUpdate(DocumentEvent e) {
                 SRLGUIApp.getApplication().proj.description.replace(0, SRLGUIApp.getApplication().proj.description.length(), descriptionField.getText());
-                SRLGUIApp.getApplication().setModified();
+                if(userChangeFlag) {
+                    SRLGUIApp.getApplication().addUndoableEdit(new DescriptionEdit(lastDescription, descriptionField.getText()));
+                    lastDescription = descriptionField.getText();
+                }
             }
 
             public void removeUpdate(DocumentEvent e) {
                 SRLGUIApp.getApplication().proj.description.replace(0, SRLGUIApp.getApplication().proj.description.length(), descriptionField.getText());
-                SRLGUIApp.getApplication().setModified();
+                if(userChangeFlag) {
+                    SRLGUIApp.getApplication().addUndoableEdit(new DescriptionEdit(lastDescription, descriptionField.getText()));
+                    lastDescription = descriptionField.getText();
+                }
             }
 
             public void changedUpdate(DocumentEvent e) {
@@ -221,7 +240,8 @@ public class ProjectPanel extends javax.swing.JPanel {
             (String)entityTable.getValueAt(idx,1));
         ((DefaultTableModel)entityTable.getModel()).removeRow(idx);
         proj.entities.remove(s);
-        SRLGUIApp.getApplication().setModified();
+        String[] oldVal = { s.first, s.second };
+        SRLGUIApp.getApplication().addUndoableEdit(new EntityEdit(oldVal, null, idx));
         userChangeFlag = true;
     }//GEN-LAST:event_removeEntityButtonActionPerformed
 
@@ -233,7 +253,7 @@ public class ProjectPanel extends javax.swing.JPanel {
         String[] data = { "", "" };
         dlm.insertRow(dlm.getRowCount(), data);
         proj.entities.add(new Pair<String,String>("",""));
-        SRLGUIApp.getApplication().setModified();
+        SRLGUIApp.getApplication().addUndoableEdit(new EntityEdit(null, data, dlm.getRowCount()-1));
         userChangeFlag = true;
     }//GEN-LAST:event_addEntityButtonActionPerformed
     
@@ -243,9 +263,126 @@ public class ProjectPanel extends javax.swing.JPanel {
             return;
         int idx = e.getFirstRow();
         proj.entities.remove(idx);
+        String[] oldVal = { proj.entities.get(idx).first, proj.entities.get(idx).second };
         proj.entities.add(idx,new Pair<String,String>((String)entityTable.getValueAt(idx, 0),
                 (String)entityTable.getValueAt(idx, 1)));
-        SRLGUIApp.getApplication().setModified();
+        String[] newVal = { proj.entities.get(idx).first, proj.entities.get(idx).second };
+        SRLGUIApp.getApplication().addUndoableEdit(new EntityEdit(oldVal, newVal, idx));
+    }
+
+    private class NameEdit extends SimpleUndoableEdit {
+        String oldVal;
+        String newVal;
+
+        public NameEdit(String oldVal, String newVal) {
+            this.oldVal = oldVal;
+            this.newVal = newVal;
+        }
+
+        public String getPresentationName() {
+            return "Change project name to " + newVal;
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            userChangeFlag = false;
+            SRLGUIApp.getApplication().proj.name.replace(0, SRLGUIApp.getApplication().proj.name.length(), oldVal);
+            projectNameField.setText(oldVal);
+            userChangeFlag = true;
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            userChangeFlag = false;
+            SRLGUIApp.getApplication().proj.name.replace(0, SRLGUIApp.getApplication().proj.name.length(), newVal);
+            projectNameField.setText(newVal);
+            userChangeFlag = true;
+        }
+
+
+    }
+
+    private class DescriptionEdit extends SimpleUndoableEdit {
+        String oldVal, newVal;
+
+        public DescriptionEdit(String oldVal, String newVal) {
+            this.oldVal = oldVal;
+            this.newVal = newVal;
+        }
+
+        public String getPresentationName() {
+            return "Change project description";
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            userChangeFlag = false;
+            SRLGUIApp.getApplication().proj.description.replace(0, SRLGUIApp.getApplication().proj.name.length(), newVal);
+            descriptionField.setText(newVal);
+            userChangeFlag = true;
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            userChangeFlag = false;
+            SRLGUIApp.getApplication().proj.description.replace(0, SRLGUIApp.getApplication().proj.name.length(), oldVal);
+            descriptionField.setText(oldVal);
+            userChangeFlag = true;
+        }
+
+    }
+
+    private class EntityEdit extends SimpleUndoableEdit {
+        String[] oldVal, newVal;
+        int idx;
+
+        public EntityEdit(String[] oldVal, String[] newVal, int idx) {
+            this.oldVal = oldVal;
+            this.newVal = newVal;
+            this.idx = idx;
+        }
+
+        public String getPresentationName() {
+            if(oldVal == null) {
+                return "Add entity " + newVal[0] + "/" + newVal[1];
+            } else if(newVal == null) {
+                return "Remove entity " + oldVal[0] + "/" + newVal[1];
+            } else {
+                return "Change entity " + oldVal[0] + "/" + newVal[1] + " to " + newVal[0] + "/" + newVal[1];
+            }
+        }
+
+        public void redo() throws CannotRedoException {
+            undone = false;
+            userChangeFlag = false;
+            DefaultTableModel dlm = (DefaultTableModel)entityTable.getModel();
+            if(oldVal != null) {
+                proj.entities.remove(idx);
+                dlm.removeRow(idx);
+            }
+            if(newVal != null) {
+                proj.entities.add(idx, new Pair<String,String>(newVal[0], newVal[1]));
+                dlm.insertRow(idx, newVal);
+            }
+            userChangeFlag = true;
+        }
+
+        public void undo() throws CannotUndoException {
+            undone = true;
+            userChangeFlag = false;
+            DefaultTableModel dlm = (DefaultTableModel)entityTable.getModel();
+            if(newVal != null) {
+                proj.entities.remove(idx);
+                dlm.removeRow(idx);
+            }
+            if(oldVal != null) {
+                proj.entities.add(idx, new Pair<String,String>(oldVal[0], oldVal[1]));
+                dlm.insertRow(idx, oldVal);
+            }
+            userChangeFlag = true;
+        }
+
+
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

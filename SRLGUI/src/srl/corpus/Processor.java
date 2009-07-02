@@ -10,8 +10,10 @@
 */
 package srl.corpus;
 
+import srl.gui.ProcessorPlugin;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
+import java.util.LinkedList;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 
@@ -23,7 +25,7 @@ import org.apache.lucene.analysis.TokenStream;
  * @author John McCrae, National Institute of Informatics
  */
 public class Processor {
-    final String analyzer, tokenizer, splitter;
+    final String analyzer, tokenizer, splitter, name;
     
     /** The names of the processors packaged with Lucene */
     public static final String[] langs = { "English", 
@@ -88,27 +90,36 @@ public class Processor {
         "srl.corpus.StandardSplitter",
         "srl.corpus.pre.PreSplitter"
     };
-    
+
+    public static final LinkedList<ProcessorPlugin> plugins = new LinkedList<ProcessorPlugin>();
+
+
     /** Construct a processor using on the standard names
      * @param name A name from langs
      */
-    public Processor(String name) {
+    public static Processor getProcessor(String name) {
         for(int i = 0; i < langs.length; i++) {
             if(name.equals(langs[i])) {
-                analyzer = analyzers[i];
-                tokenizer = tokenizers[i];
-                splitter = splitters[i];
-                return;
+                String analyzer = analyzers[i];
+                String tokenizer = tokenizers[i];
+                String splitter = splitters[i];
+                return new Processor(name,analyzer, tokenizer, splitter);
             }
+        }
+        for(ProcessorPlugin pp : plugins) {
+            if(pp.getProcessorName().equals(name))
+                return pp.getProcessor();
         }
         throw new IllegalArgumentException("Language " + name + " not known");
     }
+
     
     /** Construct a custom processor
      * @param analyzer The name of the analyzer class (must extend org.apache.lucene.analysis.Analyzer)
      * @param tokenizer The name of the tokenizer class (must extend org.apache.lucene.analysis.Tokenizer)
      */
-    public Processor(String analyzer, String tokenizer, String splitter) {
+    public Processor(String name, String analyzer, String tokenizer, String splitter) {
+        this.name = name;
         this.analyzer = analyzer;
         this.tokenizer = tokenizer;
         this.splitter = splitter;
@@ -171,6 +182,20 @@ public class Processor {
     public String getAnalyzerName() { return analyzer; }
     public String getTokenizerName() { return tokenizer; }
     public String getSplitterName() { return splitter; }
+    public String getName() { return name; }
+
+    /**
+     * Ignore. Used for 0.1.7a to 1.0rc1 transition
+     * @param analyzer
+     * @return
+     */
+    public static String getLang(String analyzer) {
+        for(int i = 0; i < analyzers.length; i++) {
+            if(analyzer.equals(analyzers[i]))
+                return langs[i];
+        }
+        return null;
+    }
 }
 
 

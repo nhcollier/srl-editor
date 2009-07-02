@@ -33,6 +33,9 @@ public class NewProjectDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         getRootPane().setDefaultButton(okButton);
+        for(ProcessorPlugin pp : Processor.plugins) {
+            ((DefaultComboBoxModel)analyzerCombo.getModel()).addElement(pp.getProcessorName());
+        }
     }
     
     /** This method is called from within the constructor to
@@ -204,7 +207,7 @@ public class NewProjectDialog extends javax.swing.JDialog {
     }
     
     public Processor getProcessor()  {
-        return new Processor(analyzerCombo.getSelectedItem().toString());
+        return Processor.getProcessor(analyzerCombo.getSelectedItem().toString());
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
