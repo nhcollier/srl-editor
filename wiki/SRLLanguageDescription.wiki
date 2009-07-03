@@ -21,6 +21,9 @@ body_expression := ( "list" "(" <wordlist> ")" |
                      "ends" "(" <literal> ")" |
                      "contains" "(" <literal> ")" |
 		     "regex" "(" <literal> ")" |
+                     "optional" "(" <literal> ")" |
+                     "not" "(" <literal> | <wordlist> ")" |
+                     "case" "(" <literal> ")" |
 	             <entity_expression> )*
 entity_expression := <id> "*"? "(" <id> ( "," <var> )? ")" ( "{" <body_expression>† "}" )?
 <id> := A sequence of alphanumeric characters starting with a lowercase letter
@@ -58,6 +61,16 @@ E.g. {{{begins("work")}}} matches "work", "works, "worked" and "working"
 {{{optional}}} matches a single literal, or skips the match if the literal is not there
 
 E.g. {{{optional("tabby") "cat"}}} matches both "tabby cat" and "cat"
+
+==not:==
+{{{not}}}} matches as long as the given literal or word list is not matched.
+
+E.g. {{{not("tabby") "cat"}}} matches "cat" but not "tabby cat"
+
+==case:==
+{{{case}}} matches a case-sensitive literal
+
+E.g. {{{case("SRL")}}} matches "SRL" but not "Srl"
 
 ==ortho:==
 Ortho provides simple orthographic forms 
