@@ -367,7 +367,7 @@ public class WordListPanel extends javax.swing.JPanel {
         int idx = e.getFirstRow();
         String oldVal, newVal = (String) mainList.getValueAt(idx, 0);
         oldVal = oldTable.get(idx);
-        changeElem(idx, oldVal, newVal,null);
+        changeElem(idx, oldVal, newVal,list);
         SRLGUIApp.getApplication().addUndoableEdit(new ChangeListEdit(idx, oldVal, newVal, (String)listCombo.getSelectedItem()));
     }
 

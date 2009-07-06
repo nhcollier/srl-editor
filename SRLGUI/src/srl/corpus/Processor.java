@@ -31,7 +31,6 @@ public class Processor {
     public static final String[] langs = { "English", 
       "Brazilian", 
       "Chinese", 
-      "CJK", 
       "Czech", 
       "Dutch", 
       "French", 
@@ -46,8 +45,7 @@ public class Processor {
     static final String[] analyzers = {
         "org.apache.lucene.analysis.standard.StandardAnalyzer",
         "org.apache.lucene.analysis.br.BrazilianAnalyzer", 
-        "org.apache.lucene.analysis.cn.ChineseAnalyzer", 
-        "org.apache.lucene.analysis.cjk.CJKAnalyzer", 
+        "srl.corpus.zh.ChineseAnalyzer",
         "org.apache.lucene.analysis.cz.CzechAnalyzer", 
         "org.apache.lucene.analysis.nl.DutchAnalyzer", 
         "org.apache.lucene.analysis.fr.FrenchAnalyzer", 
@@ -62,8 +60,7 @@ public class Processor {
     static final String[] tokenizers = {
         "srl.corpus.token.StandardTokenizer",
         "srl.corpus.token.StandardTokenizer",
-        "org.apache.lucene.analysis.cn.ChineseTokenizer", 
-        "org.apache.lucene.analysis.cjk.CJKTokenizer", 
+        "srl.corpus.zh.ChineseTokenizer",
         "srl.corpus.token.StandardTokenizer",
         "srl.corpus.token.StandardTokenizer",
         "srl.corpus.token.StandardTokenizer",
@@ -76,7 +73,6 @@ public class Processor {
     };
     
     static final String[] splitters = {
-        "srl.corpus.StandardSplitter",
         "srl.corpus.StandardSplitter",
         "srl.corpus.StandardSplitter",
         "srl.corpus.StandardSplitter",

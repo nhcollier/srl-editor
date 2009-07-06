@@ -14,7 +14,7 @@ options {
   USER_CHAR_STREAM = true;
   OPTIMIZE_TOKEN_MANAGER = true;
 }
-PARSER_BEGIN(StandardTokenizer)
+PARSER_BEGIN(ChineseTokenizer)
 /* 
  * Copyright (c) 2008, National Institute of Informatics
  *
@@ -25,17 +25,17 @@ PARSER_BEGIN(StandardTokenizer)
  * A copy of this licence is included in the distribution in the file
  * licence.html, and is also available at http://www.fsf.org/licensing/licenses/info/GPLv2.html.
 */
-package srl.corpus.token;
+package srl.corpus.zh;
 import java.io.*;
 import srl.corpus.*;
 
-public class StandardTokenizer extends org.apache.lucene.analysis.Tokenizer {
+public class ChineseTokenizer extends org.apache.lucene.analysis.Tokenizer {
     boolean finished = false;
     /** If this variable is true, tokenizer will also output whitespace */
     public boolean outputWhitespace = false;
 
   /** Constructs a tokenizer for this Reader. */
-  public StandardTokenizer(Reader reader) {
+  public ChineseTokenizer(Reader reader) {
     this(new FastCharStream(reader));
     this.input = reader;
   }
@@ -55,12 +55,12 @@ public class StandardTokenizer extends org.apache.lucene.analysis.Tokenizer {
   }
 }
 
-PARSER_END(StandardTokenizer)
+PARSER_END(ChineseTokenizer)
 
 TOKEN : {					  // token patterns
 
   // basic word: a sequence of digits & letters
-  <ALPHANUM: (<LETTER>|<DIGIT>|<KOREAN>|<CJ>)+ >				  
+  <ALPHANUM: (<LETTER>|<DIGIT>|<KOREAN>)+ >				  
 | < BEGIN_TAG : "<" <ALPHANUM> " cl=\"" <ALPHANUM> "\">">
 | < END_TAG : "</" <ALPHANUM> ">" >
 
@@ -204,7 +204,7 @@ SKIP : { <NOISE: ~[] > }
 
 /** Returns the next token in the stream, or null at EOS.
  * <p>The returned token's type is set to an element of {@link
- * StandardTokenizerConstants#tokenImage}.
+ * ChineseTokenizerConstants#tokenImage}.
  */
 org.apache.lucene.analysis.Token next2() throws IOException :
 {
@@ -212,6 +212,7 @@ org.apache.lucene.analysis.Token next2() throws IOException :
 }
 {
   ( tk = <ALPHANUM> |
+    tk = <CJ> |
     tk = <PUNCTUATION> |
     tk = <APOSTROPHE> |
     tk = <ACRONYM> |

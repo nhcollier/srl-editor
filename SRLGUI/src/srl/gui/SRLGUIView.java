@@ -182,15 +182,30 @@ public class SRLGUIView extends FrameView {
                 reloadProject();
             } catch (RuntimeException x) {
                 if (x.getMessage().matches("Lock obtain timed out: SimpleFSLock.*")) {
-                    JOptionPane.showMessageDialog(this.getFrame(), "Corpus locked! This may occur if SRL Editor failed to shut down properly.\nPlease ensure no other copies of SRL Editor are running and\ndelete the file corpus/write.lock from your project directory.",
-                            "Corpus Lock", JOptionPane.ERROR_MESSAGE);
+                    if(JOptionPane.showConfirmDialog(this.getFrame(), "Corpus locked! This may occur if SRL Editor failed to shut down properly.\nPlease ensure no other copies of SRL Editor are running.\n Do you wish to clear the lock?",
+                            "Corpus Lock", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE)
+                            == JOptionPane.YES_OPTION) {
+                        try {
+                            File f = new File(SRLGUIApp.getApplication().getPreference("ON_START_LOAD_PROJECT_PATH") + "/corpus/write.lock");
+                            f.delete();
+                            SRLGUIApp.getApplication().proj = SrlProject.openSrlProject(new File(SRLGUIApp.getApplication().getPreference("ON_START_LOAD_PROJECT_PATH")));
+                            SrlProject proj = SRLGUIApp.getApplication().proj;
+                            for (WordListSet wl : proj.wordlists) {
+                                proj.corpus.listenToWordListSet(wl);
+                                for (String l : wl.getLists()) {
+                                    proj.corpus.listenToWordList(l, WordListSet.getWordList(l));
+                                }
+                            }
+                            reloadProject();
+                         } catch(Exception x2) {
+                           error(x2, "Could not load project");
+                       }
+                    }
                 } else {
-                    x.printStackTrace();
-                    JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open project", JOptionPane.ERROR_MESSAGE);
+                    error(x, "Could not open project");
                 }
             } catch (Exception x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open project", JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not open project");
             }
         }
         String[] pluginJARs = SRLGUIApp.getApplication().getIndexedPreferences(SRLGUIApp.PLUGIN_LOAD_JAR_KEY);
@@ -1134,7 +1149,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             try {
                 ps = RuleSet.loadFromFile(jfc.getSelectedFile(), ruleType);
             } catch (Exception x) {
-                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open file", JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not open file");
                 return;
             }
             if (ruleType == Rule.ENTITY_RULE) {
@@ -1163,15 +1178,22 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                     proj.writeProject();
                     SRLGUIApp.getApplication().clearModified();
                 } catch (IOException x) {
-                    x.printStackTrace();
-                    JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                    error(x, "Could not save project");
                     return;
                 } catch (CorpusConcurrencyException x) {
-                    x.printStackTrace();
-                    JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                    error(x, "Could not save project");
                     return;
                 }
             } else if (option == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+        }
+        if(proj != null) {
+            try {
+                proj.corpus.closeCorpus();
+            } catch(IOException x) {
+                x.printStackTrace();
+                error(x, "Cannot close project");
                 return;
             }
         }
@@ -1187,8 +1209,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             try {
                 proj = new SrlProject(dial.getPath(), dial.getProcessor());
             } catch (Exception x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not create project", JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not create project");
                 return;
             }
             SRLGUIApp.getApplication().proj = proj;
@@ -1258,12 +1279,10 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                     proj.writeProject();
                     SRLGUIApp.getApplication().clearModified();
                 } catch (IOException x) {
-                    x.printStackTrace();
-                    JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                    error(x, "Could not save project");
                     return;
                 } catch (CorpusConcurrencyException x) {
-                    x.printStackTrace();
-                    JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                    error(x, "Could not save project");
                     return;
                 }
             } else if (option == JOptionPane.CANCEL_OPTION) {
@@ -1296,15 +1315,29 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 reloadProject();
             } catch (RuntimeException x) {
                 if (x.getMessage().matches("Lock obtain timed out: SimpleFSLock.*")) {
-                    JOptionPane.showMessageDialog(this.getFrame(), "Corpus locked! This may occur if SRL Editor failed to shut down properly.\nPlease ensure no other copies of SRL Editor are running and\ndelete the file corpus/write.lock from your project directory.",
-                            "Corpus Lock", JOptionPane.ERROR_MESSAGE);
+                    if(JOptionPane.showConfirmDialog(this.getFrame(), "Corpus locked! This may occur if SRL Editor failed to shut down properly.\nPlease ensure no other copies of SRL Editor are running.\n Do you wish to clear the lock?",
+                            "Corpus Lock", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE)
+                            == JOptionPane.YES_OPTION) {
+                        try {
+                            File f = new File(SRLGUIApp.getApplication().getPreference("ON_START_LOAD_PROJECT_PATH") + "/corpus/write.lock");
+                            f.delete();
+                            SRLGUIApp.getApplication().proj = SrlProject.openSrlProject(new File(SRLGUIApp.getApplication().getPreference("ON_START_LOAD_PROJECT_PATH")));
+                            for (WordListSet wl : proj.wordlists) {
+                                proj.corpus.listenToWordListSet(wl);
+                                for (String l : wl.getLists()) {
+                                    proj.corpus.listenToWordList(l, WordListSet.getWordList(l));
+                                }
+                            }
+                            reloadProject();
+                         } catch(Exception x2) {
+                           error(x2, "Could not load project");
+                       }
+                    }
                 } else {
-                    x.printStackTrace();
-                    JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open project", JOptionPane.ERROR_MESSAGE);
+                    error(x, "Could not open project");
                 }
             } catch (Exception x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open project", JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not open project");
             }
         }
         } finally {
@@ -1320,11 +1353,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 proj.writeProject();
                     SRLGUIApp.getApplication().clearModified();
             } catch (IOException x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not save project");
             } catch (CorpusConcurrencyException x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not save project");
             }
         }
     }
@@ -1636,8 +1667,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 }
                 corpus.optimizeIndex();
             } catch (Exception x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not add documents to corpus", JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not add documents to corpus");
             }
             if(selectedFiles.length > 0) {
                 setMessage("All documents added");
@@ -1681,8 +1711,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                     omd.setVisible(true);
                 }
             } catch (IOException x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Corpus Tagging Failed", JOptionPane.ERROR_MESSAGE);
+                error(x, "Corpus Tagging Failed");
             }
             return null;
         }
@@ -1716,8 +1745,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 ce.extractTemplates(SRLGUIApp.getApplication().proj.templateRulesets, this);
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Template Extraction Complete", "Template Extraction", JOptionPane.INFORMATION_MESSAGE);
             } catch(IOException x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Corpus Tagging Failed", JOptionPane.ERROR_MESSAGE);
+                error(x, "Corpus Tagging Failed");
             }
             return null;
         }
@@ -1756,7 +1784,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         try {
             Desktop.getDesktop().browse(new URI("http://code.google.com/p/srl-editor/w/list"));
         } catch(Exception x) {
-            JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not open external browser", JOptionPane.ERROR_MESSAGE);
+            error(x, "Could not open external browser");
         }
     }
 
@@ -1795,14 +1823,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Tagged documents written", 
                         "Success", JOptionPane.INFORMATION_MESSAGE);
             } catch(IOException x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not write document contents",
-                        JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not write document contents");
             } catch(CorpusConcurrencyException x) {
-                
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not write document contents",
-                        JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not write document contents");
             } finally {
                 jfc.setFileSelectionMode(jfc.FILES_ONLY);
             }
@@ -1849,14 +1872,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Templates documents written", 
                         "Success", JOptionPane.INFORMATION_MESSAGE);
             } catch(IOException x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not write document contents",
-                        JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not write document contents");
             } catch(CorpusConcurrencyException x) {
-                
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), x.getMessage(), "Could not write document contents",
-                        JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not write document contents");
             } finally {
                 jfc.setFileSelectionMode(jfc.FILES_ONLY);
             }
@@ -1913,9 +1931,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 ruleSet.getChildCount());
             mainTree.scrollPathToVisible(new TreePath(node.getPath()));
             SRLGUIApp.getApplication().addUndoableEdit(new ImportRuleSetEdit(name, ruleType, node, rs));
-        } catch(Exception x) { 
-            x.printStackTrace();
-            JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not import ruleset", JOptionPane.ERROR_MESSAGE);
+        } catch(Exception x) {
+            error(x, "Could not import rule set");
         } finally {
             jfc.resetChoosableFileFilters();
         }
@@ -1966,8 +1983,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             mainTree.scrollPathToVisible(new TreePath(node.getPath()));
             SRLGUIApp.getApplication().addUndoableEdit(new ImportWordListSetEdit(name, node, wl));
         } catch(Exception x) {
-            x.printStackTrace();
-            JOptionPane.showMessageDialog(getFrame(), x.getMessage(), "Could not import word list", JOptionPane.ERROR_MESSAGE);
+            error(x, "Could not import word list");
         } finally {
             jfc.resetChoosableFileFilters();
         }
@@ -2132,11 +2148,9 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                 proj.writeProject(jfc.getSelectedFile());
                     SRLGUIApp.getApplication().clearModified();
             } catch (IOException x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not save project");
             } catch (CorpusConcurrencyException x) {
-                x.printStackTrace();
-                JOptionPane.showMessageDialog(this.getFrame(), x.getMessage(), "Could not save project", JOptionPane.ERROR_MESSAGE);
+                error(x, "Could not save project");
             }
         }
     }
