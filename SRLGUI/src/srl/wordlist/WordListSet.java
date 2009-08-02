@@ -46,7 +46,13 @@ public class WordListSet {
         allWordListSets.put(name, this);
     }
     
-    /** Load a word list set from a file 
+    /** Load a word list set from a file. Please note this does not register the wordlist with
+     * the project or corpus, but does allow the loaded wordlists to be obtained by getWordList(String).
+     * It is recommended the following code is called after this function
+     * <br><code>
+            proj.corpus.listenToWordListSet(wl);<br>
+            proj.wordlists.add(wl);
+     * </code>     *
      * @param file The file
      * @param processor The linguistic processor used
      */
@@ -226,6 +232,8 @@ public class WordListSet {
     /** (EXPERT) For a word list find all terms in it which token. This matches
      * not only those that exactly match but also those that may match
      * as more tokens are read.
+     * @param name The word list name
+     * @param token The first token
      */
     public static SortedSet<WordListEntry> getMatchSet(String name, String token) {
         ListenableSet<WordListEntry> wles = allWordLists.get(name);
@@ -250,13 +258,16 @@ public class WordListSet {
     /**
  * @author John McCrae, National Institute of Informatics
  */
-/** Create a new Entry object attached to this word list set */
+/** Create a new Entry object attached to this word list set 
+ * @deprecated WordListEntry can be instantiated independently now
+ */
     public WordListEntry getEntry(String s) {
         return new WordListEntry(s, processor);
     }
     
     /** Create a new Entry object attached to this word list set 
      * @param The (tokenized) word list entry
+     * @deprecated WordListEntry can be instantiated independently now
      */
     private WordListEntry getEntry(List<String> s) {
         return new WordListEntry(s);

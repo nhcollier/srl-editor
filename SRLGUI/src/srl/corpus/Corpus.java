@@ -171,6 +171,8 @@ public class Corpus {
                 throw new CorpusConcurrencyException("Corpus is locked, this operation is not permitted until unlock");
             }
             lock = 0;
+            if(indexWriter == null)
+                return;
             dir = indexWriter.getDirectory();
             indexWriter.close();
 
@@ -224,6 +226,7 @@ public class Corpus {
      * be loaded into system memory, this can significantly improve performance but is
      * likely to cause out of memory exceptions.
      * @param value True for use RAM, false for use disk
+     * @deprecated
      */
     public void setUseRAM(boolean value) throws IOException, CorpusConcurrencyException {
         closeIndex();
@@ -235,7 +238,7 @@ public class Corpus {
     }
 
     /** (expert) See if the corpus is in RAM or disk.
-     * 
+     * @deprecated
      */
     public boolean getUseRAM() {
         return dir instanceof RAMDirectory;
@@ -460,6 +463,13 @@ public class Corpus {
         }
     }
 
+    private String validateDocName(String name) {
+        name = name.toLowerCase();
+        if(!name.matches("[a-z0-9]+"))
+            throw new IllegalArgumentException("Invalid document name:" + name);
+        return name;
+    }
+
         /**
      * Gets the original text for a document
      * @param name The document name
@@ -467,10 +477,11 @@ public class Corpus {
      * @throws java.io.IOException If a disk error occurred
      */
     public String getPlainDocContents(String name) throws IOException, CorpusConcurrencyException {
-        return getDoc(name).getField("originalContents").stringValue();
+        return getDoc(validateDocName(name)).getField("originalContents").stringValue();
     }
 
     private List<String> getDocFields(String docName, String fieldName) throws IOException, CorpusConcurrencyException {
+        docName = validateDocName(docName);
            if(indexSearcher == null)
             closeIndex();
         QueryParser qp = new QueryParser("name", processor.getAnalyzer());
@@ -533,10 +544,11 @@ public class Corpus {
      * @throws java.io.IOException
      */
     public void removeDoc(String name) throws IOException {
+        name = validateDocName(name);
         if (indexWriter == null) {
             reopenIndex();
         }
-        indexWriter.deleteDocuments(new Term("name", name.toLowerCase()));
+        indexWriter.deleteDocuments(new Term("name", name));
         docNames.remove(name);
     }
 
@@ -548,6 +560,7 @@ public class Corpus {
      * @throws java.io.IOException
      */
     public void updateDoc(String name, String contents) throws IOException, CorpusConcurrencyException {
+        name = validateDocName(name);
         Document old = getDoc(name);
         if (old != null) {
             if (contents.equals(old.getField("originalContents").stringValue())) {
@@ -763,7 +776,18 @@ public class Corpus {
             return null;
         }
     }
-    
+
+    /**
+     * Query the corpus. Unlike query(String) this function does not fix (escape) the query
+     * string for Lucene, so calling this function requires the user to ensure the query is a valid
+     * Lucene query
+     * @param query The query string
+     * @return The documents the query matches
+     * @throws java.io.IOException
+     * @throws srl.corpus.CorpusConcurrencyException
+     * @see QueryParser#escape(String)
+     */
+
     public Hits queryNoEscape(String query)throws IOException, CorpusConcurrencyException {
         if (query.equals("")) {
             return null;
@@ -846,7 +870,7 @@ public class Corpus {
         list.addChangeListener(new CollectionChangeListener<ListenableSet<WordListEntry>>() {
 
             public void collectionChanged(CollectionChangeEvent<ListenableSet<WordListEntry>> e) {
-
+                // TODO: Should we be doing something here?
             }
         });
     }
@@ -856,6 +880,7 @@ public class Corpus {
         wordList.addCollectionChangeListener(new WLCCL(name));
     }
 
+    // WLCCL = WordListCollectionChangeListener
     private class WLCCL implements CollectionChangeListener<WordListEntry> {
 
         String name;
@@ -865,32 +890,29 @@ public class Corpus {
         }
 
         public void collectionChanged(CollectionChangeEvent<WordListEntry> e) {
-            removeWordListElement(name, e.getOldVal() != null ? e.getOldVal().toString() : null);
-            addWordListElement(name, e.getNewVal() != null ? e.getNewVal().toString() : null);
+            Thread t = new Thread(new WLCCLRun(e.getOldVal(), e.getNewVal(), name), "wordListUpdate");
+            t.start();
         }
     }
 
-    /** Add this as a listener to list */
-    public void listenToRuleSet(RuleSet list) {
-        list.rules.addCollectionChangeListener(new CollectionChangeListener<Pair<String, Rule>>() {
+    private class WLCCLRun implements Runnable {
+        WordListEntry oldVal, newVal;
+        String name;
 
-            public void collectionChanged(CollectionChangeEvent<Pair<String, Rule>> e) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
+        public WLCCLRun(WordListEntry oldVal, WordListEntry newVal, String name) {
+            this.oldVal = oldVal;
+            this.newVal = newVal;
+            this.name = name;
+        }
+
+        public void run() {
+            removeWordListElement(name, oldVal != null ? oldVal.toString() : null);
+            addWordListElement(name, newVal != null ? newVal.toString() : null);
+        }
+
     }
 
-    /** Add this as a listener to rule */
-    public void listenToRule(Rule rule) {
-        rule.body.addCollectionChangeListener(new CollectionChangeListener<TypeExpr>() {
-
-            public void collectionChanged(CollectionChangeEvent<TypeExpr> e) {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
-    }
-
-    protected void removeWordListElement(String name, String oldVal) {
+       protected void removeWordListElement(String name, String oldVal) {
         try {
             if(indexSearcher == null)
                 optimizeIndex();

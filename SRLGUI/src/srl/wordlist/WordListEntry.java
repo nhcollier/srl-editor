@@ -25,8 +25,15 @@ public class WordListEntry implements Comparable<WordListEntry> {
 
     private List<String> words;
     //private String originalVal;
+    private final boolean modifiable;
 
+    /**
+     * Creates a word list. If this constructor is used the word list is fixed
+     * @param val
+     * @param processor
+     */
     WordListEntry(String val, Processor processor) {
+        modifiable = false;
         words = new LinkedList<String>();
       //  originalVal = val;
         TokenStream ts = processor.getTokenStream(val.toLowerCase());
@@ -40,7 +47,12 @@ public class WordListEntry implements Comparable<WordListEntry> {
         }
     }
 
+    /**
+     * Creates a word list. This is a simple model and can be manually changed.
+     * @param words
+     */
     WordListEntry(List<String> words) {
+        modifiable = true;
         this.words = words;
         //this.originalVal = "";
     }
@@ -49,6 +61,8 @@ public class WordListEntry implements Comparable<WordListEntry> {
      * @param s The next token
      */
     public void addWord(String s) {
+        if(!modifiable)
+            throw new IllegalStateException("Cannot modify word list entry from tokenizer");
         words.add(s.toLowerCase());
     }
 

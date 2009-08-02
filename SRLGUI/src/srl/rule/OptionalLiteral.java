@@ -72,6 +72,7 @@ public class OptionalLiteral implements TypeExpr {
     }
 
     public void getQuery(SrlQuery query) {
+        query.query.append("\" \"");
     }
 
     public void reset() {

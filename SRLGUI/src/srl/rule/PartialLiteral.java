@@ -36,11 +36,18 @@ public class PartialLiteral implements TypeExpr {
             return null;
         }
         if(part == BEGIN && token.termText().toLowerCase().substring(0, partLiteral.length()).equals(partLiteral) ||
-                part == END && token.termText().toLowerCase().substring(token.termText().length()-partLiteral.length()-1).equals(partLiteral) ||
+                part == END && endString(token.termText().toLowerCase(),partLiteral.length()).equals(partLiteral) ||
                 part == CONTAINS && token.termText().toLowerCase().contains(partLiteral))
             return next;
         else
             return null;
+    }
+
+    private static String endString(String string, int n) {
+        if(n >= string.length())
+            return string;
+        else
+            return string.substring(string.length()-n);
     }
 
     public boolean canEnd() {
@@ -52,6 +59,7 @@ public class PartialLiteral implements TypeExpr {
     }
 
     public void getQuery(SrlQuery query) {
+        query.query.append("\" \"");
     }
 
     public void reset() {

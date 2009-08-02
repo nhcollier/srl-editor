@@ -140,7 +140,7 @@ public class SrlProject {
      * Create a new corpus
      * @param processor The linguistic processor, if null SrlProject.processor is used
      */
-    public void openCorpus(Processor processor) throws IOException {
+    void openCorpus(Processor processor) throws IOException {
 	if(processor == null)
 	    processor = this.processor;
         corpus = Corpus.openCorpus(new File(path, "corpus"), processor, false);
@@ -150,7 +150,7 @@ public class SrlProject {
      * Create a new wordlist and add it to the word list set list
      * @param wordList The word list name
      */
-    public void openWordList(String wordList) throws IOException {
+    void openWordList(String wordList) throws IOException {
         wordlists.add(WordListSet.loadFromFile(new File(new File(path.getPath(), "wordlists"), wordList + ".wordlist.srl"), processor));
         modified = true;
     }
@@ -162,7 +162,7 @@ public class SrlProject {
      * @see Rule#ENTITY_RULE
      * @see Rule#TEMPLATE_RULE
      */
-    public void openRuleSet(String ruleSet, int ruleType) throws IOException, ParseException {
+    void openRuleSet(String ruleSet, int ruleType) throws IOException, ParseException {
         if(ruleType == Rule.ENTITY_RULE)
             entityRulesets.add(RuleSet.loadFromFile(new File(new File(path, "entity_rules"), ruleSet + ".rule.srl"),ruleType));
         else if(ruleType == Rule.TEMPLATE_RULE)
@@ -262,7 +262,8 @@ public class SrlProject {
         writeXML();
         modified = false;
     }
-  public static void copy(File source, File dest) throws IOException {
+
+   private static void copy(File source, File dest) throws IOException {
         FileChannel in = null, out = null;
         try {
             in = new FileInputStream(source).getChannel();

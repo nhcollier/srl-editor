@@ -99,7 +99,7 @@ public class Rule implements Expr, Comparable<Rule> {
      * and each is represented by exactly one entity in the body
      * @return True if the rule is valid
      */
-    public boolean validateRule() {
+    protected boolean validateRule() {
         Set<String> headVars = new HashSet<String>();
         for(Head head : heads) {
             if(head.var.matches("\".*\""))
