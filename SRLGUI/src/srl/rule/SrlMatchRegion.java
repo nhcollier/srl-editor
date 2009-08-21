@@ -28,7 +28,19 @@ public class SrlMatchRegion {
     public int ruleBegin = -1;
     /** The rule's last matchedToken */
     public int ruleEnd = -1;
-    
+
+    public SrlMatchRegion() {
+    }
+
+    public SrlMatchRegion(int beginRegion, int endRegion, String value, Rule source, int ruleBegin, int ruleEnd) {
+        this.beginRegion = beginRegion;
+        this.endRegion = endRegion;
+        this.value.append(value);
+        this.sourceRule = source;
+        this.ruleBegin = ruleBegin;
+        this.ruleEnd = ruleEnd;
+    }
+
     /** Clear this match region */
     public void reset() {
 	beginRegion = endRegion = -1;

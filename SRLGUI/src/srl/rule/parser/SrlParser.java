@@ -52,9 +52,6 @@ boolean cleanHead = false;
         case STRMATCH:
           ruleHead = jj_consume_token(STRMATCH);
           break;
-        case STRMATCH_APPROX:
-          ruleHead = jj_consume_token(STRMATCH_APPROX);
-          break;
         case STRMATCH_REGEX:
           ruleHead = jj_consume_token(STRMATCH_REGEX);
           break;
@@ -138,9 +135,6 @@ boolean cleanHead = false;
       break;
     case STRMATCH:
       ruleHead = jj_consume_token(STRMATCH);
-      break;
-    case STRMATCH_APPROX:
-      ruleHead = jj_consume_token(STRMATCH_APPROX);
       break;
     case STRMATCH_REGEX:
       ruleHead = jj_consume_token(STRMATCH_REGEX);
@@ -265,9 +259,6 @@ boolean cleanHead = false;
       case STRMATCH:
         ruleHead = jj_consume_token(STRMATCH);
         break;
-      case STRMATCH_APPROX:
-        ruleHead = jj_consume_token(STRMATCH_APPROX);
-        break;
       case STRMATCH_REGEX:
         ruleHead = jj_consume_token(STRMATCH_REGEX);
         break;
@@ -332,7 +323,6 @@ boolean cleanHead = false;
 
 // TYPE_EXPR -> EOL | COMMENT | EOF |
 //              strmatch ( WORDLIST ) TYPE_EXPR |
-//              strmatch_approx ( WORDLIST, NUMBER % ) TYPE_EXPR |
 //              strmatch_regex ( STRING_LITERAL ) TYPE_EXPR |
 //              strmatch_orth( STRING_LITERAL ) TYPE_EXPR |
 //              words ( NUMBER? , NUMBER? ) TYPE_EXPR |
@@ -356,19 +346,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(WORDLIST);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatch(s1.image));
-       typeExpr(rule);
-      break;
-    case STRMATCH_APPROX:
-      jj_consume_token(STRMATCH_APPROX);
-      jj_consume_token(OPEN_PARA);
-      s1 = jj_consume_token(WORDLIST);
-      jj_consume_token(COMMA);
-      s2 = jj_consume_token(NUMBER);
-      jj_consume_token(PERCENT);
-      jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatchApprox(s1.image,
-       Double.parseDouble(s2.image) / 100));
+       rule.addTypeExpr(new ListMatch(s1.image));
        typeExpr(rule);
       break;
     case STRMATCH_REGEX:
@@ -376,7 +354,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatchRegex(cleanLiteral(s1.image)));
+       rule.addTypeExpr(new Regex(cleanLiteral(s1.image)));
        typeExpr(rule);
       break;
     case STRMATCH_ORTH:
@@ -384,7 +362,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatchOrtho(cleanLiteral(s1.image)));
+       rule.addTypeExpr(new Ortho(cleanLiteral(s1.image)));
        typeExpr(rule);
       break;
     case WORDS:
@@ -423,7 +401,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        rule.addTypeExpr(new PartialLiteral(s1.image, 0));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 0));
         typeExpr(rule);
       break;
     case ENDS:
@@ -431,7 +409,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        rule.addTypeExpr(new PartialLiteral(s1.image, 1));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 1));
         typeExpr(rule);
       break;
     case CONTAINS:
@@ -439,7 +417,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        rule.addTypeExpr(new PartialLiteral(s1.image, 2));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 2));
         typeExpr(rule);
       break;
     case OPTIONAL:
@@ -485,7 +463,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        rule.addTypeExpr(new CaseSensitiveLiteral(s1.image));
+        rule.addTypeExpr(new CaseSensitiveLiteral(cleanLiteral(s1.image)));
         typeExpr(rule);
       break;
     case WORD:
@@ -539,7 +517,6 @@ boolean cleanHead = false;
 
 // ENTITY_BRANCH -> EOL | COMMENT | EOF |
 //              strmatch ( WORDLIST ) TYPE_EXPR |
-//              strmatch_approx ( WORDLIST, NUMBER % ) TYPE_EXPR |
 //              strmatch_regex ( STRING_LITERAL ) TYPE_EXPR |
 //              strmatch_orth( STRING_LITERAL ) TYPE_EXPR |
 //              words ( NUMBER? , NUMBER? ) TYPE_EXPR |
@@ -569,19 +546,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(WORDLIST);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatch(s1.image));
-       typeExpr(rule);
-      break;
-    case STRMATCH_APPROX:
-      jj_consume_token(STRMATCH_APPROX);
-      jj_consume_token(OPEN_PARA);
-      s1 = jj_consume_token(WORDLIST);
-      jj_consume_token(COMMA);
-      s2 = jj_consume_token(NUMBER);
-      jj_consume_token(PERCENT);
-      jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatchApprox(s1.image,
-           Double.parseDouble(s2.image) / 100));
+       rule.addTypeExpr(new ListMatch(s1.image));
        typeExpr(rule);
       break;
     case STRMATCH_REGEX:
@@ -589,7 +554,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatchRegex(cleanLiteral(s1.image)));
+       rule.addTypeExpr(new Regex(cleanLiteral(s1.image)));
        typeExpr(rule);
       break;
     case STRMATCH_ORTH:
@@ -597,7 +562,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-       rule.addTypeExpr(new StrMatchOrtho(cleanLiteral(s1.image)));
+       rule.addTypeExpr(new Ortho(cleanLiteral(s1.image)));
        typeExpr(rule);
       break;
     case WORDS:
@@ -636,7 +601,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        rule.addTypeExpr(new PartialLiteral(s1.image, 0));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 0));
        typeExpr(rule);
       break;
     case ENDS:
@@ -644,7 +609,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        rule.addTypeExpr(new PartialLiteral(s1.image, 1));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 1));
        typeExpr(rule);
       break;
     case CONTAINS:
@@ -652,7 +617,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        rule.addTypeExpr(new PartialLiteral(s1.image, 2));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 2));
        typeExpr(rule);
       break;
     case OPTIONAL:
@@ -698,7 +663,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        rule.addTypeExpr(new CaseSensitiveLiteral(s1.image));
+        rule.addTypeExpr(new CaseSensitiveLiteral(cleanLiteral(s1.image)));
         typeExpr(rule);
       break;
     case WORD:
@@ -757,7 +722,6 @@ boolean cleanHead = false;
 
 // ENTITY_EXPR ->
 //              strmatch ( WORDLIST ) ENTITY_EXPR |
-//              strmatch_approx ( WORDLIST, NUMBER % ) ENTITY_EXPR |
 //              strmatch_regex ( STRING_LITERAL ) ENTITY_EXPR |
 //              strmatch_orth( STRING_LITERAL ) ENTITY_EXPR |
 //              words ( NUMBER? , NUMBER? ) ENTITY_EXPR |
@@ -772,19 +736,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(WORDLIST);
       jj_consume_token(CLOSE_PARA);
-       e.addTypeExpr(new StrMatch(s1.image));
-       entityExpr(e);
-      break;
-    case STRMATCH_APPROX:
-      jj_consume_token(STRMATCH_APPROX);
-      jj_consume_token(OPEN_PARA);
-      s1 = jj_consume_token(WORDLIST);
-      jj_consume_token(COMMA);
-      s2 = jj_consume_token(NUMBER);
-      jj_consume_token(PERCENT);
-      jj_consume_token(CLOSE_PARA);
-       e.addTypeExpr(new StrMatchApprox(s1.image,
-           Double.parseDouble(s2.image) / 100));
+       e.addTypeExpr(new ListMatch(s1.image));
        entityExpr(e);
       break;
     case STRMATCH_REGEX:
@@ -792,7 +744,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-       e.addTypeExpr(new StrMatchRegex(cleanLiteral(s1.image)));
+       e.addTypeExpr(new Regex(cleanLiteral(s1.image)));
        entityExpr(e);
       break;
     case STRMATCH_ORTH:
@@ -800,7 +752,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-       e.addTypeExpr(new StrMatchOrtho(cleanLiteral(s1.image)));
+       e.addTypeExpr(new Ortho(cleanLiteral(s1.image)));
        entityExpr(e);
       break;
     case WORDS:
@@ -839,7 +791,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        e.addTypeExpr(new PartialLiteral(s1.image, 0));
+        e.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 0));
         entityExpr(e);
       break;
     case ENDS:
@@ -847,7 +799,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        e.addTypeExpr(new PartialLiteral(s1.image, 1));
+        e.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 1));
         entityExpr(e);
       break;
     case CONTAINS:
@@ -855,7 +807,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        e.addTypeExpr(new PartialLiteral(s1.image, 2));
+        e.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 2));
         entityExpr(e);
       break;
     case OPTIONAL:
@@ -901,7 +853,7 @@ boolean cleanHead = false;
       jj_consume_token(OPEN_PARA);
       s1 = jj_consume_token(STRING_LITERAL);
       jj_consume_token(CLOSE_PARA);
-        e.addTypeExpr(new CaseSensitiveLiteral(s1.image));
+        e.addTypeExpr(new CaseSensitiveLiteral(cleanLiteral(s1.image)));
         entityExpr(e);
       break;
     case CLOSE_BRACE:
@@ -929,7 +881,7 @@ boolean cleanHead = false;
       jj_la1_init_0();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x48000008,0x20007ff0,0xa000000,0x48000008,0x20007ff0,0xa000000,0x48000008,0x48000008,0x20007ff0,0xa000000,0xa00000,0x10000000,0x10000000,0x6000000,0x6000000,0x1000000,0x80000,0x62007ff9,0x10000000,0x10000000,0x6000000,0x6000000,0x1000000,0x80000,0x62027ff9,0x10000000,0x10000000,0x6000000,0x6000000,0x2047ff0,};
+      jj_la1_0 = new int[] {0x24000008,0x10003ff0,0x5000000,0x24000008,0x10003ff0,0x5000000,0x24000008,0x24000008,0x10003ff0,0x5000000,0x500000,0x8000000,0x8000000,0x3000000,0x3000000,0x800000,0x40000,0x31003ff9,0x8000000,0x8000000,0x3000000,0x3000000,0x800000,0x40000,0x31013ff9,0x8000000,0x8000000,0x3000000,0x3000000,0x1023ff0,};
    }
 
   /** Constructor with InputStream. */
@@ -1046,7 +998,7 @@ boolean cleanHead = false;
   /** Generate ParseException. */
   public ParseException generateParseException() {
     jj_expentries.clear();
-    boolean[] la1tokens = new boolean[31];
+    boolean[] la1tokens = new boolean[30];
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
@@ -1060,7 +1012,7 @@ boolean cleanHead = false;
         }
       }
     }
-    for (int i = 0; i < 31; i++) {
+    for (int i = 0; i < 30; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

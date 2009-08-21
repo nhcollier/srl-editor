@@ -11,13 +11,21 @@
 package srl.rule;
 
 /**
- *
- * @author john
+ * Represents a head of a rule.
+ * @author John McCrae, National Institute of Informatics
  */
 public class Head implements Comparable<Head> {
 
+    /**
+     * The value of the name and variable
+     */
     public final String name, var;
-    
+
+    /**
+     * Create an instance
+     * @param name The name of the head
+     * @param var The variable the head is bound to
+     */
     public Head(String name, String var) {
         this.name = name;
         this.var = var;

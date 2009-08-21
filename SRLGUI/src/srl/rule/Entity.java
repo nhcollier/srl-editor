@@ -15,31 +15,47 @@ import mccrae.tools.strings.Strings;
 import srl.corpus.SrlQuery;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.BeginTagToken;
-import srl.corpus.EndTagToken;
-import mccrae.tools.struct.*;
 
 
 /**
+ * A matcher representing an entity expression.
  *
- * @author john
+ * @author John McCrae, National Institute of Informatics
  */
 public class Entity implements TypeExpr, Expr, Comparable<Entity> {
 
+    /**
+     * The body of the entity
+     */
     public List<TypeExpr> body;
-    
+
+    /**
+     * The entities values.
+     */
     public final String entityType, entityValue, var;
     
     TypeExpr current;
     TypeExpr next;
     SrlMatchRegion match;
+    /**
+     * The rule type
+     */
     public final int ruleType;
-    //public static final TypeExpr successState = new EntitySuccessState(Rule.successState);
     
+
+    /**
+     * Create an instance. Note it <em> is necessary</em> to add a body to this
+     * before using
+     * @param entityType The type of the entity
+     * @param entityValue The value of the entity (i.e., cl="...")
+     * @param var The variable
+     * @param ruleType The rule type
+     */
     public Entity(String entityType, String entityValue, String var, int ruleType) {
         this.entityType = entityType;
         this.entityValue = entityValue;
         this.var = var;
-	this.ruleType = ruleType;
+        this.ruleType = ruleType;
         body = new LinkedList<TypeExpr>();
         if(ruleType == Rule.TEMPLATE_RULE) {
             EndTag endTag = new EndTag(entityType);
@@ -47,27 +63,41 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
             bt.setNext(endTag);
             body.add(bt);
             body.add(endTag);
+            current = bt;
         } 
         match = new SrlMatchRegion();
     }
     
-    
+    /**
+     * Build the query
+     * @param query
+     */
     public void getQuery(SrlQuery query) {
         for(TypeExpr te : body) {
             te.getQuery(query);
         }
     }
 
+    /**
+     * Does this match the current token
+     * @param token The current token
+     * @param tokenNo The token number
+     * @param stack The fork stack
+     * @param lookBackStack The reverse stack
+     * @return <code>this</code> if the matching is still in the entity,
+     * <code>next</code> if the match is succesful, <code>null</code> is the
+     * match fails.
+     */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
-	current = current.matches(token, tokenNo,stack, lookBackStack);
+        current = current.matches(token, tokenNo,stack, lookBackStack);
         if(current == null)
             return null;
-	if(match.beginRegion < 0) {
+        if(match.beginRegion < 0) {
             if(token instanceof BeginTagToken)
                 match.beginRegion = tokenNo + 1;
             else 
                 match.beginRegion = tokenNo;
-	}
+        }
 	
         if(!body.contains(current) && current == next) {
             if(token.termText().length() >= 1)
@@ -89,19 +119,31 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
         return this;
     }
 
+    /** Are we at the end of a completed match. Entity rules depend on the body,
+     * however template rules require an end tag to be found
+     * @return
+     */
     public boolean canEnd() {
         if(ruleType == Rule.ENTITY_RULE)
             return current.canEnd();
         else // Actually current.canEnd() always returns false in this case
             return false;
     }
-    
+
+    /**
+     * Set the next matcher
+     * @param te
+     */
     public void setNext(TypeExpr te) {
         next = te;
         if(!body.isEmpty())
             body.get(body.size()-1).setNext(te);
     }
 
+    /**
+     * Reset the matcher. Returns the matching to the beginning of the entity
+     * expression
+     */
     public void reset() {
         current = body.get(0);
         match = new SrlMatchRegion();
@@ -109,10 +151,10 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
             te.reset();
     }
     
-    //public String[] getEntity() {
-    //    return match.toArray(new String[match.size()]);
-    //}
-
+    /**
+     * Add an element to the body of this expression
+     * @param typeExpr
+     */
     public void addTypeExpr(TypeExpr typeExpr) {
         if(!body.isEmpty()) {
             if(ruleType == Rule.ENTITY_RULE)
@@ -133,11 +175,12 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
             }
         }
     }
-    
-    public void skip(Token token) {
-        match.value.append(token.termText());
-    }
 
+    /**
+     * Get the rule type.
+     * @see Rule#ENTITY_RULE
+     * @see Rule#TEMPLATE_RULE
+     */
     public int getRuleType() {
         return ruleType;
     }
@@ -201,7 +244,10 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
             return entityType + "(" + entityValue + varForm + ") { " + Strings.join(" ", body.subList(skip, body.size()-skip)) + " }";
         }
     }
-
+    /**
+     * Get the body
+     * @return
+     */
     public List<TypeExpr> getBody() {
         return body;
     }
@@ -214,39 +260,4 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
         return new Entity(entityType, entityValue, var, ruleType);
     }
 }
-class EntitySuccessState implements TypeExpr {
-    TypeExpr next;
-    
-    public EntitySuccessState(TypeExpr te) { 
-        next = te; 
-    }
-    
-    public void getQuery(SrlQuery query) {
-        throw new IllegalStateException();
-    }
 
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
-        TypeExpr te = next.matches(token,no,stack, lookBackStack);
-        if(te == null) 
-            next.reset();
-        return te;
-    }
-
-    public void reset() {
-    }
-
-    public void setNext(TypeExpr te) {
-        throw new IllegalStateException();
-    }
-
-    public void skip(Token token) {
-    }
-
-    public boolean canEnd() {
-        return true;
-    }
-
-    public TypeExpr copy() {
-        return new EntitySuccessState(next);
-    }
-}

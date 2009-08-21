@@ -54,6 +54,10 @@ public class Corpus {
     HashSet<String> docNames;
     private File indexFile;
     private long lock = 0;
+    // This is used to track changes that are being made to a corpus
+    // but require querying the corpus to fulfill these changes. If
+    // we didn't use this then this may lead to inconsistent results
+    private Thread updateThread;
 
     private Corpus() {
     }
@@ -96,20 +100,20 @@ public class Corpus {
         c.docNames = new HashSet<String>();
         if (!newIndex) {
             try {
-                c.closeIndex();
+                c.closeIndex(0);
                 c.docNames.addAll(c.extractDocNames());
             } catch (CorpusConcurrencyException x) {
                 x.printStackTrace();
                 throw new RuntimeException("ERROR: Concurrency exception");
             }
-            c.reopenIndex();
+            //c.reopenIndex(false);
         }
         return c;
     }
     
     private List<String> extractDocNames() throws IOException, IllegalStateException, CorpusConcurrencyException {
         if (indexSearcher == null) {
-            closeIndex();
+            closeIndex(0);
         }
         List<String> rv = new Vector<String>();
         for (int i = 0; i < indexSearcher.maxDoc(); i++) {
@@ -129,44 +133,62 @@ public class Corpus {
         return rv;
     }
 
-    /**
-     * Save the corpus 
-     * @param file The path to save the corpus to
-     * @throws IOException If a disk error occurred
-     */
-    public void saveCorpus() throws IOException, CorpusConcurrencyException {
-        optimizeIndex();
-        /*ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(indexFile, "support")));
-        oos.writeObject(support);
-        oos.close();*/
-    }
-    
+       
     
     /** Optimize the index. Call this only after significant changes to the corpus. It may take several
      * seconds, but will improve search speed afterwards (YMMV).
      */
-    public void optimizeIndex() throws IOException, CorpusConcurrencyException {
-        if (indexWriter == null) {
-            reopenIndex();
-        }
-        indexWriter.optimize();
-        closeIndex();
+    public synchronized void optimizeIndex(long lockID) throws IOException, CorpusConcurrencyException {
+        //synchronized (this) {
+            if (lock != lockID) {
+                throw new CorpusConcurrencyException("Corpus is locked, this operation is not permitted until unlock");
+            }
+            lock = 0;
+            if(indexWriter == null)
+                indexWriter = new IndexWriter(dir, processor.getAnalyzer(), false);
+            indexWriter.optimize();
+            indexWriter.close();
+
+            if (dir instanceof RAMDirectory) {
+                dir = new RAMDirectory(indexFile);
+            } else {
+                dir = FSDirectory.getDirectory(indexFile);
+            }
+
+            indexSearcher = new IndexSearcher(dir);
+            indexWriter = null;
+            openThread = null;
+            notifyAll();
+        //}
     }
 
     /** Close the corpus, after which no more documents can be added. Also commits the corpus to disk */
-    public void closeIndex() throws IOException, CorpusConcurrencyException {
+    /*public void closeIndex() throws IOException, CorpusConcurrencyException {
         closeIndex(0);
-    }
+    }*/
+
+    // NOTE: The correctly to open the corpus for read/write should be as follows
+    // long id = reopenIndex();
+    //    .... edit corpus ...
+    // if(id != 0)
+    //     closeIndex(id);
 
     /** Close the corpus, after which no more documents can be added. Use this method if
-     * you called reopenIndex(true), as then only this method with the correct
+     * you called reopenIndex(), as then only this method with the correct
      * lock value can be used to close the corpus.
-     * @param lockID The lockID returned from reopenIndex(true)
+     * @param lockID The lockID returned from reopenIndex()
      * @throws java.io.IOException
      * @throws srl.corpus.CorpusConcurrencyException
      */
-    public void closeIndex(long lockID) throws IOException, CorpusConcurrencyException {
-        synchronized (this) {
+    public synchronized void closeIndex(long lockID) throws IOException, CorpusConcurrencyException {
+        //synchronized (this) {
+            if(updateThread != null && updateThread != Thread.currentThread()) {
+                try {
+                    updateThread.join();
+                } catch(Exception x) {
+                    x.printStackTrace();
+                }
+            }
             if (lock != lockID) {
                 throw new CorpusConcurrencyException("Corpus is locked, this operation is not permitted until unlock");
             }
@@ -185,7 +207,9 @@ public class Corpus {
 
             indexSearcher = new IndexSearcher(dir);
             indexWriter = null;
-        }
+            openThread = null;
+            this.notifyAll();
+        //}
     }
     Directory dir;
 
@@ -193,33 +217,81 @@ public class Corpus {
     /** Reopen the index to add new documents. This is equivalent ot reopenIndex(false);
      *
      */
-    public void reopenIndex() throws IOException {
+    /*public void reopenIndex() throws IOException {
         reopenIndex(false);
+    }*/
+
+    private Thread openThread;
+    private Object openSignal = new Object();
+
+    /**
+     * Reopen the index to add new documents. Same as reopenIndex(true)
+     * @return
+     * @throws java.io.IOException
+     * @throws srl.corpus.CorpusConcurrencyException
+     */
+    public long reopenIndex() throws IOException, CorpusConcurrencyException {
+        return reopenIndex(true);
     }
 
-    /** Reopen the index to add new documents. If you specify the parameter lock
-     * as true the corpus will be opened and cannot be closed without the return
-     * value.
-     * @param lock Whether to lock the corpus 
-     * @return The lock key if lock=true (or zero otherwise)
+    /**
+     * Reopen the index to add new documents. If the second parameter is set the
+     * current thread will wait until the corpus next becomes unlocked. If not the
+     * function will throw a CorpusConcurrencyException if it can't obtain a lock.
+     * @param wait If true wait until the index can be reopened.
+     * @return The index lock ID
      * @throws java.io.IOException
+     * @throws srl.corpus.CorpusConcurrencyException
      */
-    public long reopenIndex(boolean lock) throws IOException {
-        synchronized (this) {
+    public synchronized long reopenIndex(boolean wait) throws IOException, CorpusConcurrencyException {
+       
+        //synchronized (this) {
+            if(updateThread != null && updateThread != Thread.currentThread()) {
+                try {
+                    updateThread.join();
+                } catch(Exception x) {
+                    x.printStackTrace();
+                }
+            }
             if (indexWriter != null) {
-                if(this.lock == 0 && lock) // Corpus is open but not locked so lock it
+                if(this.lock == 0) {// Corpus is open but not locked so lock it
+                    openThread = Thread.currentThread();
                     return this.lock = random.nextLong();
+                }
                 return 0;
+            }
+             while(wait && this.lock != 0) {
+                if(waitOnCorpusUnlock() != 0)
+                    lock = 0;
             }
             indexSearcher.close();
             indexWriter = new IndexWriter(dir, processor.getAnalyzer(), false);
             indexSearcher = null;
-            if (lock) {
-                return this.lock = random.nextLong();
-            } else {
-                return 0;
-            }
+            openThread = Thread.currentThread();
+            return this.lock = random.nextLong();
+        //}
+    }
+
+    /**
+     * Wait for the corpus to be unlocked.
+     * @throws srl.corpus.CorpusConcurrencyException If this is called by thread that has the lock
+     * @returns The current lock value (if a thread dies while locking the corpus, the
+     * lock value is 'given' to the next thread via this method)
+     */
+    public synchronized long waitOnCorpusUnlock() throws CorpusConcurrencyException {
+        if(lock == 0)
+            return 0;
+        if(Thread.currentThread() == openThread) {
+            throw new CorpusConcurrencyException("Thread is attempting to wait on itself");
         }
+        if(!openThread.isAlive())
+            return lock;
+        try {
+            this.wait();
+        } catch(InterruptedException x) {
+            x.printStackTrace();
+        }
+        return 0;
     }
 
     /** (expert) Switch corpus to RAM. If this option is set to true, the corpus will
@@ -229,7 +301,8 @@ public class Corpus {
      * @deprecated
      */
     public void setUseRAM(boolean value) throws IOException, CorpusConcurrencyException {
-        closeIndex();
+        if(indexSearcher == null)
+            closeIndex(0);
         if (value && !(dir instanceof RAMDirectory)) {
             dir = new RAMDirectory(dir);
         } else {
@@ -252,24 +325,28 @@ public class Corpus {
     /** Add a new document to corpus
      * @param name The name of the document
      * @param contents The text of the new document
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      * @throws IOException The document couldn't be added
      * @throws IllegalArgumentException If the document name already exits
      */
-    public void addDoc(String name, String contents) throws IOException, IllegalStateException, IllegalArgumentException {
-        addDoc(name,contents,false);
+    public void addDoc(String name, String contents, boolean wait) throws IOException, IllegalStateException, IllegalArgumentException, CorpusConcurrencyException {
+        addDoc(name,contents,false, wait);
     }
     
     /** Add a new document to corpus
      * @param name The name of the document
      * @param contents The text of the new document
      * @param tagged Treat the document as pre-tagged
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      * @throws IOException The document couldn't be added
      * @throws IllegalArgumentException If the document name already exits
      */
-    public void addDoc(String name, String contents, boolean tagged) throws IOException, IllegalStateException, IllegalArgumentException {
-        if (indexWriter == null) {
-            reopenIndex();
-        }
+    public void addDoc(String name, String contents, boolean tagged, boolean wait) throws IOException, IllegalStateException, IllegalArgumentException, CorpusConcurrencyException {
+        long id = reopenIndex(wait);
         name = name.toLowerCase();
         if (docNames.contains(name)) {
             throw new IllegalArgumentException(name + " already exists in corpus");
@@ -307,6 +384,8 @@ public class Corpus {
         }
         d.add(new Field("sentCount", i + "", Field.Store.YES, Field.Index.NO));
         indexWriter.addDocument(d);
+        if(id != 0)
+            closeIndex(id);
     }
     private HashSet<String> uids = new HashSet<String>();
     private Random random = new Random();
@@ -420,7 +499,7 @@ public class Corpus {
      */
     protected Document getDoc(String name) throws IOException, CorpusConcurrencyException {
         if (indexSearcher == null) {
-            closeIndex();
+            closeIndex(0);
         }
         QueryParser qp = new QueryParser("name", processor.getAnalyzer());
         try {
@@ -446,7 +525,7 @@ public class Corpus {
      */
     protected Document getDocByUID(String uid) throws IOException, CorpusConcurrencyException {
         if(indexSearcher == null)
-            closeIndex();
+            closeIndex(0);
         QueryParser qp = new QueryParser("uid", processor.getAnalyzer());
         try {
             Query q = qp.parse(uid);
@@ -483,7 +562,7 @@ public class Corpus {
     private List<String> getDocFields(String docName, String fieldName) throws IOException, CorpusConcurrencyException {
         docName = validateDocName(docName);
            if(indexSearcher == null)
-            closeIndex();
+            closeIndex(0);
         QueryParser qp = new QueryParser("name", processor.getAnalyzer());
         Vector<String> rval = new Vector<String>();
         try {
@@ -541,15 +620,18 @@ public class Corpus {
     /**
      * Remove a document from the corpus
      * @param name The name of the document
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      * @throws java.io.IOException
      */
-    public void removeDoc(String name) throws IOException {
+    public void removeDoc(String name, boolean wait) throws IOException, CorpusConcurrencyException {
         name = validateDocName(name);
-        if (indexWriter == null) {
-            reopenIndex();
-        }
+        long id = reopenIndex(wait);
         indexWriter.deleteDocuments(new Term("name", name));
         docNames.remove(name);
+        if(id != 0)
+            closeIndex(id);
     }
 
     /**
@@ -557,9 +639,12 @@ public class Corpus {
      * 
      * @param name The name of the document
      * @param contents The new contents
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      * @throws java.io.IOException
      */
-    public void updateDoc(String name, String contents) throws IOException, CorpusConcurrencyException {
+    public void updateDoc(String name, String contents, boolean wait) throws IOException, CorpusConcurrencyException {
         name = validateDocName(name);
         Document old = getDoc(name);
         if (old != null) {
@@ -567,13 +652,13 @@ public class Corpus {
                 return;
             }
         }
-        if (indexWriter == null) {
-            reopenIndex();
-        }
+        long id = reopenIndex(wait);
         indexWriter.deleteDocuments(new Term("name", name));
         //support.removeDoc(name);
         docNames.remove(name);
-        addDoc(name, contents);
+        addDoc(name, contents,wait);
+        if(id != 0)
+            closeIndex(id);
     }
     
     
@@ -582,9 +667,12 @@ public class Corpus {
      * 
      * @param name The name of the document
      * @param contents The new contents
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      * @throws java.io.IOException
      */
-    public void updateContext(Document old, String contents, String taggedContents) throws IOException, CorpusConcurrencyException {
+    public void updateContext(Document old, String contents, String taggedContents, boolean wait) throws IOException, CorpusConcurrencyException {
         String name = old.getField("name").stringValue();
         if (old != null) {
             if (!old.getField("name").stringValue().matches(".* .*") && 
@@ -592,9 +680,7 @@ public class Corpus {
                 return;
             }
         }
-        if (indexWriter == null) {
-            reopenIndex();
-        }
+        long id = reopenIndex(wait);
         indexWriter.deleteDocuments(new Term("uid", old.getField("uid").stringValue()));
         //support.removeDoc(name);
         try {
@@ -607,33 +693,45 @@ public class Corpus {
             System.err.println(old.getField("name"));
             x.printStackTrace();
         }
+        if(id != 0)
+            closeIndex(id);
     }
     
     /**
      * Change the content of a single context in the corpus. (Used if wordlist or other things change)
      * 
      * @param String uid The uid (a field of the document)
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      */
-    public void updateContext(String uid)  throws IOException, CorpusConcurrencyException {
-        Document old = getDocByUID(uid);
-        if(old == null)
-            return;
-        if(indexWriter == null) {
-            reopenIndex();
+    public void updateContexts(List<String> uids, boolean wait)  throws IOException, CorpusConcurrencyException {
+        LinkedList<Document> docs = new LinkedList<Document>();
+        for(String uid : uids) {
+            Document d = getDocByUID(uid);
+            if(d == null)
+                throw new IllegalArgumentException("UID " + uid + " not in corpus");
+            docs.add(d);
         }
-        indexWriter.deleteDocuments(new Term("uid",uid));
-        try {
-            addContext(old.getField("name").stringValue(), 
-                old.getField("contents").stringValue(),
-                old.getField("taggedContents") != null ? old.getField("taggedContents").stringValue() : null,
-                old.getField("pretaggedContents") != null ? old.getField("pretaggedContents").stringValue() : null,
-                old.getField("extracted") != null ? old.getField("extracted").stringValue() : null);
-        } catch(NullPointerException x) {
-            System.err.println(uid);
-            System.err.println(old.getField("name"));
-            x.printStackTrace();
+        long id = reopenIndex(wait);
+        Iterator<Document> dIter = docs.iterator();
+        for(String uid : uids) {
+            Document old = dIter.next();
+            indexWriter.deleteDocuments(new Term("uid",uid));
+            try {
+                addContext(old.getField("name").stringValue(),
+                    old.getField("contents").stringValue(),
+                    old.getField("taggedContents") != null ? old.getField("taggedContents").stringValue() : null,
+                    old.getField("pretaggedContents") != null ? old.getField("pretaggedContents").stringValue() : null,
+                    old.getField("extracted") != null ? old.getField("extracted").stringValue() : null);
+            } catch(NullPointerException x) {
+                System.err.println(uid);
+                System.err.println(old.getField("name"));
+                x.printStackTrace();
+            }
         }
-                
+        if(id != 0)
+            closeIndex(id);
     }
     
     ////////////////////////////////////////////////////////////////////////////
@@ -695,7 +793,7 @@ public class Corpus {
      */
     public void query(SrlQuery query, QueryHit collector, StopSignal signal) throws IOException, CorpusConcurrencyException {
         if (indexSearcher == null) {
-            closeIndex();
+            closeIndex(0);
         }
         if (query.query.toString().matches("\\s*") &&
                 query.entities.isEmpty() &&
@@ -764,7 +862,7 @@ public class Corpus {
             return null;
         }
         if (indexSearcher == null) {
-            closeIndex();
+            closeIndex(0);
         }
         try {
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
@@ -793,7 +891,7 @@ public class Corpus {
             return null;
         }
         if (indexSearcher == null) {
-            closeIndex();
+            closeIndex(0);
         }
         try {
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
@@ -819,16 +917,18 @@ public class Corpus {
     /** Reinitialize the corpus support. This is actually research for word 
      * list entry matches, sometimes they get out of sync, I don't know why,
      * hopefully they are fixed now and I just forgot to remove this comment.
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      * @throws java.io.IOException
      * @throws CorpusConcurrencyException
      */
-    public void resupport() throws IOException, CorpusConcurrencyException {
+    public void resupport(boolean wait) throws IOException, CorpusConcurrencyException {
         
         try {
             if(indexSearcher == null)
-                optimizeIndex();
-           
-        
+                closeIndex(0);
+            updateThread = Thread.currentThread();
             List<String> newDocs = new LinkedList<String>();
             for(int i = 0; i < indexSearcher.maxDoc(); i++) {
                 Document d;
@@ -842,13 +942,12 @@ public class Corpus {
                     continue;
                 newDocs.add(d.getField("uid").stringValue());
             }
-            if (indexWriter == null) {
-                reopenIndex();
-            }
-            for(String uid : newDocs) {
-                updateContext(uid);
-            }
-            optimizeIndex();
+            long id = reopenIndex(wait);
+            updateThread = null;
+            updateContexts(newDocs,wait);
+            
+            if(id != 0)
+                optimizeIndex(id);
         } catch(Exception x) {
             x.printStackTrace();
         }
@@ -867,16 +966,16 @@ public class Corpus {
 
     /** Add this as a listener to list */
     public void listenToWordListSet(WordListSet list) {
-        list.addChangeListener(new CollectionChangeListener<ListenableSet<WordListEntry>>() {
+        list.addChangeListener(new CollectionChangeListener<WordList>() {
 
-            public void collectionChanged(CollectionChangeEvent<ListenableSet<WordListEntry>> e) {
+            public void collectionChanged(CollectionChangeEvent<WordList> e) {
                 // TODO: Should we be doing something here?
             }
         });
     }
 
     /** Add this as a listener to wordList */
-    public void listenToWordList(String name, ListenableSet<WordListEntry> wordList) {
+    public void listenToWordList(String name, WordList wordList) {
         wordList.addCollectionChangeListener(new WLCCL(name));
     }
 
@@ -891,6 +990,7 @@ public class Corpus {
 
         public void collectionChanged(CollectionChangeEvent<WordListEntry> e) {
             Thread t = new Thread(new WLCCLRun(e.getOldVal(), e.getNewVal(), name), "wordListUpdate");
+            updateThread = t;
             t.start();
         }
     }
@@ -906,8 +1006,13 @@ public class Corpus {
         }
 
         public void run() {
-            removeWordListElement(name, oldVal != null ? oldVal.toString() : null);
-            addWordListElement(name, newVal != null ? newVal.toString() : null);
+            try {
+                removeWordListElement(name, oldVal != null ? oldVal.toString() : null);
+                addWordListElement(name, newVal != null ? newVal.toString() : null);
+                updateThread = null;
+            } catch(Exception x) {
+                x.printStackTrace();
+            }
         }
 
     }
@@ -915,7 +1020,7 @@ public class Corpus {
        protected void removeWordListElement(String name, String oldVal) {
         try {
             if(indexSearcher == null)
-                optimizeIndex();
+                closeIndex(0);
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
             qp.setDefaultOperator(QueryParser.Operator.AND);
             Query q = qp.parse("\"" + oldVal + "\"");
@@ -933,13 +1038,7 @@ public class Corpus {
                     continue;
                 newDocs.add(d.getField("uid").stringValue());
             }
-             if (indexWriter == null) {
-                reopenIndex();
-            }
-            for(String uid : newDocs) {
-                updateContext(uid);
-            }
-            closeIndex();
+            updateContexts(newDocs, false);
         } catch (Exception x) {
             x.printStackTrace();
         }
@@ -948,7 +1047,7 @@ public class Corpus {
     protected void addWordListElement(String name, String newVal) {
         try {
             if(indexSearcher == null)
-                optimizeIndex();
+                closeIndex(0);
             QueryParser qp = new QueryParser("contents", processor.getAnalyzer());
             qp.setDefaultOperator(QueryParser.Operator.AND);
             Query q = qp.parse("\"" + newVal + "\"");
@@ -968,13 +1067,7 @@ public class Corpus {
                     continue;
                 newDocs.add(d.getField("uid").stringValue());
             }
-            if (indexWriter == null) {
-                reopenIndex();
-            }
-            for(String uid : newDocs) {
-                updateContext(uid);
-            }
-            closeIndex();
+            updateContexts(newDocs, false);
         } catch(Exception x) {
             x.printStackTrace();
         }

@@ -27,7 +27,7 @@ import srl.corpus.Processor;
  */
 public class WordListSet {
     /** This represents the wordlists. It is a map indexed by the wordlist names */
-    private ListenableMap<String,ListenableSet<WordListEntry>> wordLists;
+    private ListenableMap<String,WordList> wordLists;
     /** The name of this word list set */
     public final String name;
     /** The linguistic processor */
@@ -42,7 +42,7 @@ public class WordListSet {
     public WordListSet(String name, Processor processor) {
         this.name = name;
         this.processor = processor;
-        wordLists = new ListenableMap<String,ListenableSet<WordListEntry>>(new HashMap<String,ListenableSet<WordListEntry>>());
+        wordLists = new ListenableMap<String,WordList>(new HashMap<String,WordList>());
         allWordListSets.put(name, this);
     }
     
@@ -79,7 +79,7 @@ public class WordListSet {
                 throw new RuntimeException("Syntax Error at " + in);
             String listName = m.group(1);
             if(m.matches()) {
-                ListenableSet<WordListEntry> set = new ListenableSet<WordListEntry>(new TreeSet<WordListEntry>());
+                WordList set = new WordList();
                 char[] list = m.group(2).toCharArray();
                 StringBuffer name = new StringBuffer();
                 boolean inLiteral = false;
@@ -125,7 +125,7 @@ public class WordListSet {
      */
     public void write(File file) throws IOException {
         PrintStream ps = new PrintStream(file,"UTF-8");
-        for(Map.Entry<String,ListenableSet<WordListEntry>> entry : wordLists.entrySet()) {
+        for(Map.Entry<String,WordList> entry : wordLists.entrySet()) {
             String cmt;
             if(comment.get(entry.getKey()) != null && 
                     comment.get(entry.getKey()).length() > 0) {
@@ -151,7 +151,7 @@ public class WordListSet {
     public boolean addList(String name) {
         if(allWordLists.get(name) != null) 
             return false;
-        ListenableSet<WordListEntry> set = new ListenableSet<WordListEntry>(new TreeSet<WordListEntry>());
+        WordList set = new WordList();
         wordLists.put(name, set);
         allWordLists.put(name, set);
         allWordSets.put(name, this);
@@ -180,12 +180,12 @@ public class WordListSet {
         return wordLists.keySet();
     }
     
-    static Map<String,ListenableSet<WordListEntry>> allWordLists = new HashMap<String,ListenableSet<WordListEntry>>();
+    static Map<String,WordList> allWordLists = new HashMap<String,WordList>();
     static Map<String,WordListSet> allWordSets = new HashMap<String,WordListSet>();
     static Map<String,WordListSet> allWordListSets = new HashMap<String,WordListSet>();
     
     /** Get a specific word list by name */
-    public static ListenableSet<WordListEntry> getWordList(String wordListName) {
+    public static WordList getWordList(String wordListName) {
         return allWordLists.get(wordListName);
     }
     
@@ -236,7 +236,7 @@ public class WordListSet {
      * @param token The first token
      */
     public static SortedSet<WordListEntry> getMatchSet(String name, String token) {
-        ListenableSet<WordListEntry> wles = allWordLists.get(name);
+        WordList wles = allWordLists.get(name);
         if(wles == null)
             throw new IllegalArgumentException("Cannot find word list @" + name);
         SortedSet<WordListEntry> set = ((SortedSet<WordListEntry>)wles.getSet());
@@ -251,7 +251,7 @@ public class WordListSet {
     
     /** Clear the list */
     public static void reset() {
-        allWordLists = new HashMap<String,ListenableSet<WordListEntry>>();
+        allWordLists = new HashMap<String,WordList>();
         allWordSets = new HashMap<String,WordListSet>();
     }
     
@@ -273,7 +273,7 @@ public class WordListSet {
         return new WordListEntry(s);
     }
     
-    public void addChangeListener(CollectionChangeListener<ListenableSet<WordListEntry>> listener) {
+    public void addChangeListener(CollectionChangeListener<WordList> listener) {
         wordLists.addCollectionChangeListener(listener);
     }
     
@@ -281,7 +281,7 @@ public class WordListSet {
         return wordLists.keySet();
     }
     
-    public Set<Map.Entry<String, ListenableSet<WordListEntry>>> getWordListSets() {
+    public Set<Map.Entry<String, WordList>> getWordListSets() {
         return wordLists.entrySet();
     }
 

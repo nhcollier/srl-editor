@@ -68,7 +68,12 @@ public class RuleSet {
         }
         return ps;
     }
-    
+
+    /**
+     * Write the rule set to a file
+     * @param file The file to write to
+     * @throws java.io.IOException
+     */
     public void write(File file) throws IOException {
         PrintStream ps = new PrintStream(file,"UTF-8");
         for(Pair<String,Rule> r : rules) {

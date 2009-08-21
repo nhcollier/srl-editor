@@ -15,11 +15,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.Vector;
 import mccrae.tools.process.ProgressMonitor;
 import mccrae.tools.process.StopSignal;
@@ -38,9 +38,25 @@ import srl.rule.RuleSet;
 import srl.rule.SrlMatchRegion;
 
 /**
+ * This class contains the main methods for corpus operations. This class encapsulates
+ * several common corpus actions
+ * <ol>
+ *   <li>Adding tag information to a corpus: <code>tagCorpus(...)</code></li>
+ *   <li>Adding tag information to a set of sentenes: <code>tagSentences(...)</code></li>
+ *   <li>Adding tag information from an external source: <code>addTagsToDocument(...)</code></li>
+ *   <li>Extracting templates from a tagged corpus: <code>extractTemplates(...)</code></li>
+ *   <li>Methods for cleaning up rule matches: <code>sortMatches(...)</code></li>
+ * </ol>
+ *
  * @author John McCrae, National Institute of Informatics
  */
 public class CorpusExtractor {
+
+
+    /** This states that the corpus will apply heuristics that favor languages
+     * who have the head of the noun last
+     */
+    public static boolean HEAD_LAST_HEURISTIC = true;
 
     private final Corpus corpus;
 
@@ -53,9 +69,12 @@ public class CorpusExtractor {
      * @param overlaps A collection, which this function will add any overlaps it detects to (an overlap is a pair of matches
      * where both matches hit the same token and both matches have one token not matched by the other e.g., [0,4] &amp; [1,5])
      * @param ruleSets The set of rules for named entity extraction
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      */
-    public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps) throws IOException, CorpusConcurrencyException {
-        tagCorpus(ruleSets, overlaps, null);
+    public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps, boolean wait) throws IOException, CorpusConcurrencyException {
+        tagCorpus(ruleSets, overlaps, null, wait);
     }
 
      /**
@@ -64,10 +83,15 @@ public class CorpusExtractor {
      * where both matches hit the same token and both matches have one token not matched by the other e.g., [0,4] &amp; [1,5])
      * @param ruleSets The set of rules for named entity extraction
      * @param monitor Monitors the progress surprisingly
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      */
-    public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps, ProgressMonitor monitor) throws IOException, CorpusConcurrencyException {
+    public void tagCorpus(Collection<RuleSet> ruleSets, Collection<Overlap> overlaps, ProgressMonitor monitor, boolean wait) throws IOException, CorpusConcurrencyException {
         if (corpus.isIndexOpen()) {
-            corpus.closeIndex();
+            if(wait)
+                corpus.waitOnCorpusUnlock();
+            corpus.closeIndex(0);
         }
         final HashMap<String, List<HashMap<Entity, SrlMatchRegion>>> allMatches =
                 new HashMap<String, List<HashMap<Entity, SrlMatchRegion>>>();
@@ -92,23 +116,22 @@ public class CorpusExtractor {
             }
             i++;
         }
-        long lockID = corpus.reopenIndex(true);
+        long lockID = corpus.reopenIndex(wait);
         IndexReader reader = null;
         try {
             reader = IndexReader.open(corpus.indexWriter.getDirectory());
             i = 0;
             for (Map.Entry<String, List<HashMap<Entity, SrlMatchRegion>>> entry : allMatches.entrySet()) {
                 Vector<Pair<Entity, SrlMatchRegion>> matches = findOverlapsAndKill(entry.getValue(), overlaps);
-                addTagsToDocument(entry.getKey(), matches, reader, monitor);
+                addTagsToDocument(entry.getKey(), matches, reader, monitor, wait);
                 if (monitor != null) {
                     monitor.setMessageVal("Updating document " + entry.getKey());
                     monitor.setProgressVal((float) i++ / allMatches.size());
                 }
             }
         } finally {
-            corpus.closeIndex(lockID);
+            corpus.optimizeIndex(lockID);
         }
-        corpus.optimizeIndex();
         
         
         if (reader != null) {
@@ -131,7 +154,7 @@ public class CorpusExtractor {
         final Vector<List<HashMap<Entity, SrlMatchRegion>>> allMatches =
                 new Vector<List<HashMap<Entity, SrlMatchRegion>>>(sents.size());
         
-        for (Collection<org.apache.lucene.analysis.Token> sent : sents) {
+        for (SrlDocument sent : sents) {
             allMatches.add(new LinkedList<HashMap<Entity, SrlMatchRegion>>());
         }
         for (RuleSet ruleSet : ruleSets) {
@@ -209,46 +232,59 @@ public class CorpusExtractor {
         }
     }
 
-    
-    /** Sort a selection of matches in order of appearance */
+
+
+    /**
+     *  Sort a selection of matches in order of appearance. Also removes all duplicates. The sort order is
+     * as follows
+     * <ol>
+     *   <li>The end of the match (or start if HEAD_LAST_HEURISTIC is false)</li>
+     *   <li>The start of the match (or end if HEAD_LAST_HEURISTIC is false)</li>
+     *   <li>The entity type</li>
+     *   <li>The entity value</li>
+     * </ol>
+     * @param matches This is the output of  Rule.getMatch()
+     * @return The values in a single vector
+     * @see Rule#getMatch(SrlDocument, boolean)
+     */
     public static Vector<Pair<Entity, SrlMatchRegion>> sortMatches(List<HashMap<Entity, SrlMatchRegion>> matches) {
-        Vector<Pair<Entity, SrlMatchRegion>> rv = new Vector<Pair<Entity, SrlMatchRegion>>(matches.size());
+        TreeSet<Pair<Entity, SrlMatchRegion>> rv = new TreeSet<Pair<Entity, SrlMatchRegion>>(new Comparator() {
+            public int compare(Object o1, Object o2) {
+                Pair<Entity, SrlMatchRegion> m1 = (Pair<Entity, SrlMatchRegion>) o1, m2 = (Pair<Entity, SrlMatchRegion>) o2;
+                if(HEAD_LAST_HEURISTIC) {
+                    if (m1.second.endRegion < m2.second.endRegion) {
+                        return -1;
+                    } else if (m1.second.endRegion > m2.second.endRegion) {
+                        return 1;
+                    } else if (m1.second.beginRegion < m2.second.beginRegion) {
+                        return -1;
+                    } else if (m2.second.beginRegion > m2.second.beginRegion) {
+                        return 1;
+                    }
+                } else {
+                    if (m1.second.beginRegion < m2.second.beginRegion) {
+                        return -1;
+                    } else if (m2.second.beginRegion > m2.second.beginRegion) {
+                        return 1;
+                    } else if (m1.second.endRegion < m2.second.endRegion) {
+                        return -1;
+                    } else if (m1.second.endRegion > m2.second.endRegion) {
+                        return 1;
+                    }
+                }
+                int i = m1.first.entityType.compareTo(m2.first.entityType);
+                if(i == 0)
+                    return m1.first.entityValue.compareTo(m2.first.entityValue);
+                return i;
+            }
+        });
+        // Tree sort and return the value as a vector
         for (HashMap<Entity, SrlMatchRegion> match : matches) {
             for (Map.Entry<Entity, SrlMatchRegion> entry : match.entrySet()) {
                 rv.add(new Pair<Entity, SrlMatchRegion>(entry.getKey(), entry.getValue()));
             }
         }
-        Collections.sort(rv, new Comparator() {
-
-            public int compare(Object o1, Object o2) {
-                Pair<Entity, SrlMatchRegion> m1 = (Pair<Entity, SrlMatchRegion>) o1, m2 = (Pair<Entity, SrlMatchRegion>) o2;
-                if (m1.second.endRegion < m2.second.endRegion) {
-                    return -1;
-                } else if (m1.second.endRegion > m2.second.endRegion) {
-                    return 1;
-                } else if (m1.second.beginRegion < m2.second.beginRegion) {
-                    return -1;
-                } else if (m2.second.beginRegion > m2.second.endRegion) {
-                    return 1;
-                } else {
-                    return m1.first.entityType.compareTo(m2.first.entityType);
-                }
-            }
-        });
-        Iterator<Pair<Entity, SrlMatchRegion>> matchIter = rv.iterator();
-        if (!matchIter.hasNext()) {
-            return rv;
-        }
-        Pair<Entity, SrlMatchRegion> last = matchIter.next();
-        while (matchIter.hasNext()) {
-            Pair<Entity, SrlMatchRegion> next = matchIter.next();
-            if (next.first == last.first && next.second.beginRegion == last.second.beginRegion && next.second.endRegion == last.second.endRegion) {
-                matchIter.remove();
-            } else {
-                last = next;
-            }
-        }
-        return rv;
+        return new Vector<Pair<Entity, SrlMatchRegion>>(rv);
     }
 
 
@@ -257,22 +293,26 @@ public class CorpusExtractor {
      * (expert) Add a set of tags from an external source. 
      * @param docName The document to add the tags to
      * @param matches The matches (formatted as if it was the result
+      * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      * @throws java.io.IOException
      * @throws org.apache.lucene.index.CorruptIndexException
      */
-    public void addTagsToDocument(String docName, List<Vector<Pair<Entity, SrlMatchRegion>>> matches) throws IOException, CorruptIndexException, CorpusConcurrencyException {
-        corpus.reopenIndex();
+    public void addTagsToDocument(String docName, List<Vector<Pair<Entity, SrlMatchRegion>>> matches, boolean wait) throws IOException, CorruptIndexException, CorpusConcurrencyException {
+        long id = corpus.reopenIndex(wait);
         IndexReader reader = IndexReader.open(corpus.indexWriter.getDirectory());
         int i = 0;
         for (Vector<Pair<Entity, SrlMatchRegion>> match : matches) {
-            addTagsToDocument(docName + " " + i, match, reader, null);
+            addTagsToDocument(docName + " " + i, match, reader, null, wait);
             i++;
         }
-        corpus.closeIndex();
+        if(id != 0)
+            corpus.closeIndex(id);
         reader.close();
     }
 
-    private void addTagsToDocument(String docName, Vector<Pair<Entity, SrlMatchRegion>> matches, IndexReader reader, ProgressMonitor monitor)
+    private void addTagsToDocument(String docName, Vector<Pair<Entity, SrlMatchRegion>> matches, IndexReader reader, ProgressMonitor monitor, boolean wait)
             throws IOException, CorruptIndexException {
         String docNameProper = docName.toLowerCase().split(" ")[0];
         Term t = new Term("name", docNameProper);
@@ -294,7 +334,7 @@ public class CorpusExtractor {
         String taggedContents = addEntities(new SrlDocument(old, corpus.processor, false), matches);
         try {
             corpus.updateContext(old, old.getField("contents").stringValue(),
-                taggedContents);
+                taggedContents, wait);
         } catch(Exception x) {
             x.printStackTrace();
         }
@@ -357,15 +397,30 @@ public class CorpusExtractor {
     }
 
     
-    /** Extract all the templates from this corpus */
-    public void extractTemplates(Collection<RuleSet> ruleSets) throws IOException, CorpusConcurrencyException {
-        extractTemplates(ruleSets, null);
+    /**
+     * Extract all the templates from this corpus
+     * @param ruleSets The template rules used for the extraction
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
+     * @throws java.io.IOException
+     */
+    public void extractTemplates(Collection<RuleSet> ruleSets, boolean wait) throws IOException, CorpusConcurrencyException {
+        extractTemplates(ruleSets, null, wait);
     }
 
-    /** Extract all the templates from this corpus */
-    public void extractTemplates(Collection<RuleSet> ruleSets, ProgressMonitor monitor) throws IOException, CorpusConcurrencyException {
+    /**
+     * Extract all the templates from this corpus
+     * @param ruleSets The template rules used for the extraction
+     * @param monitor Used to track the progress of the operation
+     * @param wait If the corpus is being used by another thread, this parameter sets
+     * whether the thread should wait or throw a CorpusConcurrencyException
+     * @throws CorpusConcurrencyException If the corpus is locked and wait is false
+     * @throws java.io.IOException
+     */
+    public void extractTemplates(Collection<RuleSet> ruleSets, ProgressMonitor monitor, boolean wait) throws IOException, CorpusConcurrencyException {
         if (corpus.isIndexOpen()) {
-            corpus.closeIndex();
+            corpus.closeIndex(0);
         }
         corpus.clearTemplateExtractions();
         final HashMap<String, List<String>> allMatches =
@@ -386,14 +441,14 @@ public class CorpusExtractor {
                             allMatches.put(name, new LinkedList<String>());
                         }
                         List<String> heads = rulePair.second.getHeads(new SrlDocument(d, corpus.processor, true));
-                        if(!heads.isEmpty())
-                            allMatches.get(name).add(Strings.join(";", heads));
+                        for(String s : heads)
+                            allMatches.get(name).add(s);
                     }
                 });
             }
             i++;
         }
-        long lockID = corpus.reopenIndex(true);
+        long lockID = corpus.reopenIndex(wait);
         IndexReader reader = null;
         try {
             reader = IndexReader.open(corpus.indexWriter.getDirectory());
@@ -415,9 +470,8 @@ public class CorpusExtractor {
             }
         } finally {
             reader.close();
-            corpus.closeIndex(lockID);
+            corpus.optimizeIndex(lockID);
         }
-        corpus.optimizeIndex();
         if (monitor != null) {
             monitor.setMessageVal("Template Extraction complete");
             monitor.setProgressVal(1.0f);

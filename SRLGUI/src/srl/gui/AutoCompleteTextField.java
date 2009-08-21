@@ -21,8 +21,8 @@ import javax.swing.border.*;
 import javax.swing.event.*;
 import mccrae.tools.struct.*;
 import srl.project.SrlProject;
+import srl.wordlist.WordList;
 import srl.wordlist.WordListSet;
-import srl.wordlist.WordListEntry;
 
 public class AutoCompleteTextField extends JTextArea {
 
@@ -151,9 +151,9 @@ public class AutoCompleteTextField extends JTextArea {
         }
     }
 
-    private class WLCCL implements CollectionChangeListener<ListenableSet<WordListEntry>> {
+    private class WLCCL implements CollectionChangeListener<WordList> {
 
-        public void collectionChanged(CollectionChangeEvent<ListenableSet<WordListEntry>> e) {
+        public void collectionChanged(CollectionChangeEvent<WordList> e) {
             if (e.getOldVal() != null) {
                 wordLists.remove(e.getReference());
             }

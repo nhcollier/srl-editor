@@ -108,7 +108,7 @@ public class WordListSetTest {
     public void testGetWordList() {
         System.out.println("getWordList");
         String wordListName = "test_list";
-        ListenableSet<WordListEntry> result = WordListSet.getWordList(wordListName);
+        WordList result = WordListSet.getWordList(wordListName);
         assertEquals(1, result.size());
     }
 

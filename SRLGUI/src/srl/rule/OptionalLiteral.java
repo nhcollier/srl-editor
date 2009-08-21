@@ -16,30 +16,57 @@ import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 
 /**
+ * Represents the optional matcher. This corresponds to <code>optional</code> in
+ * the SRL language.
  * @author John McCrae, National Institute of Informatics
  */
 public class OptionalLiteral implements TypeExpr {
     public final String literal;
-    public final StrMatch listMatcher;
+    public final ListMatch listMatcher;
     private TypeExpr next;
     private DummyNode dummy;
     private boolean first = true;
 
-    public OptionalLiteral(String literal) {
-        if(literal.charAt(0) == '\"') {
-            this.literal = literal.toLowerCase().substring(1,literal.length()-1);
+    /**
+     * Create a new instance.
+     * @param param If the parameter is a literal this must be a double quoted
+     * string (e.g., <code>"literal"</code>) otherwise a list name with @ or %
+     * (e.g., <code>@list</code>)
+     */
+    public OptionalLiteral(String param) {
+        if(param.charAt(0) == '\"') {
+            this.literal = param.toLowerCase().substring(1,param.length()-1);
             listMatcher = null;
         } else {
             this.literal = null;
-            listMatcher = new StrMatch(literal);
-            dummy = new DummyNode("optional "+literal);
+            listMatcher = new ListMatch(param);
+            dummy = new DummyNode();
             listMatcher.setNext(dummy);
         }
     }
 
+    /**
+     * Does this match?
+     * @param token The current token
+     * @param no The token number
+     * @param stack The fork stack... may be used if there are partial matches
+     * @param lookBackStack The reverse stack (ignored)
+     * @return
+     */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(literal != null) {
+            MatchFork mf = MatchFork.find(stack, tokenNo, this);
+            if(mf != null && (mf.used || stack.peek() == mf)) {
+                mf.split(tokenNo, this);
+                return next.matches(token, tokenNo, stack, lookBackStack);
+            }
             if(token.termText().toLowerCase().equals(literal)) {
+                if(next.matches(token, tokenNo, stack, lookBackStack) != null) {
+                    if((stack.empty() || stack.peek().tokenNo < tokenNo) &&
+                        !(next == Rule.successState))
+                        stack.push(new MatchFork(tokenNo, this));
+                }
+                next.reset();
                 return next;
             } else 
                 return next.matches(token, tokenNo, stack,lookBackStack);
@@ -60,33 +87,50 @@ public class OptionalLiteral implements TypeExpr {
         }
     }
 
+    /**
+     * Can this end. Depeneds on the next statements
+     * @return
+     */
     public boolean canEnd() {
         return next.canEnd();
     }
 
+    /**
+     * Create an exact copy of this
+     * @return
+     */
     public TypeExpr copy() {
         if(literal != null)
-            return new OptionalLiteral(literal);
+            return new OptionalLiteral("\"" + literal + "\"");
         else
-            return new OptionalLiteral(listMatcher.wordListName);
+            return new OptionalLiteral((listMatcher.set ? "%" : "@") + listMatcher.wordListName);
     }
 
+    /**
+     * Build the query
+     * @param query
+     */
     public void getQuery(SrlQuery query) {
         query.query.append("\" \"");
     }
 
+    /**
+     * Reset the matcher
+     */
     public void reset() {
         if(listMatcher != null)
             listMatcher.reset();
         first = true;
     }
 
+    /**
+     * Set the next matcher
+     * @param te
+     */
     public void setNext(TypeExpr te) {
         next = te;
     }
 
-    public void skip(Token token) {
-    }
     
     public String toString() {
         if(literal != null)
@@ -96,5 +140,16 @@ public class OptionalLiteral implements TypeExpr {
         else
             return "optional(@" + listMatcher.wordListName + ")";
     }
-    
+
+    @Override
+    public boolean equals(Object arg0) {
+        if(arg0 instanceof OptionalLiteral) {
+            OptionalLiteral arg = (OptionalLiteral)arg0;
+            return (literal != null && arg.literal != null && literal.equals(arg.literal)) ||
+                    (listMatcher != null && arg.listMatcher != null &&
+                     listMatcher.wordListName.equals(arg.listMatcher.wordListName) &&
+                     listMatcher.set == arg.listMatcher.set);
+        } else
+            return false;
+    }
 }

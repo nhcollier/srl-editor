@@ -32,7 +32,7 @@ public class WordListEntry implements Comparable<WordListEntry> {
      * @param val
      * @param processor
      */
-    WordListEntry(String val, Processor processor) {
+    public WordListEntry(String val, Processor processor) {
         modifiable = false;
         words = new LinkedList<String>();
       //  originalVal = val;
@@ -51,7 +51,7 @@ public class WordListEntry implements Comparable<WordListEntry> {
      * Creates a word list. This is a simple model and can be manually changed.
      * @param words
      */
-    WordListEntry(List<String> words) {
+    public WordListEntry(List<String> words) {
         modifiable = true;
         this.words = words;
         //this.originalVal = "";

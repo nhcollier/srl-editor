@@ -43,7 +43,6 @@ SKIP : { "\t" | " " }
 TOKEN : { < EOL : "\n" | "\r" | "\n\r" | "\r\n" > }
 // The literal types
 TOKEN : { < STRMATCH : "strmatches" | "list" > }
-TOKEN : { < STRMATCH_APPROX : "approx" > }
 TOKEN : { < STRMATCH_REGEX : "regex" > }
 TOKEN : { < STRMATCH_ORTH : "ortho" > }
 TOKEN : { < BEGINS : "begins" > }
@@ -96,8 +95,6 @@ boolean cleanHead = false;
      ruleHead = <WORD>
      |
      ruleHead = <STRMATCH>
-     |
-     ruleHead = <STRMATCH_APPROX>
      |
      ruleHead = <STRMATCH_REGEX>
      |
@@ -155,8 +152,6 @@ Rule readTRRule() :
      ruleHead = <WORD>
      |
      ruleHead = <STRMATCH>
-     |
-     ruleHead = <STRMATCH_APPROX>
      |
      ruleHead = <STRMATCH_REGEX>
      |
@@ -247,8 +242,6 @@ boolean cleanHead = false;
      |
      ruleHead = <STRMATCH>
      |
-     ruleHead = <STRMATCH_APPROX>
-     |
      ruleHead = <STRMATCH_REGEX>
      |
      ruleHead = <STRMATCH_ORTH>
@@ -284,7 +277,6 @@ boolean cleanHead = false;
 
 // TYPE_EXPR -> EOL | COMMENT | EOF |
 //              strmatch ( WORDLIST ) TYPE_EXPR |
-//              strmatch_approx ( WORDLIST, NUMBER % ) TYPE_EXPR |
 //              strmatch_regex ( STRING_LITERAL ) TYPE_EXPR |
 //              strmatch_orth( STRING_LITERAL ) TYPE_EXPR |
 //              words ( NUMBER? , NUMBER? ) TYPE_EXPR |
@@ -307,32 +299,21 @@ void typeExpr(Rule rule) :
      <OPEN_PARA>
      s1 = <WORDLIST>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatch(s1.image)); }
-     { typeExpr(rule); }
-    |
-     <STRMATCH_APPROX>
-     <OPEN_PARA>
-     s1 = <WORDLIST>
-     <COMMA>
-     s2 = <NUMBER>
-     <PERCENT>
-     <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchApprox(s1.image, 
-       Double.parseDouble(s2.image) / 100)); }
+     { rule.addTypeExpr(new ListMatch(s1.image)); }
      { typeExpr(rule); }
     |
      <STRMATCH_REGEX>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchRegex(cleanLiteral(s1.image))); }
+     { rule.addTypeExpr(new Regex(cleanLiteral(s1.image))); }
      { typeExpr(rule); }
     |
      <STRMATCH_ORTH>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchOrtho(cleanLiteral(s1.image))); }
+     { rule.addTypeExpr(new Ortho(cleanLiteral(s1.image))); }
      { typeExpr(rule); }
     |
      <WORDS>
@@ -355,7 +336,7 @@ void typeExpr(Rule rule) :
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new PartialLiteral(s1.image, 0));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 0));
         typeExpr(rule); }
     |
      <ENDS>
@@ -363,7 +344,7 @@ void typeExpr(Rule rule) :
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new PartialLiteral(s1.image, 1));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 1));
         typeExpr(rule); }
     |
      <CONTAINS>
@@ -371,7 +352,7 @@ void typeExpr(Rule rule) :
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new PartialLiteral(s1.image, 2));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 2));
         typeExpr(rule); }
     |
      <OPTIONAL>
@@ -397,7 +378,7 @@ void typeExpr(Rule rule) :
      s1 = <STRING_LITERAL> 
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new CaseSensitiveLiteral(s1.image));
+        rule.addTypeExpr(new CaseSensitiveLiteral(cleanLiteral(s1.image)));
         typeExpr(rule); }
     |
      s1 = <WORD>
@@ -432,7 +413,6 @@ void typeExpr(Rule rule) :
 
 // ENTITY_BRANCH -> EOL | COMMENT | EOF |
 //              strmatch ( WORDLIST ) TYPE_EXPR |
-//              strmatch_approx ( WORDLIST, NUMBER % ) TYPE_EXPR |
 //              strmatch_regex ( STRING_LITERAL ) TYPE_EXPR |
 //              strmatch_orth( STRING_LITERAL ) TYPE_EXPR |
 //              words ( NUMBER? , NUMBER? ) TYPE_EXPR |
@@ -461,19 +441,7 @@ int entityBranch(Rule rule, Entity e) :
      <OPEN_PARA>
      s1 = <WORDLIST>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatch(s1.image)); 
-       typeExpr(rule);
-     }
-    |
-     <STRMATCH_APPROX>
-     <OPEN_PARA>
-     s1 = <WORDLIST>
-     <COMMA>
-     s2 = <NUMBER>
-     <PERCENT>
-     <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchApprox(s1.image, 
-           Double.parseDouble(s2.image) / 100)); 
+     { rule.addTypeExpr(new ListMatch(s1.image));
        typeExpr(rule);
      }
     |
@@ -481,14 +449,14 @@ int entityBranch(Rule rule, Entity e) :
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchRegex(cleanLiteral(s1.image)));
+     { rule.addTypeExpr(new Regex(cleanLiteral(s1.image)));
        typeExpr(rule); }
     |
      <STRMATCH_ORTH>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
-     { rule.addTypeExpr(new StrMatchOrtho(cleanLiteral(s1.image)));
+     { rule.addTypeExpr(new Ortho(cleanLiteral(s1.image)));
        typeExpr(rule); }
     |
      <WORDS>
@@ -511,7 +479,7 @@ int entityBranch(Rule rule, Entity e) :
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new PartialLiteral(s1.image, 0));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 0));
        typeExpr(rule); }
     |
      <ENDS>
@@ -519,7 +487,7 @@ int entityBranch(Rule rule, Entity e) :
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new PartialLiteral(s1.image, 1));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 1));
        typeExpr(rule); }
     |
      <CONTAINS>
@@ -527,7 +495,7 @@ int entityBranch(Rule rule, Entity e) :
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new PartialLiteral(s1.image, 2));
+        rule.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 2));
        typeExpr(rule); }
     |
      <OPTIONAL>
@@ -553,7 +521,7 @@ int entityBranch(Rule rule, Entity e) :
      s1 = <STRING_LITERAL> 
      <CLOSE_PARA>
      {
-        rule.addTypeExpr(new CaseSensitiveLiteral(s1.image));
+        rule.addTypeExpr(new CaseSensitiveLiteral(cleanLiteral(s1.image)));
         typeExpr(rule); }
     |
      s1 = <WORD>
@@ -591,7 +559,6 @@ int entityBranch(Rule rule, Entity e) :
 
 // ENTITY_EXPR ->
 //              strmatch ( WORDLIST ) ENTITY_EXPR |
-//              strmatch_approx ( WORDLIST, NUMBER % ) ENTITY_EXPR |
 //              strmatch_regex ( STRING_LITERAL ) ENTITY_EXPR |
 //              strmatch_orth( STRING_LITERAL ) ENTITY_EXPR |
 //              words ( NUMBER? , NUMBER? ) ENTITY_EXPR |
@@ -608,32 +575,21 @@ void entityExpr(Entity e) :
      <OPEN_PARA>
      s1 = <WORDLIST>
      <CLOSE_PARA>
-     { e.addTypeExpr(new StrMatch(s1.image)); }
-     { entityExpr(e); }
-    |
-     <STRMATCH_APPROX>
-     <OPEN_PARA>
-     s1 = <WORDLIST>
-     <COMMA>
-     s2 = <NUMBER>
-     <PERCENT>
-     <CLOSE_PARA>
-     { e.addTypeExpr(new StrMatchApprox(s1.image, 
-           Double.parseDouble(s2.image) / 100)); }
+     { e.addTypeExpr(new ListMatch(s1.image)); }
      { entityExpr(e); }
     |
      <STRMATCH_REGEX>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
-     { e.addTypeExpr(new StrMatchRegex(cleanLiteral(s1.image))); }
+     { e.addTypeExpr(new Regex(cleanLiteral(s1.image))); }
      { entityExpr(e); }
     |
      <STRMATCH_ORTH>
      <OPEN_PARA>
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
-     { e.addTypeExpr(new StrMatchOrtho(cleanLiteral(s1.image))); }
+     { e.addTypeExpr(new Ortho(cleanLiteral(s1.image))); }
      { entityExpr(e); }
     |
      <WORDS>
@@ -656,7 +612,7 @@ void entityExpr(Entity e) :
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        e.addTypeExpr(new PartialLiteral(s1.image, 0));
+        e.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 0));
         entityExpr(e); }
     |
      <ENDS>
@@ -664,7 +620,7 @@ void entityExpr(Entity e) :
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        e.addTypeExpr(new PartialLiteral(s1.image, 1));
+        e.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 1));
         entityExpr(e); }
     |
      <CONTAINS>
@@ -672,7 +628,7 @@ void entityExpr(Entity e) :
      s1 = <STRING_LITERAL>
      <CLOSE_PARA>
      {
-        e.addTypeExpr(new PartialLiteral(s1.image, 2));
+        e.addTypeExpr(new PartialLiteral(cleanLiteral(s1.image), 2));
         entityExpr(e); }
     |
      <OPTIONAL>
@@ -698,7 +654,7 @@ void entityExpr(Entity e) :
      s1 = <STRING_LITERAL> 
      <CLOSE_PARA>
      {
-        e.addTypeExpr(new CaseSensitiveLiteral(s1.image));
+        e.addTypeExpr(new CaseSensitiveLiteral(cleanLiteral(s1.image)));
         entityExpr(e); }
     |
      <CLOSE_BRACE>

@@ -16,26 +16,45 @@ import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 
 /**
+ * This represents the negative matcher. Corresponds to <code>not(...)</code> in
+ * the SRL language. This matcher is a <it>zero-width, look-behind</it> assertion,
+ * which means that it matches no term but instead checks that the reverse stack
+ * does not have the appropriate literal or word-list element on top.
  * @author John McCrae, National Institute of Informatics
  */
 public class NegativeLiteral implements TypeExpr {
     public final String literal;
-    public final StrMatch listMatcher;
+    public final ListMatch listMatcher;
     private TypeExpr next;
     private DummyNode dummy;
 
+    /**
+     * Create a new instance
+     * @param literal If the matcher is for a literal specify it with double quotes
+     * (e.g., <code>"literal"</code>), for lists specify with % or @ (e.g.,
+     * <code>@list</code>)
+     */
     public NegativeLiteral(String literal) {
         if(literal.charAt(0) == '\"') {
             this.literal = literal.toLowerCase().substring(1,literal.length()-1);
             listMatcher = null;
         } else {
             this.literal = null;
-            listMatcher = new StrMatch(literal);
-            dummy = new DummyNode("negative "+literal);
+            listMatcher = new ListMatch(literal);
+            dummy = new DummyNode();
             listMatcher.setNext(dummy);
         }
     }
 
+    /**
+     * Does this match the current token. In fact this matcher does not check the
+     * current token but instead the top element(s) of <code>lookBackStack</code>
+     * @param token The current token (ignored)
+     * @param tokenNo The token number (ignoed)
+     * @param stack The fork stack (ignored)
+     * @param lookBackStack The reverse stack
+     * @return
+     */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(literal != null) {
             if(lookBackStack.isEmpty()) 
@@ -61,32 +80,49 @@ public class NegativeLiteral implements TypeExpr {
         }
     }
 
+    /**
+     * Can this end. Answer depends on following matchers
+     * @return
+     */
     public boolean canEnd() {
         return next.canEnd();
     }
 
+    /**
+     * Create an exact copy
+     * @return
+     */
     public TypeExpr copy() {
-        if(literal != null)
-            return new NegativeLiteral(literal);
+        if(literal != null) 
+            return new NegativeLiteral("\"" + literal + "\"");
         else
-            return new NegativeLiteral(listMatcher.wordListName);
+            return new NegativeLiteral((listMatcher.set ? "%" : "@") + listMatcher.wordListName);
     }
 
+    /**
+     * Build the query.
+     * @param query
+     */
     public void getQuery(SrlQuery query) {
         query.query.append("\" \"");
     }
 
+    /**
+     * Reset the matcher
+     */
     public void reset() {
         if(listMatcher != null)
             listMatcher.reset();
     }
 
+    /**
+     * Set the next matcher
+     * @param te
+     */
     public void setNext(TypeExpr te) {
         next = te;
     }
 
-    public void skip(Token token) {
-    }
     
     public String toString() {
         if(literal != null)
@@ -96,5 +132,18 @@ public class NegativeLiteral implements TypeExpr {
         else
             return "not(@" + listMatcher.wordListName + ")";
     }
-    
+
+    @Override
+    public boolean equals(Object arg0) {
+        if(arg0 instanceof NegativeLiteral) {
+            NegativeLiteral nl = (NegativeLiteral)arg0;
+            return (literal != null && nl.literal != null && literal.equals(nl.literal)) ||
+                    (listMatcher != null && nl.listMatcher != null &&
+                    listMatcher.wordListName.equals(nl.listMatcher.wordListName) &&
+                    listMatcher.set == nl.listMatcher.set);
+        } else
+            return false;
+    }
+
+
 }

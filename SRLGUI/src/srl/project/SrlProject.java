@@ -197,7 +197,7 @@ public class SrlProject {
             }
             rs.write(f);
         }
-        corpus.saveCorpus();
+        corpus.optimizeIndex(0);
         writeXML();
         modified = false;
     }
@@ -224,7 +224,7 @@ public class SrlProject {
         for(File f : corpusFiles) {
             copy(f, new File(new File(location, "corpus"),f.getName()));
         }
-        corpus.saveCorpus();
+        corpus.optimizeIndex(0);
          corpus = Corpus.openCorpus(new File(location, "corpus"), processor, false);
          path = location;
         if (!(new File(path, "entity_rules")).mkdir()) {
@@ -258,7 +258,7 @@ public class SrlProject {
             }
             rs.write(f);
         }
-        corpus.saveCorpus();
+        corpus.optimizeIndex(0);
         writeXML();
         modified = false;
     }

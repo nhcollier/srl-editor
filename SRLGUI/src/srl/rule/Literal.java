@@ -16,25 +16,41 @@ import java.util.*;
 import mccrae.tools.struct.*;
 
 /**
- *
- * @author john
+ * Matcher representing a single literal.
+ * @author John McCrae, National Institute of Informatics
  */
 public class Literal implements TypeExpr {
 
     final String literal;
     
     TypeExpr next;
-            
+
+    /**
+     * Create an instance
+     * @param literal The literal (no double quotes ("))
+     */
     public Literal(String literal) {
         this.literal = literal;
     }
-    
+
+    /**
+     * Build the query
+     * @param query
+     */
     public void getQuery(SrlQuery query) {
         if(query.query.charAt(query.query.length()-1) != '\"')
             query.query.append(" ");
         query.query.append(literal.replaceAll("([\\\"\\\'])", "\\$1"));
     }
 
+    /**
+     * Does it match
+     * @param token The token
+     * @param no The token number (ignored)
+     * @param stack The fork stack (ignored)
+     * @param lookBackStack The reverse stack (ignored)
+     * @return
+     */
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termText().toLowerCase().equals(literal.toLowerCase())) {
             return next;
@@ -43,18 +59,26 @@ public class Literal implements TypeExpr {
         }
     }
 
+    /**
+     * Set the next matcher
+     * @param te
+     */
     public void setNext(TypeExpr te) {
         next = te;
     }
 
-    public void skip(Token token) {
-       
-    }
 
+    /**
+     * Reset the matcher. Does nothing
+     */
     public void reset() {
        
     }
-    
+
+    /**
+     * Get the literal.
+     * @return
+     */
     public String getVal() {
         return literal;
     }
@@ -64,6 +88,10 @@ public class Literal implements TypeExpr {
         return "\"" + literal + "\"";
     }
 
+    /**
+     * Can this end? Always no
+     * @return false
+     */
     public boolean canEnd() {
         return false;
     }
@@ -76,6 +104,10 @@ public class Literal implements TypeExpr {
         return false;
     }
 
+    /**
+     * Create an exact copy of this matcher
+     * @return
+     */
     public TypeExpr copy() {
         return new Literal(literal);
     }

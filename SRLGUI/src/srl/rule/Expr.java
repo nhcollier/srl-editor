@@ -13,10 +13,27 @@ package srl.rule;
 import java.util.List;
 
 /**
+ * This interface represents common elements between Entity and Rule.
+ *
  * @author John McCrae, National Institute of Informatics
  */
 public interface Expr {
+    /**
+     * Add a type expression to the body
+     * @param typeExpr
+     */
     public void addTypeExpr(TypeExpr typeExpr);
+
+    /**
+     * Get the rule type
+     * @see Rule#ENTITY_RULE
+     * @see Rule#TEMPLATE_RULE
+     */
     public int getRuleType();
+
+    /**
+     * Get the body of the rule
+     * @return
+     */
     public List<TypeExpr> getBody();
 }

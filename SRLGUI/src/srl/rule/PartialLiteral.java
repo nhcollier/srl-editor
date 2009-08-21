@@ -16,21 +16,52 @@ import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 
 /**
+ * This matches to a partial literal. This corresponds to <code>begins(...)</code>,
+ * <code>ends(...)</code> and <code>contains(...)</code> in the SRL language
+ *
  * @author John McCrae, National Institute of Informatics
  */
 public class PartialLiteral implements TypeExpr {
+    /**
+     * The partial literal
+     */
     public final String partLiteral;
+    /**
+     * Match begins, ends or contains
+     */
     public final int part;
     private TypeExpr next;
+    /**
+     * Constant for begin match
+     */
     public static final int BEGIN = 0;
+    /**
+     * Constant for end match
+     */
     public static final int END = 1;
+    /**
+     * Constant for contains match
+     */
     public static final int CONTAINS = 2;
 
+    /**
+     * Create a new instance
+     * @param partLiteral The partial literal, no double quotes (")
+     * @param part Either <code>PartialLiteral.BEGIN</code> or <code>PartialLiteral.END</code> or <code>PartialLiteral.CONTAINS</code>
+     */
     public PartialLiteral(String partLiteral, int part) {
-        this.partLiteral = partLiteral.substring(1, partLiteral.length()-1);
+        this.partLiteral = partLiteral;
         this.part = part;
     }
 
+    /**
+     * Does this match?
+     * @param token The current token
+     * @param no The token number
+     * @param stack The fork stack
+     * @param lookBackStack The reverse stack (ignored)
+     * @return
+     */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termLength() < partLiteral.length()) {
             return null;
@@ -50,27 +81,44 @@ public class PartialLiteral implements TypeExpr {
             return string.substring(string.length()-n);
     }
 
+    /**
+     * Can this end? Always no
+     * @return
+     */
     public boolean canEnd() {
         return false;
     }
 
+    /**
+     * Create an exact copy
+     * @return
+     */
     public TypeExpr copy() {
         return new PartialLiteral(partLiteral, part);
     }
 
+    /**
+     * Build a query
+     * @param query
+     */
     public void getQuery(SrlQuery query) {
         query.query.append("\" \"");
     }
 
+    /**
+     * Reset the matcher
+     */
     public void reset() {
     }
 
+    /**
+     * Set the next matcher
+     * @param te
+     */
     public void setNext(TypeExpr te) {
         next = te;
     }
 
-    public void skip(Token token) {
-    }
     
     public String toString() {
         if(part == BEGIN) {
@@ -83,4 +131,15 @@ public class PartialLiteral implements TypeExpr {
             return "<<ERROR>>";
         }
     }
+
+    @Override
+    public boolean equals(Object arg0) {
+        if(arg0 instanceof PartialLiteral) {
+            return partLiteral.equals(((PartialLiteral)arg0).partLiteral) &&
+                    part == ((PartialLiteral)arg0).part;
+        } else
+            return false;
+    }
+
+
 }

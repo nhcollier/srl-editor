@@ -27,7 +27,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         if(SRLGUIApp.getApplication().getPreference("ON_START_LOAD_PROJECT_TOGGLE").equals("true")) {
             jCheckBox1.setSelected(true);
             jLabel1.setEnabled(true);
-            jTextField1.setEditable(true);
+            jTextField1.setEnabled(true);
             jTextField1.setText(SRLGUIApp.getApplication().getPreference("ON_START_LOAD_PROJECT_PATH"));
         } else {
             SrlProject proj = SRLGUIApp.getApplication().proj;

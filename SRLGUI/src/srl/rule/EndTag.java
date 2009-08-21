@@ -11,21 +11,39 @@ import mccrae.tools.struct.*;
 
 
 /**
+ * This matcher represents an end tag. This does not correspond to a element of
+ * the SRL language but is part of the implementation of entities.
  *
  * @author John McCrae
  */
 public class EndTag implements TypeExpr {
     final String entityType;
     TypeExpr next;
-    
+
+    /**
+     * Create an instance
+     * @param entityType The entity type
+     */
     public EndTag(String entityType) {
         this.entityType = entityType;
     } 
     
-    
+    /**
+     * Build the query. Does nothing.
+     * @param query
+     */
     public void getQuery(SrlQuery query) {
+        query.query.append("\" \"");
     }
 
+    /**
+     * Does this match.
+     * @param token The token
+     * @param tokenNo The token number (ignored)
+     * @param stack The fork stack (ignored)
+     * @param lookBackStack The reverse stack (ignored)
+     * @return
+     */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token instanceof EndTagToken) {
             EndTagToken ett = (EndTagToken)token;
@@ -38,18 +56,25 @@ public class EndTag implements TypeExpr {
         }
     }
 
-    public void skip(Token token) {
-        
-    }
-
+    /**
+     * Set the next matcher
+     * @param te
+     */
     public void setNext(TypeExpr te) {
         next = te;
     }
 
+    /**
+     * Reset the matcher. Does nothing
+     */
     public void reset() {
         
     }
 
+    /**
+     *  Are we at the end of a completed match. Answer is always no.
+     * @return
+     */
     public boolean canEnd() {
         return false;
     }
@@ -63,6 +88,10 @@ public class EndTag implements TypeExpr {
         return false;
     }
 
+    /**
+     * Create an exact copy
+     * @return
+     */
     public TypeExpr copy() {
         return new EndTag(entityType);
     }

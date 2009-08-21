@@ -16,23 +16,41 @@ import mccrae.tools.struct.*;
 import java.util.*;
 
 /**
- *
- * @author John McCrae
+ * This matcher represents a begin tag. This does not correspond to a element of
+ * the SRL language but is part of the implementation of entities.
+ * @author John McCrae, National Institute of Informatics
  */
 public class BeginTag implements TypeExpr {
     final String entityType, entityValue;
     TypeExpr next;
-    
+
+    /**
+     * Create an instance
+     * @param entityType The type of the tag
+     * @param entityValue The value (cl="...") of the tag
+     */
     public BeginTag(String entityType, String entityValue) {
         this.entityType = entityType;
         this.entityValue = entityValue;
     } 
     
-    
+    /**
+     * Build the query.
+     * @param query The query to build onto.
+     */
     public void getQuery(SrlQuery query) {
         query.entities.add(new Pair<String,String>(entityType,entityValue));
+        query.query.append("\" \"");
     }
 
+    /**
+     * Does this match.
+     * @param token The token
+     * @param tokenNo The token number (ignored)
+     * @param stack The fork stack (ignored)
+     * @param lookBackStack The reverse stack (ignored)
+     * @return
+     */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token instanceof BeginTagToken) {
             BeginTagToken btt = (BeginTagToken)token;
@@ -45,18 +63,25 @@ public class BeginTag implements TypeExpr {
         }
     }
 
-    public void skip(Token token) {
-        
-    }
-
+    /**
+     * Set the next matcher.
+     * @param te
+     */
     public void setNext(TypeExpr te) {
         this.next = te;
     }
 
+    /**
+     * Reset the matcher. Does nothing
+     */
     public void reset() {
         
     }
 
+    /**
+     * Are we at the end of a completed match. Answer is always no
+     * @return
+     */
     public boolean canEnd() {
         return false;
     }
@@ -70,6 +95,10 @@ public class BeginTag implements TypeExpr {
         return false;
     }
 
+    /**
+     * Create an exact copy of this matcher.
+     * @return
+     */
     public TypeExpr copy() {
         return new BeginTag(entityType,entityValue);
     }

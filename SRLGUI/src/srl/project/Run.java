@@ -20,6 +20,7 @@ import srl.corpus.SrlDocument;
 import srl.rule.Rule;
 import srl.rule.RuleSet;
 import gnu.getopt.Getopt;
+import mccrae.tools.strings.Strings;
 
 /**
  * @author John McCrae, National Institute of Informatics
@@ -96,8 +97,9 @@ public class Run {
                             x.printStackTrace();
                             continue;
                         }
-                        for(String head : heads)
-                            out.println(head);
+                        for(String s2 : heads) {
+                            out.println(s2);
+                        }
                     }
                 }
             }

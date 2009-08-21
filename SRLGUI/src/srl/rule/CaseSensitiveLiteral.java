@@ -13,28 +13,48 @@ package srl.rule;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 import java.util.*;
-import mccrae.tools.struct.*;
 
 /**
+ * A case-sensitive literal. This corresponds to case("LiTeRaL") in the SRL language
+ * and will match only if the case matches... i.e., the example will only match 
+ * "LiTeRaL" not "literal"
  *
- * @author john
+ * @author John McCrae, National Institute of Informatics
  */
 public class CaseSensitiveLiteral implements TypeExpr {
 
     final String literal;
     
     TypeExpr next;
-            
+
+    /**
+     * Create an instance. Parameter doesn't need double quotes (").
+     *
+     * @param literal
+     */
     public CaseSensitiveLiteral(String literal) {
-        this.literal = literal.substring(1, literal.length() - 1);
+        this.literal = literal;
     }
-    
+
+    /**
+     * Build the query. Adds the literal to the query
+     *
+     * @param query The query to be added to
+     */
     public void getQuery(SrlQuery query) {
         if(query.query.charAt(query.query.length()-1) != '\"')
             query.query.append(" ");
         query.query.append(literal.replaceAll("([\\\"\\\'])", "\\$1"));
     }
 
+    /**
+     * Does this match the current token?
+     * @param token The token
+     * @param no The token number (ignored)
+     * @param stack The fork stack (ignored)
+     * @param lookBackStack The reverse stack (ignored)
+     * @return
+     */
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termText().equals(literal)) {
             return next;
@@ -43,18 +63,25 @@ public class CaseSensitiveLiteral implements TypeExpr {
         }
     }
 
+    /**
+     * Set the next matcher
+     * @param te
+     */
     public void setNext(TypeExpr te) {
         next = te;
     }
 
-    public void skip(Token token) {
-       
-    }
-
+    /**
+     * Reset  this matcher. (Does nothing)
+     */
     public void reset() {
        
     }
-    
+
+    /**
+     * Get the value of the literal.
+     * @return The value of the literal
+     */
     public String getVal() {
         return literal;
     }
@@ -64,6 +91,10 @@ public class CaseSensitiveLiteral implements TypeExpr {
         return "case(\"" + literal + "\")";
     }
 
+    /**
+     * Are we at the end of a completed match. Answer is always no.
+     * @return
+     */
     public boolean canEnd() {
         return false;
     }
@@ -76,7 +107,11 @@ public class CaseSensitiveLiteral implements TypeExpr {
         return false;
     }
 
+    /**
+     * Create an exact copy of this matcher
+     * @return An exact copy of this matcher
+     */
     public TypeExpr copy() {
-        return new Literal(literal);
+        return new CaseSensitiveLiteral(literal);
     }
 }

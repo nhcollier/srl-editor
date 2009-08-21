@@ -79,7 +79,46 @@ public class SrlDocument extends AbstractList<Token> {
         return tokensRead.add(arg0);   
     }
 
-        
+    /** Returns the representation of this document. Note this does not include tags and
+     * may not preserve formatting information
+     * @return
+     */
+    @Override
+    public String toString() {
+        StringBuffer rval = new StringBuffer();
+        Iterator<Token> tkIter = iterator();
+        while(tkIter.hasNext()) {
+            Token t = tkIter.next();
+            rval.append(t.termBuffer(), 0, t.termLength());
+            if(tkIter.hasNext())
+                rval.append(" ");
+        }
+        return rval.toString();
+    }
+
+    /** Returns the representation of this document with tags. Note this does not preserve
+     * formatting information
+     */
+    public String toStringTagged() {
+        StringBuffer rval = new StringBuffer();
+        Iterator<Token> tkIter = iterator();
+        while(tkIter.hasNext()) {
+            Token t = tkIter.next();
+            if(t instanceof BeginTagToken) {
+                rval.append(((BeginTagToken)t).getTag());
+            } else if(t instanceof EndTagToken) {
+                rval.append(((EndTagToken)t).getTag());
+            } else {
+                rval.append(t.termBuffer(), 0, t.termLength());
+            }
+            if(tkIter.hasNext())
+                rval.append(" ");
+        }
+        return rval.toString();
+    }
+
+
+    /** Returns the name of the document */
     public String getName() {
         return name;
     }

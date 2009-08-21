@@ -12,6 +12,7 @@ package srl.corpus;
 
 import java.util.HashSet;
 import java.util.Set;
+import mccrae.tools.strings.Strings;
 import mccrae.tools.struct.Pair;
 
 /**
@@ -28,7 +29,25 @@ public class SrlQuery {
     public SrlQuery() {
         wordLists = new HashSet<String>();
         wordListSets = new HashSet<String>();
-        query = new StringBuffer();
-	entities = new HashSet<Pair<String,String>>();
+        query = new StringBuffer("\"");
+        entities = new HashSet<Pair<String,String>>();
+    }
+
+    @Override
+    public boolean equals(Object arg0) {
+        if(arg0 instanceof SrlQuery) {
+            return query.toString().equals(((SrlQuery)arg0).query.toString()) &&
+                    wordListSets.equals(((SrlQuery)arg0).wordListSets) &&
+                    wordLists.equals(((SrlQuery)arg0).wordLists) &&
+                    entities.equals(((SrlQuery)arg0).entities);
+        } else
+            return false;
+    }
+
+    @Override
+    public String toString() {
+        return "<query: " + query.toString() + " ||| wordLists: " + Strings.join(",", wordLists) +
+                " ||| wordListSets: " + Strings.join(",", wordListSets) + " ||| entities " +
+                Strings.join(",", entities) + ">";
     }
 }

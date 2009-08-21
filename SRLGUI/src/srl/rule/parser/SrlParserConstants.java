@@ -25,57 +25,55 @@ public interface SrlParserConstants {
   /** RegularExpression Id. */
   int STRMATCH = 4;
   /** RegularExpression Id. */
-  int STRMATCH_APPROX = 5;
+  int STRMATCH_REGEX = 5;
   /** RegularExpression Id. */
-  int STRMATCH_REGEX = 6;
+  int STRMATCH_ORTH = 6;
   /** RegularExpression Id. */
-  int STRMATCH_ORTH = 7;
+  int BEGINS = 7;
   /** RegularExpression Id. */
-  int BEGINS = 8;
+  int ENDS = 8;
   /** RegularExpression Id. */
-  int ENDS = 9;
+  int CONTAINS = 9;
   /** RegularExpression Id. */
-  int CONTAINS = 10;
+  int WORDS = 10;
   /** RegularExpression Id. */
-  int WORDS = 11;
+  int OPTIONAL = 11;
   /** RegularExpression Id. */
-  int OPTIONAL = 12;
+  int NOT = 12;
   /** RegularExpression Id. */
-  int NOT = 13;
+  int CASE = 13;
   /** RegularExpression Id. */
-  int CASE = 14;
+  int OPEN_PARA = 14;
   /** RegularExpression Id. */
-  int OPEN_PARA = 15;
+  int CLOSE_PARA = 15;
   /** RegularExpression Id. */
-  int CLOSE_PARA = 16;
+  int OPEN_BRACE = 16;
   /** RegularExpression Id. */
-  int OPEN_BRACE = 17;
+  int CLOSE_BRACE = 17;
   /** RegularExpression Id. */
-  int CLOSE_BRACE = 18;
+  int COMMA = 18;
   /** RegularExpression Id. */
-  int COMMA = 19;
+  int PERCENT = 19;
   /** RegularExpression Id. */
-  int PERCENT = 20;
+  int IMPLIES = 20;
   /** RegularExpression Id. */
-  int IMPLIES = 21;
+  int COLON = 21;
   /** RegularExpression Id. */
-  int COLON = 22;
+  int SEMICOLON = 22;
   /** RegularExpression Id. */
-  int SEMICOLON = 23;
+  int STAR = 23;
   /** RegularExpression Id. */
-  int STAR = 24;
+  int STRING_LITERAL = 24;
   /** RegularExpression Id. */
-  int STRING_LITERAL = 25;
+  int WORDLIST = 25;
   /** RegularExpression Id. */
-  int WORDLIST = 26;
+  int VAR = 26;
   /** RegularExpression Id. */
-  int VAR = 27;
+  int NUMBER = 27;
   /** RegularExpression Id. */
-  int NUMBER = 28;
+  int WORD = 28;
   /** RegularExpression Id. */
-  int WORD = 29;
-  /** RegularExpression Id. */
-  int COMMENT = 30;
+  int COMMENT = 29;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -87,7 +85,6 @@ public interface SrlParserConstants {
     "\" \"",
     "<EOL>",
     "<STRMATCH>",
-    "\"approx\"",
     "\"regex\"",
     "\"ortho\"",
     "\"begins\"",

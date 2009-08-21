@@ -263,7 +263,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         try {
             if(docList.getSelectedIndex() == -1 || !modified)
                 return;
-            corpus.updateDoc((String) docList.getSelectedValue(), mainPane.getText());
+            corpus.updateDoc((String) docList.getSelectedValue(), mainPane.getText(),false);
             modified = false;
         } catch (IOException x) {
             x.printStackTrace();
@@ -279,13 +279,16 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         try {
             if(docList.getSelectedIndex() == -1)
                 return;
-            corpus.removeDoc((String) docList.getSelectedValue());
+            corpus.removeDoc((String) docList.getSelectedValue(), false);
             ((DefaultListModel) docList.getModel()).remove(docList.getSelectedIndex());
             mainPane.setText("");
             if(docList.getModel().getSize() == 0)
                 mainPane.setEditable(false);
             modified = false;
         } catch (IOException x) {
+            x.printStackTrace();
+            JOptionPane.showMessageDialog(this, x.getMessage(), "Could not remove from corpus", JOptionPane.ERROR_MESSAGE);
+        } catch (CorpusConcurrencyException x) {
             x.printStackTrace();
             JOptionPane.showMessageDialog(this, x.getMessage(), "Could not remove from corpus", JOptionPane.ERROR_MESSAGE);
         }
@@ -301,7 +304,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         if (modified) {
             if (JOptionPane.showConfirmDialog(this, "Save changes to current document?", "Document Modified", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
                 try {
-                    corpus.updateDoc(currentDoc, mainPane.getText());
+                    corpus.updateDoc(currentDoc, mainPane.getText(), false);
                     modified = false;
                 } catch (IOException x) {
                     x.printStackTrace();
@@ -332,7 +335,7 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
         if (modified) {
             if (JOptionPane.showConfirmDialog(this, "Save changes to current document?", "Document Modified", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
                 try {
-                    corpus.updateDoc((String) docList.getSelectedValue(), mainPane.getText());
+                    corpus.updateDoc((String) docList.getSelectedValue(), mainPane.getText(), false);
                     modified = false;
                 } catch (IOException x) {
                     x.printStackTrace();
@@ -357,11 +360,14 @@ public class CorpusDocumentPanel extends javax.swing.JPanel {
             return;
         }
         try {
-            corpus.addDoc(name, "");
+            corpus.addDoc(name, "", false,false);
         } catch (IOException x) {
             x.printStackTrace();
             JOptionPane.showMessageDialog(this, x.getMessage(), "Could not add doc to corpus", JOptionPane.ERROR_MESSAGE);
             return;
+        } catch (CorpusConcurrencyException x) {
+            x.printStackTrace();
+            JOptionPane.showMessageDialog(this, x.getMessage(), "Could not remove from corpus", JOptionPane.ERROR_MESSAGE);
         }
         ((DefaultListModel) docList.getModel()).addElement(name);
         docList.setSelectedValue(name, true);

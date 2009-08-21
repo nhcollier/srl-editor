@@ -26,6 +26,7 @@ import org.apache.lucene.analysis.Token;
 import srl.corpus.BeginTagToken;
 import srl.corpus.EndTagToken;
 import srl.corpus.SrlQuery;
+import srl.rule.parser.TokenMgrError;
 
 
 /**
@@ -55,7 +56,7 @@ public class Rule implements Expr, Comparable<Rule> {
     
 
     static {
-        successState = new SuccessState();
+        successState = new DummyNode();
     }
 
     /**
@@ -80,7 +81,12 @@ public class Rule implements Expr, Comparable<Rule> {
             throws ParseException {
         SrlParser parser = new SrlParser(new StringReader(s));
         if (ruleType == ENTITY_RULE) {
-            Rule r = parser.readNERule();
+            Rule r;
+            try {
+                r = parser.readNERule();
+            } catch(TokenMgrError e) {
+                throw new ParseException(e.getMessage());
+            }
             if(!r.validateRule())
                 throw new ParseException("Rule is not valid (repeated variables in head or body or head variable not in body)");
             return r;
@@ -126,7 +132,6 @@ public class Rule implements Expr, Comparable<Rule> {
      */
     public SrlQuery getCorpusQuery() {
         SrlQuery query = new SrlQuery();
-        query.query.append("\"");
         for (TypeExpr te : body) {
             te.getQuery(query);
         }
@@ -277,14 +282,17 @@ public class Rule implements Expr, Comparable<Rule> {
         List<HashMap<Entity, SrlMatchRegion>> ents = getMatch(sentence, false);
         Vector<Pair<Entity,SrlMatchRegion>> matches = srl.corpus.CorpusExtractor.sortMatches(ents);
         for (Pair<Entity,SrlMatchRegion> map : matches) {
+            StringBuffer headStr = new StringBuffer();
             for (Head head : heads) {
+                if(headStr.length() > 0)
+                    headStr.append(";");
                 if(head.var.matches("\".*\"")) {
-                    rv.add(head.name + "(" + head.var + ")");
+                    headStr.append(head.name + "(" + head.var + ")");
                 } else if (map.first.var.equals(head.var)) {
-                    // MULTIPLE MATCHES
-                    rv.add(head.name + "(\"" + map.second.value.toString() + "\")");
+                    headStr.append(head.name + "(\"" + map.second.value.toString() + "\")");
                 } 
             }
+            rv.add(headStr.toString());
         }
         return rv;
     }
@@ -319,6 +327,9 @@ public class Rule implements Expr, Comparable<Rule> {
         return ruleType;
     }
 
+    /**
+     * Get the body of the rule
+     */
     public List<TypeExpr> getBody() {
         return body;
     }
@@ -352,32 +363,5 @@ public class Rule implements Expr, Comparable<Rule> {
         return 0;
     }
 }
-class SuccessState implements TypeExpr {
 
-    public void getQuery(SrlQuery query) {
-        throw new IllegalStateException();
-    }
-
-    public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
-        return this;
-    }
-
-    public void reset() {
-    }
-
-    public void setNext(TypeExpr te) {
-        throw new IllegalStateException();
-    }
-
-    public void skip(Token token) {
-    }
-
-    public boolean canEnd() {
-        return true;
-    }
-
-    public TypeExpr copy() {
-        return new SuccessState();
-    }
-}
 

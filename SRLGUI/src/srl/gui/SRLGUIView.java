@@ -26,28 +26,23 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.Map;
 import java.util.List;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.zip.ZipException;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.tree.*;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 import mccrae.tools.jar.JarClassLoader;
-import mccrae.tools.struct.ListenableSet;
 import srl.corpus.Corpus;
 import srl.corpus.CorpusConcurrencyException;
 import srl.corpus.CorpusExtractor;
 import srl.project.SrlProject;
 import srl.rule.*;
 import srl.wordlist.WordListSet;
-import srl.wordlist.WordListEntry;
 
 /**
  * The application's main frame.
@@ -94,6 +89,7 @@ public class SRLGUIView extends FrameView {
         copyIcon = resourceMap.getIcon("srl.copyIcon");
         cutIcon = resourceMap.getIcon("srl.cutIcon");
         pasteIcon = resourceMap.getIcon("srl.pasteIcon");
+        getFrame().setIconImage(resourceMap.getImageIcon("mainFrame.iconImage").getImage());
 
         // connecting action tasks to status bar via TaskMonitor
         TaskMonitor taskMonitor = new TaskMonitor(getApplication().getContext());
@@ -132,42 +128,42 @@ public class SRLGUIView extends FrameView {
         cutMenu.setMnemonic(KeyEvent.VK_T);
         cutMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK));
         cutMenu.setIcon(cutIcon);
-        jMenu2.add(cutMenu);
+        editMenu.add(cutMenu);
 
         JMenuItem copyMenu = new JMenuItem(new DefaultEditorKit.CopyAction());
         copyMenu.setText("Copy");
         copyMenu.setMnemonic(KeyEvent.VK_C);
         copyMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
         copyMenu.setIcon(copyIcon);
-        jMenu2.add(copyMenu);
+        editMenu.add(copyMenu);
 
         JMenuItem pasteMenu = new JMenuItem(new DefaultEditorKit.PasteAction());
         pasteMenu.setText("Paste");
         pasteMenu.setMnemonic(KeyEvent.VK_P);
         pasteMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
         pasteMenu.setIcon(pasteIcon);
-        jMenu2.add(pasteMenu);
+        editMenu.add(pasteMenu);
 
         JButton cutButton = new JButton(new DefaultEditorKit.CutAction());
         cutButton.setText("");
         cutButton.setIcon(cutIcon);
         cutButton.setFocusable(false);
         cutButton.setPreferredSize(new Dimension(28,28));
-        jToolBar1.add(cutButton,7);
+        mainToolBar.add(cutButton,7);
 
         JButton copyButton = new JButton(new DefaultEditorKit.CopyAction());
         copyButton.setText("");
         copyButton.setIcon(copyIcon);
         copyButton.setFocusable(false);
         copyButton.setPreferredSize(new Dimension(28,28));
-        jToolBar1.add(copyButton,8);
+        mainToolBar.add(copyButton,8);
 
         JButton pasteButton = new JButton(new DefaultEditorKit.PasteAction());
         pasteButton.setText("");
         pasteButton.setIcon(pasteIcon);
         pasteButton.setFocusable(false);
         pasteButton.setPreferredSize(new Dimension(28,28));
-        jToolBar1.add(pasteButton,9);
+        mainToolBar.add(pasteButton,9);
 
         if(SRLGUIApp.getApplication().getPreference("ON_START_LOAD_PROJECT_TOGGLE").equals("true")) {
              try {
@@ -234,20 +230,23 @@ public class SRLGUIView extends FrameView {
             public void stateChanged(ChangeEvent arg0) {
                 Component c = rightPane.getSelectedComponent();
                 if(c instanceof RuleSetPanel) {
-                    jMenuItem20.setEnabled(true);
-                    jMenuItem21.setEnabled(true);
-                    jMenuItem24.setEnabled(false);
-                    jMenuItem25.setEnabled(false);
+                    addRuleMenuItem.setEnabled(true);
+                    removeRuleMenuItem.setEnabled(true);
+                    deleteRuleSetMenuItem.setEnabled(true);
+                    addWordListMenuItem.setEnabled(false);
+                    removeWordListMenuItem.setEnabled(false);
                 } else if(c instanceof WordListPanel) {
-                    jMenuItem20.setEnabled(false);
-                    jMenuItem21.setEnabled(false);
-                    jMenuItem24.setEnabled(true);
-                    jMenuItem25.setEnabled(true);
+                    addRuleMenuItem.setEnabled(false);
+                    removeRuleMenuItem.setEnabled(false);
+                    deleteRuleSetMenuItem.setEnabled(false);
+                    addWordListMenuItem.setEnabled(true);
+                    removeWordListMenuItem.setEnabled(true);
                 } else {
-                    jMenuItem20.setEnabled(false);
-                    jMenuItem21.setEnabled(false);
-                    jMenuItem24.setEnabled(false);
-                    jMenuItem25.setEnabled(false);
+                    addRuleMenuItem.setEnabled(false);
+                    removeRuleMenuItem.setEnabled(false);
+                    deleteRuleSetMenuItem.setEnabled(false);
+                    addWordListMenuItem.setEnabled(false);
+                    removeWordListMenuItem.setEnabled(false);
                 }
             }
         });
@@ -279,66 +278,66 @@ public class SRLGUIView extends FrameView {
         jScrollPane1 = new javax.swing.JScrollPane();
         mainTree = new javax.swing.JTree();
         rightPane = new javax.swing.JTabbedPane();
-        jToolBar1 = new javax.swing.JToolBar();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
+        mainToolBar = new javax.swing.JToolBar();
+        newProjTBButton = new javax.swing.JButton();
+        openProjTBButton = new javax.swing.JButton();
+        saveProjTBButton = new javax.swing.JButton();
         jSeparator3 = new javax.swing.JToolBar.Separator();
-        jButton10 = new javax.swing.JButton();
-        jButton11 = new javax.swing.JButton();
+        undoTBButton = new javax.swing.JButton();
+        redoTBButton = new javax.swing.JButton();
         jSeparator11 = new javax.swing.JToolBar.Separator();
         jSeparator12 = new javax.swing.JToolBar.Separator();
-        jButton4 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
+        newRulesTBButton = new javax.swing.JButton();
+        newWordListTBButton = new javax.swing.JButton();
+        addCorpusTBButton = new javax.swing.JButton();
         jSeparator4 = new javax.swing.JToolBar.Separator();
-        jButton7 = new javax.swing.JButton();
-        jButton8 = new javax.swing.JButton();
+        tagCorpusTBButton = new javax.swing.JButton();
+        extractTemplatesTBButton = new javax.swing.JButton();
         jSeparator6 = new javax.swing.JToolBar.Separator();
-        jButton9 = new javax.swing.JButton();
+        searchTBButton = new javax.swing.JButton();
         jSeparator13 = new javax.swing.JToolBar.Separator();
-        jButton15 = new javax.swing.JButton();
+        helpTBButton = new javax.swing.JButton();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         newProjectMenuItem = new javax.swing.JMenuItem();
-        jMenuItem2 = new javax.swing.JMenuItem();
-        jMenuItem1 = new javax.swing.JMenuItem();
-        jMenuItem23 = new javax.swing.JMenuItem();
+        openProjectMenuItem = new javax.swing.JMenuItem();
+        saveProjectMenuItem = new javax.swing.JMenuItem();
+        saveProjectAsMenuItem = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         javax.swing.JMenuItem exitMenuItem = new javax.swing.JMenuItem();
-        jMenu2 = new javax.swing.JMenu();
-        jMenuItem15 = new javax.swing.JMenuItem();
-        jMenuItem16 = new javax.swing.JMenuItem();
+        editMenu = new javax.swing.JMenu();
+        undoMenuItem = new javax.swing.JMenuItem();
+        redoMenuItem = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JSeparator();
-        jMenu3 = new javax.swing.JMenu();
-        jMenuItem3 = new javax.swing.JMenuItem();
-        jMenuItem12 = new javax.swing.JMenuItem();
-        jMenuItem22 = new javax.swing.JMenuItem();
+        rulesMenu = new javax.swing.JMenu();
+        addRuleSetMenuItem = new javax.swing.JMenuItem();
+        importRuleSetMenuItem = new javax.swing.JMenuItem();
+        deleteRuleSetMenuItem = new javax.swing.JMenuItem();
         jSeparator5 = new javax.swing.JSeparator();
-        jMenuItem20 = new javax.swing.JMenuItem();
-        jMenuItem21 = new javax.swing.JMenuItem();
-        jMenu4 = new javax.swing.JMenu();
-        jMenuItem4 = new javax.swing.JMenuItem();
-        jMenuItem13 = new javax.swing.JMenuItem();
+        addRuleMenuItem = new javax.swing.JMenuItem();
+        removeRuleMenuItem = new javax.swing.JMenuItem();
+        wordListsMenu = new javax.swing.JMenu();
+        addWLSMenuItem = new javax.swing.JMenuItem();
+        importWLSMenuItem = new javax.swing.JMenuItem();
         jSeparator8 = new javax.swing.JSeparator();
-        jMenuItem24 = new javax.swing.JMenuItem();
-        jMenuItem25 = new javax.swing.JMenuItem();
-        jMenu5 = new javax.swing.JMenu();
-        jMenuItem5 = new javax.swing.JMenuItem();
-        jMenuItem6 = new javax.swing.JMenuItem();
-        jMenuItem7 = new javax.swing.JMenuItem();
+        addWordListMenuItem = new javax.swing.JMenuItem();
+        removeWordListMenuItem = new javax.swing.JMenuItem();
+        corpusMenu = new javax.swing.JMenu();
+        addToCorpusMenuItem = new javax.swing.JMenuItem();
+        entityTagMenuItem = new javax.swing.JMenuItem();
+        extractTemplatesMenuItem = new javax.swing.JMenuItem();
         jSeparator9 = new javax.swing.JSeparator();
-        jMenuItem8 = new javax.swing.JMenuItem();
+        searchMenuItem = new javax.swing.JMenuItem();
         jSeparator10 = new javax.swing.JSeparator();
-        jMenuItem14 = new javax.swing.JMenuItem();
-        jMenuItem11 = new javax.swing.JMenuItem();
-        jMenuItem10 = new javax.swing.JMenuItem();
-        jMenu6 = new javax.swing.JMenu();
-        jMenuItem27 = new javax.swing.JMenuItem();
-        jMenuItem28 = new javax.swing.JMenuItem();
+        importTaggedMenuItem = new javax.swing.JMenuItem();
+        writeTaggedMenuItem = new javax.swing.JMenuItem();
+        writeTemplatesMenuItem = new javax.swing.JMenuItem();
+        toolsMenu = new javax.swing.JMenu();
+        plugInsMenuItem = new javax.swing.JMenuItem();
+        settingMenuItem = new javax.swing.JMenuItem();
         javax.swing.JMenu helpMenu = new javax.swing.JMenu();
-        jMenuItem9 = new javax.swing.JMenuItem();
-        jMenuItem26 = new javax.swing.JMenuItem();
+        wikiMenuItem = new javax.swing.JMenuItem();
+        languageDescriptionMenuItem = new javax.swing.JMenuItem();
         jSeparator7 = new javax.swing.JSeparator();
         javax.swing.JMenuItem aboutMenuItem = new javax.swing.JMenuItem();
         statusPanel = new javax.swing.JPanel();
@@ -346,7 +345,6 @@ public class SRLGUIView extends FrameView {
         statusMessageLabel = new javax.swing.JLabel();
         statusAnimationLabel = new javax.swing.JLabel();
         progressBar = new javax.swing.JProgressBar();
-        jSeparator14 = new javax.swing.JSeparator();
 
         mainPanel.setName("mainPanel"); // NOI18N
 
@@ -368,139 +366,140 @@ public class SRLGUIView extends FrameView {
         rightPane.setEnabled(false);
         rightPane.setName("rightPane"); // NOI18N
 
-        jToolBar1.setRollover(true);
-        jToolBar1.setName("jToolBar1"); // NOI18N
+        mainToolBar.setRollover(true);
+        mainToolBar.setName("mainToolBar"); // NOI18N
 
         javax.swing.ActionMap actionMap = org.jdesktop.application.Application.getInstance(srl.gui.SRLGUIApp.class).getContext().getActionMap(SRLGUIView.class, this);
-        jButton1.setAction(actionMap.get("newProject")); // NOI18N
+        newProjTBButton.setAction(actionMap.get("newProject")); // NOI18N
         org.jdesktop.application.ResourceMap resourceMap = org.jdesktop.application.Application.getInstance(srl.gui.SRLGUIApp.class).getContext().getResourceMap(SRLGUIView.class);
-        jButton1.setText(resourceMap.getString("jButton1.text")); // NOI18N
-        jButton1.setFocusable(false);
-        jButton1.setMinimumSize(new java.awt.Dimension(20, 20));
-        jButton1.setName("jButton1"); // NOI18N
-        jButton1.setPreferredSize(new java.awt.Dimension(28, 28));
-        jToolBar1.add(jButton1);
+        newProjTBButton.setText(resourceMap.getString("newProjTBButton.text")); // NOI18N
+        newProjTBButton.setFocusable(false);
+        newProjTBButton.setMinimumSize(new java.awt.Dimension(20, 20));
+        newProjTBButton.setName("newProjTBButton"); // NOI18N
+        newProjTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        mainToolBar.add(newProjTBButton);
 
-        jButton2.setAction(actionMap.get("openProject")); // NOI18N
-        jButton2.setText(resourceMap.getString("jButton2.text")); // NOI18N
-        jButton2.setFocusable(false);
-        jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton2.setMinimumSize(new java.awt.Dimension(20, 20));
-        jButton2.setName("jButton2"); // NOI18N
-        jButton2.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton2.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton2);
+        openProjTBButton.setAction(actionMap.get("openProject")); // NOI18N
+        openProjTBButton.setText(resourceMap.getString("openProjTBButton.text")); // NOI18N
+        openProjTBButton.setFocusable(false);
+        openProjTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        openProjTBButton.setMinimumSize(new java.awt.Dimension(20, 20));
+        openProjTBButton.setName("openProjTBButton"); // NOI18N
+        openProjTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        openProjTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(openProjTBButton);
 
-        jButton3.setAction(actionMap.get("saveProject")); // NOI18N
-        jButton3.setText(resourceMap.getString("jButton3.text")); // NOI18N
-        jButton3.setFocusable(false);
-        jButton3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton3.setMinimumSize(new java.awt.Dimension(20, 20));
-        jButton3.setName("jButton3"); // NOI18N
-        jButton3.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton3.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton3);
+        saveProjTBButton.setAction(actionMap.get("saveProject")); // NOI18N
+        saveProjTBButton.setText(resourceMap.getString("saveProjTBButton.text")); // NOI18N
+        saveProjTBButton.setFocusable(false);
+        saveProjTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        saveProjTBButton.setMinimumSize(new java.awt.Dimension(20, 20));
+        saveProjTBButton.setName("saveProjTBButton"); // NOI18N
+        saveProjTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        saveProjTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(saveProjTBButton);
 
         jSeparator3.setName("jSeparator3"); // NOI18N
-        jToolBar1.add(jSeparator3);
+        mainToolBar.add(jSeparator3);
 
-        jButton10.setAction(actionMap.get("undo")); // NOI18N
-        jButton10.setText(resourceMap.getString("jButton10.text")); // NOI18N
-        jButton10.setFocusable(false);
-        jButton10.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton10.setName("jButton10"); // NOI18N
-        jButton10.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton10.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton10);
+        undoTBButton.setAction(actionMap.get("undo")); // NOI18N
+        undoTBButton.setText(resourceMap.getString("undoTBButton.text")); // NOI18N
+        undoTBButton.setFocusable(false);
+        undoTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        undoTBButton.setName("undoTBButton"); // NOI18N
+        undoTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        undoTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(undoTBButton);
 
-        jButton11.setAction(actionMap.get("redo")); // NOI18N
-        jButton11.setText(resourceMap.getString("jButton11.text")); // NOI18N
-        jButton11.setFocusable(false);
-        jButton11.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton11.setName("jButton11"); // NOI18N
-        jButton11.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton11.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton11);
+        redoTBButton.setAction(actionMap.get("redo")); // NOI18N
+        redoTBButton.setText(resourceMap.getString("redoTBButton.text")); // NOI18N
+        redoTBButton.setFocusable(false);
+        redoTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        redoTBButton.setName("redoTBButton"); // NOI18N
+        redoTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        redoTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(redoTBButton);
 
         jSeparator11.setName("jSeparator11"); // NOI18N
-        jToolBar1.add(jSeparator11);
+        mainToolBar.add(jSeparator11);
 
         jSeparator12.setName("jSeparator12"); // NOI18N
-        jToolBar1.add(jSeparator12);
+        mainToolBar.add(jSeparator12);
 
-        jButton4.setAction(actionMap.get("addRuleSet")); // NOI18N
-        jButton4.setText(resourceMap.getString("jButton4.text")); // NOI18N
-        jButton4.setFocusable(false);
-        jButton4.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton4.setMinimumSize(new java.awt.Dimension(20, 20));
-        jButton4.setName("jButton4"); // NOI18N
-        jButton4.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton4.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton4);
+        newRulesTBButton.setAction(actionMap.get("addRuleSet")); // NOI18N
+        newRulesTBButton.setText(resourceMap.getString("newRulesTBButton.text")); // NOI18N
+        newRulesTBButton.setFocusable(false);
+        newRulesTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        newRulesTBButton.setMinimumSize(new java.awt.Dimension(20, 20));
+        newRulesTBButton.setName("newRulesTBButton"); // NOI18N
+        newRulesTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        newRulesTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(newRulesTBButton);
 
-        jButton5.setAction(actionMap.get("addWordList")); // NOI18N
-        jButton5.setText(resourceMap.getString("jButton5.text")); // NOI18N
-        jButton5.setFocusable(false);
-        jButton5.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton5.setMinimumSize(new java.awt.Dimension(20, 20));
-        jButton5.setName("jButton5"); // NOI18N
-        jButton5.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton5.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton5);
+        newWordListTBButton.setAction(actionMap.get("addWordList")); // NOI18N
+        newWordListTBButton.setText(resourceMap.getString("newWordListTBButton.text")); // NOI18N
+        newWordListTBButton.setFocusable(false);
+        newWordListTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        newWordListTBButton.setMinimumSize(new java.awt.Dimension(20, 20));
+        newWordListTBButton.setName("newWordListTBButton"); // NOI18N
+        newWordListTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        newWordListTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(newWordListTBButton);
 
-        jButton6.setAction(actionMap.get("addCorpusDoc")); // NOI18N
-        jButton6.setFocusable(false);
-        jButton6.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton6.setMinimumSize(new java.awt.Dimension(20, 20));
-        jButton6.setName("jButton6"); // NOI18N
-        jButton6.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton6.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton6);
+        addCorpusTBButton.setAction(actionMap.get("addCorpusDoc")); // NOI18N
+        addCorpusTBButton.setFocusable(false);
+        addCorpusTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        addCorpusTBButton.setMinimumSize(new java.awt.Dimension(20, 20));
+        addCorpusTBButton.setName("addCorpusTBButton"); // NOI18N
+        addCorpusTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        addCorpusTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(addCorpusTBButton);
 
         jSeparator4.setName("jSeparator4"); // NOI18N
-        jToolBar1.add(jSeparator4);
+        mainToolBar.add(jSeparator4);
 
-        jButton7.setAction(actionMap.get("tagCorpus")); // NOI18N
-        jButton7.setText(resourceMap.getString("jButton7.text")); // NOI18N
-        jButton7.setFocusable(false);
-        jButton7.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton7.setMinimumSize(new java.awt.Dimension(20, 20));
-        jButton7.setName("jButton7"); // NOI18N
-        jButton7.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton7);
+        tagCorpusTBButton.setAction(actionMap.get("tagCorpus")); // NOI18N
+        tagCorpusTBButton.setText(resourceMap.getString("tagCorpusTBButton.text")); // NOI18N
+        tagCorpusTBButton.setFocusable(false);
+        tagCorpusTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        tagCorpusTBButton.setMinimumSize(new java.awt.Dimension(20, 20));
+        tagCorpusTBButton.setName("tagCorpusTBButton"); // NOI18N
+        tagCorpusTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        tagCorpusTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(tagCorpusTBButton);
 
-        jButton8.setAction(actionMap.get("extractTemplates")); // NOI18N
-        jButton8.setText(resourceMap.getString("jButton8.text")); // NOI18N
-        jButton8.setFocusable(false);
-        jButton8.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton8.setName("jButton8"); // NOI18N
-        jButton8.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton8.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton8);
+        extractTemplatesTBButton.setAction(actionMap.get("extractTemplates")); // NOI18N
+        extractTemplatesTBButton.setText(resourceMap.getString("extractTemplatesTBButton.text")); // NOI18N
+        extractTemplatesTBButton.setFocusable(false);
+        extractTemplatesTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        extractTemplatesTBButton.setName("extractTemplatesTBButton"); // NOI18N
+        extractTemplatesTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        extractTemplatesTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(extractTemplatesTBButton);
 
         jSeparator6.setName("jSeparator6"); // NOI18N
-        jToolBar1.add(jSeparator6);
+        mainToolBar.add(jSeparator6);
 
-        jButton9.setAction(actionMap.get("searchCorpus")); // NOI18N
-        jButton9.setText(resourceMap.getString("jButton9.text")); // NOI18N
-        jButton9.setFocusable(false);
-        jButton9.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton9.setName("jButton9"); // NOI18N
-        jButton9.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton9.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton9);
+        searchTBButton.setAction(actionMap.get("searchCorpus")); // NOI18N
+        searchTBButton.setText(resourceMap.getString("searchTBButton.text")); // NOI18N
+        searchTBButton.setFocusable(false);
+        searchTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        searchTBButton.setName("searchTBButton"); // NOI18N
+        searchTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        searchTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(searchTBButton);
 
         jSeparator13.setName("jSeparator13"); // NOI18N
-        jToolBar1.add(jSeparator13);
+        mainToolBar.add(jSeparator13);
 
-        jButton15.setAction(actionMap.get("openWiki")); // NOI18N
-        jButton15.setText(resourceMap.getString("jButton15.text")); // NOI18N
-        jButton15.setFocusable(false);
-        jButton15.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        jButton15.setName("jButton15"); // NOI18N
-        jButton15.setPreferredSize(new java.awt.Dimension(28, 28));
-        jButton15.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        jToolBar1.add(jButton15);
+        helpTBButton.setAction(actionMap.get("openWiki")); // NOI18N
+        helpTBButton.setText(resourceMap.getString("helpTBButton.text")); // NOI18N
+        helpTBButton.setFocusable(false);
+        helpTBButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        helpTBButton.setName("helpTBButton"); // NOI18N
+        helpTBButton.setPreferredSize(new java.awt.Dimension(28, 28));
+        helpTBButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        mainToolBar.add(helpTBButton);
 
         org.jdesktop.layout.GroupLayout mainPanelLayout = new org.jdesktop.layout.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
@@ -512,12 +511,12 @@ public class SRLGUIView extends FrameView {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(rightPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 491, Short.MAX_VALUE)
                 .addContainerGap())
-            .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 740, Short.MAX_VALUE)
+            .add(mainToolBar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 740, Short.MAX_VALUE)
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, mainPanelLayout.createSequentialGroup()
-                .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(mainToolBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(mainPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, rightPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
@@ -536,19 +535,19 @@ public class SRLGUIView extends FrameView {
         newProjectMenuItem.setName("newProjectMenuItem"); // NOI18N
         fileMenu.add(newProjectMenuItem);
 
-        jMenuItem2.setAction(actionMap.get("openProject")); // NOI18N
-        jMenuItem2.setText(resourceMap.getString("jMenuItem2.text")); // NOI18N
-        jMenuItem2.setName("jMenuItem2"); // NOI18N
-        fileMenu.add(jMenuItem2);
+        openProjectMenuItem.setAction(actionMap.get("openProject")); // NOI18N
+        openProjectMenuItem.setText(resourceMap.getString("openProjectMenuItem.text")); // NOI18N
+        openProjectMenuItem.setName("openProjectMenuItem"); // NOI18N
+        fileMenu.add(openProjectMenuItem);
 
-        jMenuItem1.setAction(actionMap.get("saveProject")); // NOI18N
-        jMenuItem1.setText(resourceMap.getString("jMenuItem1.text")); // NOI18N
-        jMenuItem1.setName("jMenuItem1"); // NOI18N
-        fileMenu.add(jMenuItem1);
+        saveProjectMenuItem.setAction(actionMap.get("saveProject")); // NOI18N
+        saveProjectMenuItem.setText(resourceMap.getString("saveProjectMenuItem.text")); // NOI18N
+        saveProjectMenuItem.setName("saveProjectMenuItem"); // NOI18N
+        fileMenu.add(saveProjectMenuItem);
 
-        jMenuItem23.setAction(actionMap.get("saveProjectAs")); // NOI18N
-        jMenuItem23.setName("jMenuItem23"); // NOI18N
-        fileMenu.add(jMenuItem23);
+        saveProjectAsMenuItem.setAction(actionMap.get("saveProjectAs")); // NOI18N
+        saveProjectAsMenuItem.setName("saveProjectAsMenuItem"); // NOI18N
+        fileMenu.add(saveProjectAsMenuItem);
 
         jSeparator2.setName("jSeparator2"); // NOI18N
         fileMenu.add(jSeparator2);
@@ -559,147 +558,152 @@ public class SRLGUIView extends FrameView {
 
         menuBar.add(fileMenu);
 
-        jMenu2.setMnemonic('e');
-        jMenu2.setText(resourceMap.getString("jMenu2.text")); // NOI18N
-        jMenu2.setName("jMenu2"); // NOI18N
+        editMenu.setMnemonic('e');
+        editMenu.setText(resourceMap.getString("editMenu.text")); // NOI18N
+        editMenu.setName("editMenu"); // NOI18N
 
-        jMenuItem15.setAction(actionMap.get("undo")); // NOI18N
-        jMenuItem15.setText(resourceMap.getString("jMenuItem15.text")); // NOI18N
-        jMenuItem15.setName("jMenuItem15"); // NOI18N
-        jMenu2.add(jMenuItem15);
+        undoMenuItem.setAction(actionMap.get("undo")); // NOI18N
+        undoMenuItem.setText(resourceMap.getString("undoMenuItem.text")); // NOI18N
+        undoMenuItem.setName("undoMenuItem"); // NOI18N
+        editMenu.add(undoMenuItem);
 
-        jMenuItem16.setAction(actionMap.get("redo")); // NOI18N
-        jMenuItem16.setText(resourceMap.getString("jMenuItem16.text")); // NOI18N
-        jMenuItem16.setName("jMenuItem16"); // NOI18N
-        jMenu2.add(jMenuItem16);
+        redoMenuItem.setAction(actionMap.get("redo")); // NOI18N
+        redoMenuItem.setText(resourceMap.getString("redoMenuItem.text")); // NOI18N
+        redoMenuItem.setName("redoMenuItem"); // NOI18N
+        editMenu.add(redoMenuItem);
 
         jSeparator1.setName("jSeparator1"); // NOI18N
-        jMenu2.add(jSeparator1);
+        editMenu.add(jSeparator1);
 
-        menuBar.add(jMenu2);
+        menuBar.add(editMenu);
 
-        jMenu3.setMnemonic('r');
-        jMenu3.setText(resourceMap.getString("jMenu3.text")); // NOI18N
-        jMenu3.setEnabled(false);
-        jMenu3.setName("jMenu3"); // NOI18N
+        rulesMenu.setMnemonic('r');
+        rulesMenu.setText(resourceMap.getString("rulesMenu.text")); // NOI18N
+        rulesMenu.setEnabled(false);
+        rulesMenu.setName("rulesMenu"); // NOI18N
 
-        jMenuItem3.setAction(actionMap.get("addRuleSet")); // NOI18N
-        jMenuItem3.setName("jMenuItem3"); // NOI18N
-        jMenu3.add(jMenuItem3);
+        addRuleSetMenuItem.setAction(actionMap.get("addRuleSet")); // NOI18N
+        addRuleSetMenuItem.setName("addRuleSetMenuItem"); // NOI18N
+        rulesMenu.add(addRuleSetMenuItem);
 
-        jMenuItem12.setAction(actionMap.get("importRuleSet")); // NOI18N
-        jMenuItem12.setName("jMenuItem12"); // NOI18N
-        jMenu3.add(jMenuItem12);
+        importRuleSetMenuItem.setAction(actionMap.get("importRuleSet")); // NOI18N
+        importRuleSetMenuItem.setName("importRuleSetMenuItem"); // NOI18N
+        rulesMenu.add(importRuleSetMenuItem);
 
-        jMenuItem22.setAction(actionMap.get("deleteRuleSet")); // NOI18N
-        jMenuItem22.setName("jMenuItem22"); // NOI18N
-        jMenu3.add(jMenuItem22);
+        deleteRuleSetMenuItem.setAction(actionMap.get("deleteRuleSet")); // NOI18N
+        deleteRuleSetMenuItem.setEnabled(false);
+        deleteRuleSetMenuItem.setName("deleteRuleSetMenuItem"); // NOI18N
+        rulesMenu.add(deleteRuleSetMenuItem);
 
         jSeparator5.setName("jSeparator5"); // NOI18N
-        jMenu3.add(jSeparator5);
+        rulesMenu.add(jSeparator5);
 
-        jMenuItem20.setAction(actionMap.get("addRule")); // NOI18N
-        jMenuItem20.setName("jMenuItem20"); // NOI18N
-        jMenu3.add(jMenuItem20);
+        addRuleMenuItem.setAction(actionMap.get("addRule")); // NOI18N
+        addRuleMenuItem.setEnabled(false);
+        addRuleMenuItem.setName("addRuleMenuItem"); // NOI18N
+        rulesMenu.add(addRuleMenuItem);
 
-        jMenuItem21.setAction(actionMap.get("removeRule")); // NOI18N
-        jMenuItem21.setName("jMenuItem21"); // NOI18N
-        jMenu3.add(jMenuItem21);
+        removeRuleMenuItem.setAction(actionMap.get("removeRule")); // NOI18N
+        removeRuleMenuItem.setEnabled(false);
+        removeRuleMenuItem.setName("removeRuleMenuItem"); // NOI18N
+        rulesMenu.add(removeRuleMenuItem);
 
-        menuBar.add(jMenu3);
+        menuBar.add(rulesMenu);
 
-        jMenu4.setMnemonic('w');
-        jMenu4.setText(resourceMap.getString("jMenu4.text")); // NOI18N
-        jMenu4.setEnabled(false);
-        jMenu4.setName("jMenu4"); // NOI18N
+        wordListsMenu.setMnemonic('w');
+        wordListsMenu.setText(resourceMap.getString("wordListsMenu.text")); // NOI18N
+        wordListsMenu.setEnabled(false);
+        wordListsMenu.setName("wordListsMenu"); // NOI18N
 
-        jMenuItem4.setAction(actionMap.get("addWordList")); // NOI18N
-        jMenuItem4.setName("jMenuItem4"); // NOI18N
-        jMenu4.add(jMenuItem4);
+        addWLSMenuItem.setAction(actionMap.get("addWordList")); // NOI18N
+        addWLSMenuItem.setName("addWLSMenuItem"); // NOI18N
+        wordListsMenu.add(addWLSMenuItem);
 
-        jMenuItem13.setAction(actionMap.get("importWordList")); // NOI18N
-        jMenuItem13.setName("jMenuItem13"); // NOI18N
-        jMenu4.add(jMenuItem13);
+        importWLSMenuItem.setAction(actionMap.get("importWordList")); // NOI18N
+        importWLSMenuItem.setName("importWLSMenuItem"); // NOI18N
+        wordListsMenu.add(importWLSMenuItem);
 
         jSeparator8.setName("jSeparator8"); // NOI18N
-        jMenu4.add(jSeparator8);
+        wordListsMenu.add(jSeparator8);
 
-        jMenuItem24.setAction(actionMap.get("addWordListToSet")); // NOI18N
-        jMenuItem24.setName("jMenuItem24"); // NOI18N
-        jMenu4.add(jMenuItem24);
+        addWordListMenuItem.setAction(actionMap.get("addWordListToSet")); // NOI18N
+        addWordListMenuItem.setEnabled(false);
+        addWordListMenuItem.setName("addWordListMenuItem"); // NOI18N
+        wordListsMenu.add(addWordListMenuItem);
 
-        jMenuItem25.setAction(actionMap.get("removeWordListFromSet")); // NOI18N
-        jMenuItem25.setName("jMenuItem25"); // NOI18N
-        jMenu4.add(jMenuItem25);
+        removeWordListMenuItem.setAction(actionMap.get("removeWordListFromSet")); // NOI18N
+        removeWordListMenuItem.setEnabled(false);
+        removeWordListMenuItem.setName("removeWordListMenuItem"); // NOI18N
+        wordListsMenu.add(removeWordListMenuItem);
 
-        menuBar.add(jMenu4);
+        menuBar.add(wordListsMenu);
 
-        jMenu5.setMnemonic('c');
-        jMenu5.setText(resourceMap.getString("jMenu5.text")); // NOI18N
-        jMenu5.setEnabled(false);
-        jMenu5.setName("jMenu5"); // NOI18N
+        corpusMenu.setMnemonic('c');
+        corpusMenu.setText(resourceMap.getString("corpusMenu.text")); // NOI18N
+        corpusMenu.setEnabled(false);
+        corpusMenu.setName("corpusMenu"); // NOI18N
 
-        jMenuItem5.setAction(actionMap.get("addCorpusDoc")); // NOI18N
-        jMenuItem5.setText(resourceMap.getString("jMenuItem5.text")); // NOI18N
-        jMenuItem5.setName("jMenuItem5"); // NOI18N
-        jMenu5.add(jMenuItem5);
+        addToCorpusMenuItem.setAction(actionMap.get("addCorpusDoc")); // NOI18N
+        addToCorpusMenuItem.setText(resourceMap.getString("addToCorpusMenuItem.text")); // NOI18N
+        addToCorpusMenuItem.setName("addToCorpusMenuItem"); // NOI18N
+        corpusMenu.add(addToCorpusMenuItem);
 
-        jMenuItem6.setAction(actionMap.get("tagCorpus")); // NOI18N
-        jMenuItem6.setName("jMenuItem6"); // NOI18N
-        jMenu5.add(jMenuItem6);
+        entityTagMenuItem.setAction(actionMap.get("tagCorpus")); // NOI18N
+        entityTagMenuItem.setName("entityTagMenuItem"); // NOI18N
+        corpusMenu.add(entityTagMenuItem);
 
-        jMenuItem7.setAction(actionMap.get("extractTemplates")); // NOI18N
-        jMenuItem7.setName("jMenuItem7"); // NOI18N
-        jMenu5.add(jMenuItem7);
+        extractTemplatesMenuItem.setAction(actionMap.get("extractTemplates")); // NOI18N
+        extractTemplatesMenuItem.setName("extractTemplatesMenuItem"); // NOI18N
+        corpusMenu.add(extractTemplatesMenuItem);
 
         jSeparator9.setName("jSeparator9"); // NOI18N
-        jMenu5.add(jSeparator9);
+        corpusMenu.add(jSeparator9);
 
-        jMenuItem8.setAction(actionMap.get("searchCorpus")); // NOI18N
-        jMenuItem8.setName("jMenuItem8"); // NOI18N
-        jMenu5.add(jMenuItem8);
+        searchMenuItem.setAction(actionMap.get("searchCorpus")); // NOI18N
+        searchMenuItem.setName("searchMenuItem"); // NOI18N
+        corpusMenu.add(searchMenuItem);
 
         jSeparator10.setName("jSeparator10"); // NOI18N
-        jMenu5.add(jSeparator10);
+        corpusMenu.add(jSeparator10);
 
-        jMenuItem14.setAction(actionMap.get("importTagged")); // NOI18N
-        jMenuItem14.setName("jMenuItem14"); // NOI18N
-        jMenu5.add(jMenuItem14);
+        importTaggedMenuItem.setAction(actionMap.get("importTagged")); // NOI18N
+        importTaggedMenuItem.setName("importTaggedMenuItem"); // NOI18N
+        corpusMenu.add(importTaggedMenuItem);
 
-        jMenuItem11.setAction(actionMap.get("writeTagged")); // NOI18N
-        jMenuItem11.setName("jMenuItem11"); // NOI18N
-        jMenu5.add(jMenuItem11);
+        writeTaggedMenuItem.setAction(actionMap.get("writeTagged")); // NOI18N
+        writeTaggedMenuItem.setName("writeTaggedMenuItem"); // NOI18N
+        corpusMenu.add(writeTaggedMenuItem);
 
-        jMenuItem10.setAction(actionMap.get("writeTemplates")); // NOI18N
-        jMenuItem10.setName("jMenuItem10"); // NOI18N
-        jMenu5.add(jMenuItem10);
+        writeTemplatesMenuItem.setAction(actionMap.get("writeTemplates")); // NOI18N
+        writeTemplatesMenuItem.setName("writeTemplatesMenuItem"); // NOI18N
+        corpusMenu.add(writeTemplatesMenuItem);
 
-        menuBar.add(jMenu5);
+        menuBar.add(corpusMenu);
 
-        jMenu6.setMnemonic('t');
-        jMenu6.setText(resourceMap.getString("jMenu6.text")); // NOI18N
-        jMenu6.setName("jMenu6"); // NOI18N
+        toolsMenu.setMnemonic('t');
+        toolsMenu.setText(resourceMap.getString("toolsMenu.text")); // NOI18N
+        toolsMenu.setName("toolsMenu"); // NOI18N
 
-        jMenuItem27.setAction(actionMap.get("openPlugInDialog")); // NOI18N
-        jMenuItem27.setName("jMenuItem27"); // NOI18N
-        jMenu6.add(jMenuItem27);
+        plugInsMenuItem.setAction(actionMap.get("openPlugInDialog")); // NOI18N
+        plugInsMenuItem.setName("plugInsMenuItem"); // NOI18N
+        toolsMenu.add(plugInsMenuItem);
 
-        jMenuItem28.setAction(actionMap.get("openSettings")); // NOI18N
-        jMenuItem28.setName("jMenuItem28"); // NOI18N
-        jMenu6.add(jMenuItem28);
+        settingMenuItem.setAction(actionMap.get("openSettings")); // NOI18N
+        settingMenuItem.setName("settingMenuItem"); // NOI18N
+        toolsMenu.add(settingMenuItem);
 
-        menuBar.add(jMenu6);
+        menuBar.add(toolsMenu);
 
         helpMenu.setText(resourceMap.getString("helpMenu.text")); // NOI18N
         helpMenu.setName("helpMenu"); // NOI18N
 
-        jMenuItem9.setAction(actionMap.get("openWiki")); // NOI18N
-        jMenuItem9.setName("jMenuItem9"); // NOI18N
-        helpMenu.add(jMenuItem9);
+        wikiMenuItem.setAction(actionMap.get("openWiki")); // NOI18N
+        wikiMenuItem.setName("wikiMenuItem"); // NOI18N
+        helpMenu.add(wikiMenuItem);
 
-        jMenuItem26.setAction(actionMap.get("openLanguageDescription")); // NOI18N
-        jMenuItem26.setName("jMenuItem26"); // NOI18N
-        helpMenu.add(jMenuItem26);
+        languageDescriptionMenuItem.setAction(actionMap.get("openLanguageDescription")); // NOI18N
+        languageDescriptionMenuItem.setName("languageDescriptionMenuItem"); // NOI18N
+        helpMenu.add(languageDescriptionMenuItem);
 
         jSeparator7.setName("jSeparator7"); // NOI18N
         helpMenu.add(jSeparator7);
@@ -746,8 +750,6 @@ public class SRLGUIView extends FrameView {
                     .add(progressBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(3, 3, 3))
         );
-
-        jSeparator14.setName("jSeparator1"); // NOI18N
 
         setComponent(mainPanel);
         setMenuBar(menuBar);
@@ -843,7 +845,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
                         public void run() {
                             try {
-                                SRLGUIApp.getApplication().proj.corpus.resupport();
+                                SRLGUIApp.getApplication().proj.corpus.resupport(false);
                                 JOptionPane.showMessageDialog(getFrame(), "Corpus re-initialized", "Corpus", JOptionPane.INFORMATION_MESSAGE);
                             } catch (IOException x) {
                                 error(x, "Cannot re-initialize corpus");
@@ -1253,15 +1255,15 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         }
         rightPane.removeAll();
         mainTree.setEnabled(true);
-        jButton4.setEnabled(true);
-        jButton5.setEnabled(true);
-        jButton6.setEnabled(true);
-        jButton7.setEnabled(true);
-        jButton8.setEnabled(true);
-        jButton9.setEnabled(true);
-        jMenu3.setEnabled(true);
-        jMenu4.setEnabled(true);
-        jMenu5.setEnabled(true);
+        newRulesTBButton.setEnabled(true);
+        newWordListTBButton.setEnabled(true);
+        addCorpusTBButton.setEnabled(true);
+        tagCorpusTBButton.setEnabled(true);
+        extractTemplatesTBButton.setEnabled(true);
+        searchTBButton.setEnabled(true);
+        rulesMenu.setEnabled(true);
+        wordListsMenu.setEnabled(true);
+        corpusMenu.setEnabled(true);
         rightPane.setEnabled(true);
         rightPane.add(new ProjectPanel(proj));
         SRLGUIApp.getApplication().clearAllEdits();
@@ -1497,16 +1499,16 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         if(pluginMenu == null)
             return;
         int idx;
-        for(idx = 0; idx < jMenu6.getComponentCount(); idx++) {
-            if(jMenu6.getComponent(idx) instanceof JSeparator) {
+        for(idx = 0; idx < toolsMenu.getComponentCount(); idx++) {
+            if(toolsMenu.getComponent(idx) instanceof JSeparator) {
                 break;
             }
         }
-        if(idx == jMenu6.getComponentCount()) {
+        if(idx == toolsMenu.getComponentCount()) {
             idx = 0;
-            jMenu6.add(new JSeparator(),0);
+            toolsMenu.add(new JSeparator(),0);
         }
-        jMenu6.add(pluginMenu,idx);
+        toolsMenu.add(pluginMenu,idx);
     }
 
     private class CustomEncodingFilter extends javax.swing.filechooser.FileFilter {
@@ -1621,7 +1623,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         public Object doInBackground() throws Exception {
             try {
                 Corpus corpus = SRLGUIApp.getApplication().proj.corpus;
-                long lockID = corpus.reopenIndex(true);
+                long lockID = corpus.reopenIndex();
                 try {
                     int replaceDoc = 0; // 0=? 1=YES -1=NO
                     JPanel p = getPanel(SRLGUIApp.getApplication().SRL_CORPUS, "");
@@ -1651,21 +1653,20 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
                                 if(opt == 2) { replaceDoc = -1; }
                                 if(opt == 3) { replaceDoc = 1; }
                                 if(opt == 0 || opt == 2) {
-                                    corpus.updateDoc(fName, contents.toString());
+                                    corpus.updateDoc(fName, contents.toString(),false);
                                 }
                             } else if(replaceDoc == 1) {
-                                corpus.updateDoc(fName, contents.toString());
+                                corpus.updateDoc(fName, contents.toString(),false);
                             }
                         } else
-                            corpus.addDoc(fName, contents.toString(), tagged);
+                            corpus.addDoc(fName, contents.toString(), tagged,false);
                         if (p != null) {
                             ((CorpusDocumentPanel) p).addDoc(fName);
                         }
                     }
                 } finally {
-                    corpus.closeIndex(lockID);
+                    corpus.optimizeIndex(lockID);
                 }
-                corpus.optimizeIndex();
             } catch (Exception x) {
                 error(x, "Could not add documents to corpus");
             }
@@ -1683,14 +1684,14 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     }
     
     public void enableSave() {
-        jButton3.setEnabled(true);
-        jMenuItem1.setEnabled(true);
-        jMenuItem23.setEnabled(true);
+        saveProjTBButton.setEnabled(true);
+        saveProjectMenuItem.setEnabled(true);
+        saveProjectAsMenuItem.setEnabled(true);
     }
     
     public void disableSave() {
-        jButton3.setEnabled(false);
-        jMenuItem1.setEnabled(false);
+        saveProjTBButton.setEnabled(false);
+        saveProjectMenuItem.setEnabled(false);
     }
 
     private class TagCorpusTask extends Task implements mccrae.tools.process.ProgressMonitor {
@@ -1703,7 +1704,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             try {
                 CorpusExtractor ce = new CorpusExtractor(SRLGUIApp.getApplication().proj.corpus);
                 LinkedList<CorpusExtractor.Overlap> overlaps = new LinkedList<CorpusExtractor.Overlap>();
-                ce.tagCorpus(SRLGUIApp.getApplication().proj.entityRulesets,overlaps, this);
+                ce.tagCorpus(SRLGUIApp.getApplication().proj.entityRulesets,overlaps, this, false);
                 if(overlaps.isEmpty())
                     JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Corpus tagging complete", "Corpus tagger", JOptionPane.INFORMATION_MESSAGE);
                 else {
@@ -1742,7 +1743,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         public Object doInBackground() throws Exception {
             try {
                 CorpusExtractor ce = new CorpusExtractor(SRLGUIApp.getApplication().proj.corpus);
-                ce.extractTemplates(SRLGUIApp.getApplication().proj.templateRulesets, this);
+                ce.extractTemplates(SRLGUIApp.getApplication().proj.templateRulesets, this,false);
                 JOptionPane.showMessageDialog(SRLGUIApp.getApplication().getMainFrame(), "Template Extraction Complete", "Template Extraction", JOptionPane.INFORMATION_MESSAGE);
             } catch(IOException x) {
                 error(x, "Corpus Tagging Failed");
@@ -2042,14 +2043,14 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
 
     void onUndoableEditAdd() {
         UndoManager undoManager = SRLGUIApp.getApplication().undoManager;
-        jButton10.setEnabled(undoManager.canUndo());
-        jButton10.setToolTipText(undoManager.canUndo() ? undoManager.getUndoPresentationName() : "Cannot undo");
-        jMenuItem15.setEnabled(undoManager.canUndo());
-        jMenuItem15.setToolTipText(undoManager.canUndo() ? undoManager.getUndoPresentationName() : "Cannot undo");
-        jButton11.setEnabled(undoManager.canRedo());
-        jButton11.setToolTipText(undoManager.canRedo() ? undoManager.getRedoPresentationName() : "Cannot redo");
-        jMenuItem16.setEnabled(undoManager.canRedo());
-        jMenuItem16.setToolTipText(undoManager.canRedo() ? undoManager.getRedoPresentationName() : "Cannot redo");
+        undoTBButton.setEnabled(undoManager.canUndo());
+        undoTBButton.setToolTipText(undoManager.canUndo() ? undoManager.getUndoPresentationName() : "Cannot undo");
+        undoMenuItem.setEnabled(undoManager.canUndo());
+        undoMenuItem.setToolTipText(undoManager.canUndo() ? undoManager.getUndoPresentationName() : "Cannot undo");
+        redoTBButton.setEnabled(undoManager.canRedo());
+        redoTBButton.setToolTipText(undoManager.canRedo() ? undoManager.getRedoPresentationName() : "Cannot redo");
+        redoMenuItem.setEnabled(undoManager.canRedo());
+        redoMenuItem.setToolTipText(undoManager.canRedo() ? undoManager.getRedoPresentationName() : "Cannot redo");
     }
 
     @Action
@@ -2381,55 +2382,28 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton10;
-    private javax.swing.JButton jButton11;
-    private javax.swing.JButton jButton15;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JButton jButton8;
-    private javax.swing.JButton jButton9;
-    private javax.swing.JMenu jMenu2;
-    private javax.swing.JMenu jMenu3;
-    private javax.swing.JMenu jMenu4;
-    private javax.swing.JMenu jMenu5;
-    private javax.swing.JMenu jMenu6;
-    private javax.swing.JMenuItem jMenuItem1;
-    private javax.swing.JMenuItem jMenuItem10;
-    private javax.swing.JMenuItem jMenuItem11;
-    private javax.swing.JMenuItem jMenuItem12;
-    private javax.swing.JMenuItem jMenuItem13;
-    private javax.swing.JMenuItem jMenuItem14;
-    private javax.swing.JMenuItem jMenuItem15;
-    private javax.swing.JMenuItem jMenuItem16;
-    private javax.swing.JMenuItem jMenuItem2;
-    private javax.swing.JMenuItem jMenuItem20;
-    private javax.swing.JMenuItem jMenuItem21;
-    private javax.swing.JMenuItem jMenuItem22;
-    private javax.swing.JMenuItem jMenuItem23;
-    private javax.swing.JMenuItem jMenuItem24;
-    private javax.swing.JMenuItem jMenuItem25;
-    private javax.swing.JMenuItem jMenuItem26;
-    private javax.swing.JMenuItem jMenuItem27;
-    private javax.swing.JMenuItem jMenuItem28;
-    private javax.swing.JMenuItem jMenuItem3;
-    private javax.swing.JMenuItem jMenuItem4;
-    private javax.swing.JMenuItem jMenuItem5;
-    private javax.swing.JMenuItem jMenuItem6;
-    private javax.swing.JMenuItem jMenuItem7;
-    private javax.swing.JMenuItem jMenuItem8;
-    private javax.swing.JMenuItem jMenuItem9;
+    private javax.swing.JButton addCorpusTBButton;
+    private javax.swing.JMenuItem addRuleMenuItem;
+    private javax.swing.JMenuItem addRuleSetMenuItem;
+    private javax.swing.JMenuItem addToCorpusMenuItem;
+    private javax.swing.JMenuItem addWLSMenuItem;
+    private javax.swing.JMenuItem addWordListMenuItem;
+    private javax.swing.JMenu corpusMenu;
+    private javax.swing.JMenuItem deleteRuleSetMenuItem;
+    private javax.swing.JMenu editMenu;
+    private javax.swing.JMenuItem entityTagMenuItem;
+    private javax.swing.JMenuItem extractTemplatesMenuItem;
+    private javax.swing.JButton extractTemplatesTBButton;
+    private javax.swing.JButton helpTBButton;
+    private javax.swing.JMenuItem importRuleSetMenuItem;
+    private javax.swing.JMenuItem importTaggedMenuItem;
+    private javax.swing.JMenuItem importWLSMenuItem;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator10;
     private javax.swing.JToolBar.Separator jSeparator11;
     private javax.swing.JToolBar.Separator jSeparator12;
     private javax.swing.JToolBar.Separator jSeparator13;
-    private javax.swing.JSeparator jSeparator14;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JToolBar.Separator jSeparator3;
     private javax.swing.JToolBar.Separator jSeparator4;
@@ -2438,16 +2412,42 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JSeparator jSeparator7;
     private javax.swing.JSeparator jSeparator8;
     private javax.swing.JSeparator jSeparator9;
-    private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JMenuItem languageDescriptionMenuItem;
     private javax.swing.JPanel mainPanel;
+    private javax.swing.JToolBar mainToolBar;
     private javax.swing.JTree mainTree;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JButton newProjTBButton;
     private javax.swing.JMenuItem newProjectMenuItem;
+    private javax.swing.JButton newRulesTBButton;
+    private javax.swing.JButton newWordListTBButton;
+    private javax.swing.JButton openProjTBButton;
+    private javax.swing.JMenuItem openProjectMenuItem;
+    private javax.swing.JMenuItem plugInsMenuItem;
     private javax.swing.JProgressBar progressBar;
+    private javax.swing.JMenuItem redoMenuItem;
+    private javax.swing.JButton redoTBButton;
+    private javax.swing.JMenuItem removeRuleMenuItem;
+    private javax.swing.JMenuItem removeWordListMenuItem;
     private javax.swing.JTabbedPane rightPane;
+    private javax.swing.JMenu rulesMenu;
+    private javax.swing.JButton saveProjTBButton;
+    private javax.swing.JMenuItem saveProjectAsMenuItem;
+    private javax.swing.JMenuItem saveProjectMenuItem;
+    private javax.swing.JMenuItem searchMenuItem;
+    private javax.swing.JButton searchTBButton;
+    private javax.swing.JMenuItem settingMenuItem;
     private javax.swing.JLabel statusAnimationLabel;
     private javax.swing.JLabel statusMessageLabel;
     private javax.swing.JPanel statusPanel;
+    private javax.swing.JButton tagCorpusTBButton;
+    private javax.swing.JMenu toolsMenu;
+    private javax.swing.JMenuItem undoMenuItem;
+    private javax.swing.JButton undoTBButton;
+    private javax.swing.JMenuItem wikiMenuItem;
+    private javax.swing.JMenu wordListsMenu;
+    private javax.swing.JMenuItem writeTaggedMenuItem;
+    private javax.swing.JMenuItem writeTemplatesMenuItem;
     // End of variables declaration//GEN-END:variables
     private final Timer messageTimer;
     private final Timer busyIconTimer;

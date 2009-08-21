@@ -10,6 +10,7 @@
  */
 package srl.gui;
 
+import java.awt.Image;
 import org.jdesktop.application.Application;
 import org.jdesktop.application.SingleFrameApplication;
 
