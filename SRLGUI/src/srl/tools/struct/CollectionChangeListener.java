@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2008, National Institute of Informatics
  *
  * This file is part of SRL, and is free
@@ -7,16 +7,15 @@
  *
  * A copy of this licence is included in the distribution in the file
  * licence.html, and is also available at http://www.fsf.org/licensing/licenses/info/GPLv2.html.
-*/
-package mccrae.tools.process;
+ */
+package srl.tools.struct;
 
 /**
- * Monitor the progress of some process
- * @author john
+ * A listener for changes to a collection. See classes such as
+ * listenable list
+ * 
+ * @author John McCrae
  */
-public interface ProgressMonitor {
-    /** A message about the current operation of the process */
-    public void setMessageVal(String s);
-    /** The processes progress (between 0 and 1) */
-    public void setProgressVal(float f);
+public interface CollectionChangeListener<E> {
+    public void collectionChanged(CollectionChangeEvent<E> e);
 }

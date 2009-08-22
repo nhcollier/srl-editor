@@ -26,7 +26,7 @@ PARSER_BEGIN(SrlParser)
  */
 package srl.rule.parser;
 import srl.rule.*;
-import mccrae.tools.struct.Pair;
+import mccrae.srl.tools.struct.Pair;
 
 public class SrlParser {
     private static int autoVarNum = 0;

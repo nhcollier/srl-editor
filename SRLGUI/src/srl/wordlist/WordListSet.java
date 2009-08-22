@@ -13,8 +13,8 @@ package srl.wordlist;
 import java.util.*;
 import java.io.*;
 import java.util.regex.*;
-import mccrae.tools.strings.Strings;
-import mccrae.tools.struct.*;
+import srl.tools.strings.Strings;
+import srl.tools.struct.*;
 import org.apache.lucene.analysis.*;
 import srl.corpus.Processor;
 

@@ -48,10 +48,9 @@ public class OptionalLiteral implements TypeExpr {
     /**
      * Does this match?
      * @param token The current token
-     * @param no The token number
+     * @param tokenNo The token number
      * @param stack The fork stack... may be used if there are partial matches
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(literal != null) {
@@ -89,7 +88,6 @@ public class OptionalLiteral implements TypeExpr {
 
     /**
      * Can this end. Depeneds on the next statements
-     * @return
      */
     public boolean canEnd() {
         return next.canEnd();
@@ -97,7 +95,6 @@ public class OptionalLiteral implements TypeExpr {
 
     /**
      * Create an exact copy of this
-     * @return
      */
     public TypeExpr copy() {
         if(literal != null)

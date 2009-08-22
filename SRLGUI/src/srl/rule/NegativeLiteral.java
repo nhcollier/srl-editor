@@ -53,7 +53,6 @@ public class NegativeLiteral implements TypeExpr {
      * @param tokenNo The token number (ignoed)
      * @param stack The fork stack (ignored)
      * @param lookBackStack The reverse stack
-     * @return
      */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(literal != null) {
@@ -82,7 +81,6 @@ public class NegativeLiteral implements TypeExpr {
 
     /**
      * Can this end. Answer depends on following matchers
-     * @return
      */
     public boolean canEnd() {
         return next.canEnd();
@@ -90,7 +88,6 @@ public class NegativeLiteral implements TypeExpr {
 
     /**
      * Create an exact copy
-     * @return
      */
     public TypeExpr copy() {
         if(literal != null) 

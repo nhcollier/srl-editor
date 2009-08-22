@@ -87,6 +87,7 @@ public class Processor {
         "srl.corpus.pre.PreSplitter"
     };
 
+    /** The plugins currently loaded */
     public static final LinkedList<ProcessorPlugin> plugins = new LinkedList<ProcessorPlugin>();
 
 
@@ -174,16 +175,21 @@ public class Processor {
             return s;
         }
     }
-    
+
+    /** Get the analyzer class name */
     public String getAnalyzerName() { return analyzer; }
+    /** Get the tokenizer class name */
     public String getTokenizerName() { return tokenizer; }
+    /** Get the splitter class name */
     public String getSplitterName() { return splitter; }
+    /** Get the language name */
     public String getName() { return name; }
 
     /**
-     * Ignore. Used for 0.1.7a to 1.0rc1 transition
-     * @param analyzer
-     * @return
+     * Get language for analyzer class name. Used to transition 0.1.7a or earlier projects
+     * to new format.
+     * @param analyzer The analyzer class value
+     * @return The corresponding language name
      */
     public static String getLang(String analyzer) {
         for(int i = 0; i < analyzers.length; i++) {

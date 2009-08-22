@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2008, National Institute of Informatics
  *
  * This file is part of SRL, and is free
@@ -8,8 +8,9 @@
  * A copy of this licence is included in the distribution in the file
  * licence.html, and is also available at http://www.fsf.org/licensing/licenses/info/GPLv2.html.
  */
-package mccrae.tools.struct;
+package srl.tools.struct;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -22,11 +23,15 @@ import java.util.Map.Entry;
  * @see CollectionChangeListener
  * @author John McCrae
  */
-public class ListenableMap<K, V> extends AbstractMap<K, V> {
+public class ListenableMap<K, V> extends AbstractMap<K, V> implements Serializable, Cloneable {
 
     Map<K, V> map;
-    List<CollectionChangeListener<V>> listeners;
+    transient List<CollectionChangeListener<V>> listeners;
 
+    /**
+     * Create a new instance
+     * @param map The map to listen to
+     */
     public ListenableMap(Map<K, V> map) {
         this.map = map;
         listeners = new LinkedList<CollectionChangeListener<V>>();
@@ -38,14 +43,28 @@ public class ListenableMap<K, V> extends AbstractMap<K, V> {
         }
     }
 
+    /**
+     * Add a listener
+     * @param listener The listener
+     */
     public void addCollectionChangeListener(CollectionChangeListener<V> listener) {
         listeners.add(listener);
     }
 
+    /**
+     * Remove a listener
+     * @param listener The listener
+     */
     public void removeCollectionChangeListener(CollectionChangeListener<V> listener) {
         listeners.remove(listener);
     }
 
+    /**
+     * Put an element in the map
+     * @param key The element key
+     * @param value The element value
+     * @return The previous value of the key
+     */
     @Override
     public V put(K key, V value) {
         V oldVal = map.get(key);
@@ -55,12 +74,21 @@ public class ListenableMap<K, V> extends AbstractMap<K, V> {
 
     }
 
+    /**
+     * Get an element by its key
+     * @param key The key
+     * @return The element value
+     */
     @Override
     public V get(Object key) {
         return map.get(key);
     }
     
 
+    /**
+     * Get the entry set
+     * @return The entry set
+     */
     @Override
     public Set<Entry<K, V>> entrySet() {
         return new ListenableSet(map.entrySet());
@@ -115,6 +143,10 @@ public class ListenableMap<K, V> extends AbstractMap<K, V> {
         }
     }
 
+    /**
+     * Get the size of the map
+     * @return The size of the map
+     */
     @Override
     public int size() {
         return map.size();

@@ -13,7 +13,7 @@ import java.util.TreeSet;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
-import mccrae.tools.struct.Counter;
+import srl.tools.struct.Counter;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.BeginTagToken;
 import srl.corpus.Corpus;

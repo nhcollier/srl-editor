@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2008, National Institute of Informatics
  *
  * This file is part of SRL, and is free
@@ -8,7 +8,8 @@
  * A copy of this licence is included in the distribution in the file
  * licence.html, and is also available at http://www.fsf.org/licensing/licenses/info/GPLv2.html.
  */
-package mccrae.tools.struct;
+package srl.tools.struct;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -19,11 +20,14 @@ import java.util.*;
  * @see CollectionChangeListener
  * @author John McCrae
  */
-public class ListenableList<E> extends AbstractList<E> {
+public class ListenableList<E> extends AbstractList<E> implements Cloneable, Serializable {
     List<E> list;
-    List<CollectionChangeListener<E>> listeners;
+    transient List<CollectionChangeListener<E>> listeners;
     
-    
+    /**
+     * Create a new instance
+     * @param list A List object to listen to
+     */
     public ListenableList(List<E> list) {
         this.list = list;
         listeners = new LinkedList<CollectionChangeListener<E>>();
@@ -35,20 +39,37 @@ public class ListenableList<E> extends AbstractList<E> {
         }
     }
     
-    
+    /**
+     * Add a change listener
+     * @param listener The listener
+     */
     public void addCollectionChangeListener(CollectionChangeListener<E> listener) {
         listeners.add(listener);
     }
-    
+
+    /**
+     * Remove a change listener
+     * @param listener The listener
+     */
     public void removeCollectionChangeListener(CollectionChangeListener<E> listener) {
         listeners.remove(listener);
     }
-    
+
+    /**
+     * Get the size of the list
+     */
     @Override
     public int size() {
         return list.size();
     }
-    
+
+    /**
+     * Set the element at a specific index
+     * @param index The index
+     * @param element The element
+     * @return The element previously at the specified index
+     */
+
     @Override
     public E set(int index, E element) {
         E oldVal = list.get(index);
@@ -57,7 +78,11 @@ public class ListenableList<E> extends AbstractList<E> {
         return rv;
     }
 
-
+    /**
+     * Remove an element at a specific index
+     * @param index The index
+     * @return The element at the index
+     */
     @Override
     public E remove(int index) {
         E oldVal = list.get(index);
@@ -66,6 +91,11 @@ public class ListenableList<E> extends AbstractList<E> {
         return rv;
     }
 
+    /**
+     * Remove an element
+     * @param o The element
+     * @return <code>true</code> if the list changed
+     */
     @Override
     public boolean remove(Object o) {
         Integer index = list.indexOf(o);
@@ -126,24 +156,42 @@ public class ListenableList<E> extends AbstractList<E> {
         }
         
     }
-    
+
+    /**
+     * Get a list iterator
+     * @param index The first index
+     * @return The iterator object
+     */
     @Override
     public ListIterator<E> listIterator(int index) {
         return new ListenableListIterator(list.listIterator(index));
     }
 
-
+    /**
+     * Get an iterator
+     * @return The iterator object
+     */
     @Override
     public Iterator<E> iterator() {
         return new ListenableListIterator(list.listIterator());
     }
 
+    /**
+     * Add an element at a specific index
+     * @param index The index
+     * @param element The element
+     */
     @Override
     public void add(int index, E element) {
         list.add(index, element);
         fireEvent(new CollectionChangeEvent<E>(null, element, (Integer)index));
     }
 
+    /**
+     * Add an element to the end of the list
+     * @param e The element
+     * @return <code>true</code> (as the list has changed)
+     */
     @Override
     public boolean add(E e) {
         boolean rval = list.add(e);
@@ -151,6 +199,11 @@ public class ListenableList<E> extends AbstractList<E> {
         return rval;
     }
 
+    /**
+     * Get the element at a specific index
+     * @param index The index
+     * @return The element
+     */
     @Override
     public E get(int index) {
         return list.get(index);

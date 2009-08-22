@@ -16,8 +16,7 @@ import org.apache.lucene.analysis.*;
 import srl.corpus.token.StandardTokenizer;
 
 /**
- * Sentence splitter implementation. This is loosely based on the one
- * used in GATE only with some common sense applied.
+ * Sentence splitter implementation. 
  * @author John McCrae, National Institute of Informatics
  */
 public class StandardSplitter implements Splitter {
@@ -107,7 +106,7 @@ public class StandardSplitter implements Splitter {
       * Split a string into sentences. Uses srl.corpus.token.StandardTokenizer for
       * tokenization but includes whitespace as is.
       * @return The tokens split into sentences
-      * @see StandardTokenizer#tokenize(String)
+      * @see srl.corpus.token.StandardTokenizer
       */
      public List<SrlDocument> split(String string, String docName) {
          DFSMState currentState = initial;

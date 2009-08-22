@@ -12,18 +12,22 @@ package srl.corpus;
 
 import java.util.HashSet;
 import java.util.Set;
-import mccrae.tools.strings.Strings;
-import mccrae.tools.struct.Pair;
+import srl.tools.strings.Strings;
+import srl.tools.struct.Pair;
 
 /**
- * This represents a query on the Corpus object. Corpus can be queried on 3
- * indices, the raw text, matches to any word list and any tagged entities
+ * This represents a query on the Corpus object. Corpus can be queried on 4
+ * indices, the raw text, matches to any word list or word list set and any tagged entities
  * @author John McCrae, National Institute of Informatics
  */
 public class SrlQuery {
+    /** The string part of the query */
     public StringBuffer query;
+    /** The word lists in this query */
     public Set<String> wordLists;
+    /** The word list sets in this query */
     public Set<String> wordListSets;
+    /** The entities in this query */
     public Set<Pair<String,String>> entities;
     
     public SrlQuery() {

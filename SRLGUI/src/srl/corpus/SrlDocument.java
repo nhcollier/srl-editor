@@ -81,7 +81,6 @@ public class SrlDocument extends AbstractList<Token> {
 
     /** Returns the representation of this document. Note this does not include tags and
      * may not preserve formatting information
-     * @return
      */
     @Override
     public String toString() {

@@ -16,9 +16,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.text.AbstractDocument.ElementEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
-import mccrae.tools.struct.CollectionChangeEvent;
-import mccrae.tools.struct.CollectionChangeListener;
-import mccrae.tools.struct.Pair;
+import srl.tools.struct.CollectionChangeEvent;
+import srl.tools.struct.CollectionChangeListener;
+import srl.tools.struct.Pair;
 import srl.project.SrlProject;
 
 /**

@@ -13,7 +13,7 @@ package srl.rule;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 import java.util.*;
-import mccrae.tools.struct.*;
+import srl.tools.struct.*;
 
 /**
  * Matcher representing a single literal.
@@ -49,7 +49,6 @@ public class Literal implements TypeExpr {
      * @param no The token number (ignored)
      * @param stack The fork stack (ignored)
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termText().toLowerCase().equals(literal.toLowerCase())) {
@@ -61,7 +60,6 @@ public class Literal implements TypeExpr {
 
     /**
      * Set the next matcher
-     * @param te
      */
     public void setNext(TypeExpr te) {
         next = te;
@@ -77,7 +75,6 @@ public class Literal implements TypeExpr {
 
     /**
      * Get the literal.
-     * @return
      */
     public String getVal() {
         return literal;
@@ -106,7 +103,6 @@ public class Literal implements TypeExpr {
 
     /**
      * Create an exact copy of this matcher
-     * @return
      */
     public TypeExpr copy() {
         return new Literal(literal);

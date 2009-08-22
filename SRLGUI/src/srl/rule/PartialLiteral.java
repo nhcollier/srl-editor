@@ -57,10 +57,9 @@ public class PartialLiteral implements TypeExpr {
     /**
      * Does this match?
      * @param token The current token
-     * @param no The token number
+     * @param tokenNo The token number
      * @param stack The fork stack
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termLength() < partLiteral.length()) {
@@ -83,7 +82,6 @@ public class PartialLiteral implements TypeExpr {
 
     /**
      * Can this end? Always no
-     * @return
      */
     public boolean canEnd() {
         return false;
@@ -91,7 +89,6 @@ public class PartialLiteral implements TypeExpr {
 
     /**
      * Create an exact copy
-     * @return
      */
     public TypeExpr copy() {
         return new PartialLiteral(partLiteral, part);

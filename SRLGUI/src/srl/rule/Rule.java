@@ -17,11 +17,11 @@ import java.util.*;
 // A dummy state to denote the end of the rule
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import mccrae.tools.strings.Strings;
+import srl.tools.strings.Strings;
 import srl.corpus.SrlDocument;
 import srl.rule.parser.ParseException;
 import srl.rule.parser.SrlParser;
-import mccrae.tools.struct.*;
+import srl.tools.struct.*;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.BeginTagToken;
 import srl.corpus.EndTagToken;

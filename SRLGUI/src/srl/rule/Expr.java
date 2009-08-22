@@ -33,7 +33,6 @@ public interface Expr {
 
     /**
      * Get the body of the rule
-     * @return
      */
     public List<TypeExpr> getBody();
 }

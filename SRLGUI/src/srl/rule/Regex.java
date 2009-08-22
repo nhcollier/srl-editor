@@ -48,7 +48,6 @@ public class Regex implements TypeExpr {
      * @param no The token number (ignored)
      * @param stack The fork stack (ignored)
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termText().matches(expression)) {
@@ -60,7 +59,6 @@ public class Regex implements TypeExpr {
 
     /**
      * Set the next matcher
-     * @param te
      */
     public void setNext(TypeExpr te) {
         next = te;
@@ -79,8 +77,6 @@ public class Regex implements TypeExpr {
     }
 
     /** Can this end. Always no
-     * 
-     * @return
      */
     public boolean canEnd() {
         return false;
@@ -96,7 +92,6 @@ public class Regex implements TypeExpr {
 
     /**
      * Create an exact copy
-     * @return
      */
     public TypeExpr copy() {
         return new Regex(expression);

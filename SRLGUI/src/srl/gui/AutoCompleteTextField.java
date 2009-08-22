@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.regex.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
-import mccrae.tools.struct.*;
+import srl.tools.struct.*;
 import srl.project.SrlProject;
 import srl.wordlist.WordList;
 import srl.wordlist.WordListSet;

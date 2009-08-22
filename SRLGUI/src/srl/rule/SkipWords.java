@@ -63,7 +63,6 @@ public class SkipWords implements TypeExpr {
      * @param stack The fork stack. This will be added to if there is a need for more
      * complex stacks
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         // Stack: Two options if next matches 1/ Return next.next 2/ Ignore, return this
@@ -152,7 +151,6 @@ public class SkipWords implements TypeExpr {
     /**
      * Can this matcher end. Depends on if the minimum number of tokens has been met and
      * the next elements.
-     * @return
      */
     public boolean canEnd() {
         if(i >= min)
@@ -172,7 +170,6 @@ public class SkipWords implements TypeExpr {
 
     /**
      * Create an exact copy
-     * @return
      */
     public TypeExpr copy() {
         return new SkipWords(min, max);

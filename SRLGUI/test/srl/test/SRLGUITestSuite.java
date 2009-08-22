@@ -42,7 +42,7 @@ import srl.wordlist.WordListSetTest;
 @Suite.SuiteClasses({SrlProjectTest.class,CorpusTest.class,WordListEntryTest.class,WordListSetTest.class,RuleTest.class,
 CorpusExtractorTest.class, SrlDocumentTest.class, StandardSplitterTest.class, BeginTagTest.class, CaseSensitiveLiteralTest.class,
 DummyNodeTest.class, EndTagTest.class, EntityTest.class, ListMatchTest.class, LiteralTest.class, NegativeLiteralTest.class,
-OptionalLiteralTest.class, OrthoTest.class, PartialLiteralTest.class, RegexTest.class, SkipWordsTest.class})
+OptionalLiteralTest.class, OrthoTest.class, PartialLiteralTest.class, RegexTest.class, SkipWordsTest.class, Finalize.class})
 public class SRLGUITestSuite {
 
     public static SrlProject proj;

@@ -13,7 +13,7 @@ package srl.wordlist;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import mccrae.tools.strings.Strings;
+import srl.tools.strings.Strings;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
 import srl.corpus.Processor;

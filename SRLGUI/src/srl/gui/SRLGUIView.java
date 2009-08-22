@@ -36,7 +36,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.tree.*;
 import javax.swing.undo.UndoManager;
-import mccrae.tools.jar.JarClassLoader;
+import srl.tools.jar.JarClassLoader;
 import srl.corpus.Corpus;
 import srl.corpus.CorpusConcurrencyException;
 import srl.corpus.CorpusExtractor;
@@ -1694,7 +1694,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         saveProjectMenuItem.setEnabled(false);
     }
 
-    private class TagCorpusTask extends Task implements mccrae.tools.process.ProgressMonitor {
+    private class TagCorpusTask extends Task implements srl.tools.process.ProgressMonitor {
 
         TagCorpusTask() {
             super(SRLGUIApp.getApplication());
@@ -1733,7 +1733,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         return new ExtractTemplatesTask();
     }
     
-    private class ExtractTemplatesTask extends Task implements mccrae.tools.process.ProgressMonitor {
+    private class ExtractTemplatesTask extends Task implements srl.tools.process.ProgressMonitor {
 
         public ExtractTemplatesTask() {
             super(SRLGUIApp.getApplication());

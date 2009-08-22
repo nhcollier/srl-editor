@@ -10,18 +10,16 @@
  */
 package srl.project;
 
-import java.io.IOException;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
-import java.lang.reflect.*;
-import mccrae.tools.struct.Pair;
-import org.apache.lucene.analysis.Analyzer;
+import srl.tools.struct.Pair;
 import srl.corpus.Processor;
 import srl.rule.Rule;
 import srl.rule.parser.ParseException;
 import srl.rule.parser.TokenMgrError;
 
 /**
+ * The XML parser for project files.
  * @author John McCrae, National Institute of Informatics
  */
 public class SrlProjectDocumentHandler extends DefaultHandler {

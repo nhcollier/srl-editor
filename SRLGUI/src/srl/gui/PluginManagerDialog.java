@@ -24,7 +24,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
-import mccrae.tools.jar.JarClassLoader;
+import srl.tools.jar.JarClassLoader;
 import org.jdesktop.application.Action;
 
 /**

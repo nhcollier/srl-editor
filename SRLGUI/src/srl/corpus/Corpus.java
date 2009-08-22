@@ -13,9 +13,9 @@ package srl.corpus;
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-import mccrae.tools.process.ProgressMonitor;
-import mccrae.tools.process.StopSignal;
-import mccrae.tools.strings.Strings;
+import srl.tools.process.ProgressMonitor;
+import srl.tools.process.StopSignal;
+import srl.tools.strings.Strings;
 import org.apache.lucene.index.*;
 import org.apache.lucene.store.*;
 import org.apache.lucene.document.*;
@@ -23,27 +23,32 @@ import org.apache.lucene.search.*;
 import org.apache.lucene.queryParser.*;
 import srl.rule.*;
 import srl.wordlist.*;
-import mccrae.tools.struct.*;
+import srl.tools.struct.*;
 
 /**
  * This class wraps Lucene to provide all the tools useful for
  * access to the corpus.
  * 
  * The corpus stores documents in two forms
- * 1/ Head File
- * Field "name": The document name as it appears in the document
- * Field "originalContents": The raw text of the document
- * Field "sentCount": The number of contexts this document is split into
- * Field "uid": A unique identifier (a long integer value)
+ * <ol><li> Head File</li>
+ *   <ul>
+ *      <li> Field "name": The document name as it appears in the document </li>
+ *      <li> Field "originalContents": The raw text of the document </li>
+ *      <li> Field "sentCount": The number of contexts this document is split into </li>
+ *      <li>  Field "uid": A unique identifier (a long integer value) </li>
+ *   </ul>
  * 
- * 2/ Context File
- * Field "name": Of the form "name #" where name is the document name and # is the context number
- * Field "contents": The tokenized contents of the context
- * Field "taggedContents": The tokenized contents with the tags
- * Field "extracted": The extracted templates
- * Field "wordlists": The wordlists containing terms in this context
- * Field "wordlistsets": The wordlist sets containing terms in this context
- * Field "uid": A unique identifier (a long integer value)
+ *   <li>Context File</li>
+ *   <ul>
+ *      <li> Field "name": Of the form "name #" where name is the document name and # is the context number </li>
+ *      <li> Field "contents": The tokenized contents of the context </li>
+ *      <li> Field "taggedContents": The tokenized contents with the tags </li>
+ *      <li> Field "extracted": The extracted templates </li>
+ *      <li> Field "wordlists": The wordlists containing terms in this context </li>
+ *      <li> Field "wordlistsets": The wordlist sets containing terms in this context </li>
+ *      <li> Field "uid": A unique identifier (a long integer value) </li>
+ *    </ul>
+ * </ol>
  * @author John McCrae, National Institute of Informatics
  */
 public class Corpus {
@@ -226,7 +231,7 @@ public class Corpus {
 
     /**
      * Reopen the index to add new documents. Same as reopenIndex(true)
-     * @return
+     * @return The Lock ID
      * @throws java.io.IOException
      * @throws srl.corpus.CorpusConcurrencyException
      */
@@ -275,7 +280,7 @@ public class Corpus {
     /**
      * Wait for the corpus to be unlocked.
      * @throws srl.corpus.CorpusConcurrencyException If this is called by thread that has the lock
-     * @returns The current lock value (if a thread dies while locking the corpus, the
+     * @return The current lock value (if a thread dies while locking the corpus, the
      * lock value is 'given' to the next thread via this method)
      */
     public synchronized long waitOnCorpusUnlock() throws CorpusConcurrencyException {
@@ -438,8 +443,8 @@ public class Corpus {
     }
     
 
-    public void clearTemplateExtractions() throws CorruptIndexException,IOException, CorpusConcurrencyException {
-   /*     System.err.println("Check efficiency");
+   /* public void clearTemplateExtractions() throws CorruptIndexException,IOException, CorpusConcurrencyException {
+        System.err.println("Check efficiency");
         if(indexSearcher == null)
             closeIndex();
         for (int i = 0; i < indexSearcher.maxDoc(); i++) {
@@ -456,8 +461,8 @@ public class Corpus {
                 closeIndex();
            
         }
-        return;*/
-    }
+        return;
+    }*/
 
     private Set<Pair<String, String>> wordListForDoc(String contents) {
         Set<Pair<String, String>> rval = new HashSet<Pair<String, String>>();
@@ -635,7 +640,7 @@ public class Corpus {
     }
 
     /**
-     * Change the contents of document in the corpus. If the document already exists
+     * Change the contents of document in the corpus. 
      * 
      * @param name The name of the document
      * @param contents The new contents
@@ -663,12 +668,13 @@ public class Corpus {
     
     
     /**
-     * Change the contents of document in the corpus. If the document already exists
+     * Change the contents of document in the corpus. 
      * 
-     * @param name The name of the document
+     * @param old The document
      * @param contents The new contents
      * @param wait If the corpus is being used by another thread, this parameter sets
      * whether the thread should wait or throw a CorpusConcurrencyException
+     * @param taggedContents The tagged contents, or null if no tagged contents exist
      * @throws CorpusConcurrencyException If the corpus is locked and wait is false
      * @throws java.io.IOException
      */
@@ -700,7 +706,7 @@ public class Corpus {
     /**
      * Change the content of a single context in the corpus. (Used if wordlist or other things change)
      * 
-     * @param String uid The uid (a field of the document)
+     * @param uids The unique identifiers
      * @param wait If the corpus is being used by another thread, this parameter sets
      * whether the thread should wait or throw a CorpusConcurrencyException
      * @throws CorpusConcurrencyException If the corpus is locked and wait is false
@@ -1017,7 +1023,12 @@ public class Corpus {
 
     }
 
-       protected void removeWordListElement(String name, String oldVal) {
+    /**
+     * Update all documents, that a word list element has been removed
+     * @param name The word list name
+     * @param oldVal The element removed
+     */
+    protected void removeWordListElement(String name, String oldVal) {
         try {
             if(indexSearcher == null)
                 closeIndex(0);
@@ -1044,6 +1055,11 @@ public class Corpus {
         }
     }
 
+       /**
+        * Update all document to a new word list element
+        * @param name The word list name
+        * @param newVal The new element
+        */
     protected void addWordListElement(String name, String newVal) {
         try {
             if(indexSearcher == null)

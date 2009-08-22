@@ -7,8 +7,6 @@ package srl.rule;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.*;
 import java.util.*;
-import mccrae.tools.struct.*;
-
 
 /**
  * This matcher represents an end tag. This does not correspond to a element of
@@ -42,7 +40,6 @@ public class EndTag implements TypeExpr {
      * @param tokenNo The token number (ignored)
      * @param stack The fork stack (ignored)
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token instanceof EndTagToken) {
@@ -73,7 +70,6 @@ public class EndTag implements TypeExpr {
 
     /**
      *  Are we at the end of a completed match. Answer is always no.
-     * @return
      */
     public boolean canEnd() {
         return false;
@@ -90,7 +86,6 @@ public class EndTag implements TypeExpr {
 
     /**
      * Create an exact copy
-     * @return
      */
     public TypeExpr copy() {
         return new EndTag(entityType);

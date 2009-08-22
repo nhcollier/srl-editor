@@ -12,7 +12,7 @@ package srl.rule;
 
 import srl.wordlist.*;
 import java.util.*;
-import mccrae.tools.struct.ListenableSet;
+import srl.tools.struct.ListenableSet;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.SrlQuery;
 
@@ -61,7 +61,6 @@ public class ListMatch implements TypeExpr {
      * @param no The token number
      * @param stack The fork stack... may be used if there are partial matches
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(matches == null) {
@@ -132,7 +131,6 @@ public class ListMatch implements TypeExpr {
     /**
      * Can this end. Always returns false, if it is possible for this to complete
      * this is handled by the fork stack (see "fire breathing dragons" example)
-     * @return
      */
     public boolean canEnd() {
         return false;
@@ -148,7 +146,6 @@ public class ListMatch implements TypeExpr {
 
     /**
      * Create an exact copy of this matcher
-     * @return
      */
     public TypeExpr copy() {
         return new ListMatch((set ? "%" : "@") + wordListName);

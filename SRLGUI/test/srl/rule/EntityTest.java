@@ -8,7 +8,7 @@ package srl.rule;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
-import mccrae.tools.struct.Pair;
+import srl.tools.struct.Pair;
 import org.apache.lucene.analysis.Token;
 import org.junit.After;
 import org.junit.AfterClass;

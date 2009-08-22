@@ -11,8 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import mccrae.tools.process.StopSignal;
-import mccrae.tools.struct.ListenableSet;
+import srl.tools.process.StopSignal;
+import srl.tools.struct.ListenableSet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Hits;
 import org.junit.After;
@@ -185,7 +185,7 @@ public class CorpusTest {
     public void testClearTemplateExtractions() throws Exception {
         System.out.println("clearTemplateExtractions");
         Corpus instance = SRLGUITestSuite.proj.corpus;
-        instance.clearTemplateExtractions();
+        //instance.clearTemplateExtractions();
     }
 
     /**

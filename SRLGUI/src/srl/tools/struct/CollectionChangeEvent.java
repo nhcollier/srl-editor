@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2008, National Institute of Informatics
  *
  * This file is part of SRL, and is free
@@ -8,7 +8,7 @@
  * A copy of this licence is included in the distribution in the file
  * licence.html, and is also available at http://www.fsf.org/licensing/licenses/info/GPLv2.html.
  */
-package mccrae.tools.struct;
+package srl.tools.struct;
 
 /**
  * The event for when a collection changes. This event stores the previous value,
@@ -35,15 +35,24 @@ public class CollectionChangeEvent<E> {
         this.newVal = newVal;
         this.reference = reference;
     }
-    
+
+    /**
+     * Get the old value
+     */
     public E getOldVal() {
         return oldVal;
     }
-    
+
+    /**
+     * Get the new value
+     */
     public E getNewVal() {
         return newVal;
     }
-    
+
+    /**
+     * Get the source of the event
+     */
     public Object getReference() {
         return reference;
     }

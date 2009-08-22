@@ -11,7 +11,7 @@
  */
 package srl.rule.parser;
 import srl.rule.*;
-import mccrae.tools.struct.Pair;
+import srl.tools.struct.Pair;
 
 /** Token Manager. */
 public class SrlParserTokenManager implements SrlParserConstants

@@ -15,12 +15,14 @@ import srl.corpus.token.*;
 
 
 /**
- * Identical to a Lucene token.
+ * A token from the tokenizer.
+ * @see org.apache.lucene.analysis.Token
  */
 public class SrlToken extends org.apache.lucene.analysis.Token {
     
     protected SrlToken(String s, int begin, int end) { super(s,begin,end); }
-    
+
+    /** Make a token. Used by srl.corpus.token.StandardTokenizer */
     public static SrlToken makeToken(String image, int kind, int begin, int end) {
 	if(kind == StandardTokenizerConstants.BEGIN_TAG) {
 	    return new BeginTagToken(image, begin, end);
@@ -30,7 +32,8 @@ public class SrlToken extends org.apache.lucene.analysis.Token {
 	    return new SrlToken(image, begin, end);
 	}
     }
-    
+
+    /** Make a token. Used by srl.corpus.token.PreTokenizer */
     public static SrlToken makeToken2(String image, int kind, int begin, int end) {
 	if(kind == PreTokenizerConstants.BEGIN_TAG) {
 	    return new BeginTagToken(image, begin, end);

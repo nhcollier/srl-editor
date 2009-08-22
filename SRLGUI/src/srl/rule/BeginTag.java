@@ -12,7 +12,7 @@ package srl.rule;
 
 import org.apache.lucene.analysis.Token;
 import srl.corpus.*;
-import mccrae.tools.struct.*;
+import srl.tools.struct.*;
 import java.util.*;
 
 /**
@@ -49,7 +49,6 @@ public class BeginTag implements TypeExpr {
      * @param tokenNo The token number (ignored)
      * @param stack The fork stack (ignored)
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int tokenNo, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token instanceof BeginTagToken) {
@@ -80,7 +79,6 @@ public class BeginTag implements TypeExpr {
 
     /**
      * Are we at the end of a completed match. Answer is always no
-     * @return
      */
     public boolean canEnd() {
         return false;
@@ -97,7 +95,6 @@ public class BeginTag implements TypeExpr {
 
     /**
      * Create an exact copy of this matcher.
-     * @return
      */
     public TypeExpr copy() {
         return new BeginTag(entityType,entityValue);

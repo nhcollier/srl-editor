@@ -11,7 +11,7 @@
 package srl.rule;
 
 import java.util.*;
-import mccrae.tools.strings.Strings;
+import srl.tools.strings.Strings;
 import srl.corpus.SrlQuery;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.BeginTagToken;
@@ -121,7 +121,6 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
 
     /** Are we at the end of a completed match. Entity rules depend on the body,
      * however template rules require an end tag to be found
-     * @return
      */
     public boolean canEnd() {
         if(ruleType == Rule.ENTITY_RULE)
@@ -246,7 +245,6 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
     }
     /**
      * Get the body
-     * @return
      */
     public List<TypeExpr> getBody() {
         return body;
@@ -254,7 +252,6 @@ public class Entity implements TypeExpr, Expr, Comparable<Entity> {
 
     /**
      * Copy this type expr. Note this implementation does not copy the body
-     * @return
      */
     public TypeExpr copy() {
         return new Entity(entityType, entityValue, var, ruleType);

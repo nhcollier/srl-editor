@@ -50,7 +50,6 @@ public class Ortho implements TypeExpr {
      * @param no The token number
      * @param stack The fork stack... may be used if there are partial matches
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         LOOP: for(String[] expBlock : expressions) {
@@ -160,7 +159,6 @@ public class Ortho implements TypeExpr {
 
     /**
      * Can this end. Always no
-     * @return
      */
     public boolean canEnd() {
         return false;
@@ -176,7 +174,6 @@ public class Ortho implements TypeExpr {
 
     /**
      * Create an exact copy
-     * @return
      */
     public TypeExpr copy() {
         return new Ortho(baseExpr);

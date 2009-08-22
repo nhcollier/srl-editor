@@ -11,10 +11,10 @@
 package srl.wordlist;
 
 import java.util.TreeSet;
-import mccrae.tools.struct.ListenableSet;
+import srl.tools.struct.ListenableSet;
 
 /**
- * A word list. This file has no functionality, it just provides a simple name 
+ * A word list. This file has no added functionality, it just provides a simple name
  * for word list objects.
  *
  * @author John McCrae, National Institute of Informatics

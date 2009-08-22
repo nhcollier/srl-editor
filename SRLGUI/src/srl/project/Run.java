@@ -11,7 +11,7 @@
 package srl.project;
 import java.io.*;
 import java.util.*;
-import mccrae.tools.struct.Pair;
+import srl.tools.struct.Pair;
 import org.apache.lucene.analysis.Token;
 import srl.corpus.BeginTagToken;
 import srl.corpus.CorpusExtractor;
@@ -20,26 +20,38 @@ import srl.corpus.SrlDocument;
 import srl.rule.Rule;
 import srl.rule.RuleSet;
 import gnu.getopt.Getopt;
-import mccrae.tools.strings.Strings;
 
 /**
+ * Command line interface. This is run as following
+ * <code>java -cp SRLGUI.jar srl.project.Run -p project_dir/ [-i input_file] [-o output_file]
+ *              [-n] [-e encoding]</code>
+ * <ul>
+ *   <li> <code>-p</code>: A project directory </li>
+ *   <li> <code>-i</code>: An input file (STDIN is used if no file is specified) </li>
+ *   <li> <code>-o</code>: An output file (STDOUT is used if no file is specified) </li>
+ *   <li> <code>-e</code>: The input file encoding (e.g., UTF-8, windows-1252) </li>
+ *   <li> <code>-n</code>: If specifed output tagged document, otherwise the template extractions </li>
+ * </ul>
+ *
  * @author John McCrae, National Institute of Informatics
  */
 public class Run {
 
     public static void main(String[] args) {
         PrintStream out = System.out;
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader in;
+        String inFile = null;
         SrlProject proj = null;
         boolean namedEntity = false;
+        String encoding = null;
         
-        Getopt opt = new Getopt("applyrules", args, "i:o:p:n");
+        Getopt opt = new Getopt("applyrules", args, "i:o:p:e:n");
         int c;
         try {
             while((c = opt.getopt()) != -1) {
                 switch(c) {
                     case 'i':
-                        in = new BufferedReader(new FileReader(opt.getOptarg()));
+                        inFile = opt.getOptarg();
                         break;
                     case 'o':
                         out = new PrintStream(new File(opt.getOptarg()));
@@ -49,8 +61,20 @@ public class Run {
                         break;
                     case 'n':
                         namedEntity = true;
+                        break;
+                    case 'e':
+                        encoding = opt.getOptarg();
+                        break;
+                        
                 }
             }
+            if(encoding != null && inFile != null)
+                in = new BufferedReader(new InputStreamReader(
+                        new FileInputStream(inFile), encoding));
+            else if(inFile != null)
+                in = new BufferedReader(new InputStreamReader(new FileInputStream(inFile)));
+            else
+                in = new BufferedReader(new InputStreamReader(System.in));
         } catch(Exception x) {
                 x.printStackTrace();
                 System.err.println("Could not initialize: " + x.getMessage());
@@ -64,7 +88,7 @@ public class Run {
         String s;
         try {
             while((s = in.readLine()) != null) {
-                doc.append(s);
+                doc.append(s + "\n");
             }
         
        

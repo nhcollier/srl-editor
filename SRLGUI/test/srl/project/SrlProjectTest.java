@@ -55,7 +55,8 @@ public class SrlProjectTest {
         File path = new File("test_project/");
         try {
             if(path.exists()) {
-                deleteDir(path);
+                System.err.println("For some reason the project already exists! I can't carry on the tests");
+                System.exit(0);
             }
         } catch(Exception x) {
             x.printStackTrace();

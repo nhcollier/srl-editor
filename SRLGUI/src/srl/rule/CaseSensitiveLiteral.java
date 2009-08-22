@@ -53,7 +53,6 @@ public class CaseSensitiveLiteral implements TypeExpr {
      * @param no The token number (ignored)
      * @param stack The fork stack (ignored)
      * @param lookBackStack The reverse stack (ignored)
-     * @return
      */
     public TypeExpr matches(Token token, int no, Stack<MatchFork> stack, List<Token> lookBackStack) {
         if(token.termText().equals(literal)) {
@@ -93,7 +92,6 @@ public class CaseSensitiveLiteral implements TypeExpr {
 
     /**
      * Are we at the end of a completed match. Answer is always no.
-     * @return
      */
     public boolean canEnd() {
         return false;

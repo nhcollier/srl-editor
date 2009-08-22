@@ -21,10 +21,10 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
-import mccrae.tools.process.ProgressMonitor;
-import mccrae.tools.process.StopSignal;
-import mccrae.tools.strings.Strings;
-import mccrae.tools.struct.Pair;
+import srl.tools.process.ProgressMonitor;
+import srl.tools.process.StopSignal;
+import srl.tools.strings.Strings;
+import srl.tools.struct.Pair;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.CorruptIndexException;
@@ -220,9 +220,14 @@ public class CorpusExtractor {
     
     /** Used to represent an overlap in tagging */
     public static class Overlap {
-
-        public Entity e1,  e2;
-        public SrlMatchRegion r1,  r2;
+        /** The first overlapping entity */
+        public Entity e1;
+        /** The second overlapping entity */
+        public Entity e2;
+        /** The region matched by the first entity */
+        public SrlMatchRegion r1;
+        /** The region matched by the second entity */
+        public SrlMatchRegion r2;
 
         public Overlap(Pair<Entity, SrlMatchRegion> m1, Pair<Entity, SrlMatchRegion> m2) {
             e1 = m1.first;
@@ -422,7 +427,7 @@ public class CorpusExtractor {
         if (corpus.isIndexOpen()) {
             corpus.closeIndex(0);
         }
-        corpus.clearTemplateExtractions();
+        //corpus.clearTemplateExtractions();
         final HashMap<String, List<String>> allMatches =
                 new HashMap<String, List<String>>();
         int i = 0;

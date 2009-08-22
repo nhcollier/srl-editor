@@ -1,15 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-package mccrae.tools.jar;
+package srl.tools.jar;
 import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
 /**
- * JarResources: JarResources maps all resources included in a
+ * JarResources maps all resources included in a
  * Zip or Jar file. Additionaly, it provides a method to extract one
  * as a blob.
  */

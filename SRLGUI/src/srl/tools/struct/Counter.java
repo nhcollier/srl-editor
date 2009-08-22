@@ -1,15 +1,16 @@
-/* 
+/*
  * Copyright (c) 2008, National Institute of Informatics
  *
- * This file is part of ALLOE, and is free
+ * This file is part of SRL, and is free
  * software, licenced under the GNU Library General Public License,
  * Version 2, June 1991.
  *
  * A copy of this licence is included in the distribution in the file
  * licence.html, and is also available at http://www.fsf.org/licensing/licenses/info/GPLv2.html.
-*/
-package mccrae.tools.struct;
+ */
+package srl.tools.struct;
 
+import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,7 +23,7 @@ import java.util.TreeMap;
  * 
  * @author John McCrae, National Institute of Informatics
  */
-public class Counter<E> extends AbstractSet<E> {
+public class Counter<E> extends AbstractSet<E> implements Serializable, Cloneable {
 
     private Map<E,Integer> map;
 
@@ -42,13 +43,25 @@ public class Counter<E> extends AbstractSet<E> {
             map = new HashMap<E,Integer>();
         }
     }
+
+    private Counter(Map<E,Integer> map) {
+        this.map = map;
+    }
     
-    
+    /**
+     * Get an iterator
+     * @return The iterator object
+     */
     @Override
     public Iterator<E> iterator() {
         return map.keySet().iterator();
     }
 
+    /**
+     * Get the size of the collection. (This is the number of object with a count
+     * greater than zero)
+     * @return The size of the collection
+     */
     @Override
     public int size() {
         return map.size();

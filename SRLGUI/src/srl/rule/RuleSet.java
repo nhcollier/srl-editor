@@ -12,7 +12,7 @@ package srl.rule;
 import java.util.*;
 import java.io.*;
 import srl.rule.parser.*;
-import mccrae.tools.struct.*;
+import srl.tools.struct.*;
 
 /**
  * Rule sets represents sets of rules. This is essentially a list
