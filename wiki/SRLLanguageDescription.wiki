@@ -13,7 +13,6 @@ template_rule := <head_expression> ":-" <body_expression>
 head_expression := <head> ( ";" <head> )*
 head := <id> "(" <var> ")"
 body_expression := ( "list" "(" <wordlist> ")" |
-		     "approx" "(" <wordlist> "," <number> "%" ")" |
 		     "ortho" "(" <literal> ")" |
 		     "words" "(" <number>? "," <number>? ")" |
 		     <literal> |
@@ -65,13 +64,6 @@ If the variable is not needed (i.e., the entity does not match to any heads), it
 
 The special form {{{entityType*(entityVal,var) { body } }}} is equivalent to the form
 {{{entityType(entityVal,var) { words(,) body words(,) } }}}. This means the entity contains the given body but is not limited. This feature can make template rules more concise.
-
-==approx:==
-Similar to {{{list}}} but applies approximate matching, the second parameter designates how fuzzy to be. This will match if the difference (defined as 1 minus Levenshtein distance over the length of the longest string) between the text and a word occurring in its list is no more the second parameter. (Hence 0% will match any string)
-
-E.g. {{{approx(@wordlist,90%)}}} matches “fire” “breathing” “dragons” (95% match)
-
-_Approx currently does not support multi-token entries in wordlists_
 
 ==begins,ends,contains:==
 {{{begins}}},{{{ends}}},{{{contains}}} match to a single word which begin, end or
