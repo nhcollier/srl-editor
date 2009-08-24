@@ -27,7 +27,7 @@ body_expression := ( "list" "(" <wordlist> ")" |
 entity_expression := <id> "*"? "(" <id> ( "," <var> )? ")" ( "{" <body_expression>† "}" )?
 <id> := A sequence of alphanumeric characters starting with a lowercase letter
 <var> := A sequence of alphanumeric characters starting with an uppercase letter
-<wordlist> := A “@” followed by alphanumeric characters
+<wordlist> := A "@" or "%" followed by alphanumeric characters
 <literal> := Any string enclosed by quotation marks
 }}}
 _† An entity expression's body is not allowed to contain another entity expression_
@@ -39,7 +39,7 @@ This is a template rule matching any sequence starting with “tested positive f
 
 {{{ :- "tested" "positive" "for" name(disease,D) { strmatches(@disease) } }}}
 ==list:==
-Matches a sequence of words from a word list.
+Matches a sequence of words from a word list or word list set. A word list identifier begins with "@" for example `@wordlist`. Alternatively the system can match to any word list in a particular set, this is done by using the word list set name with a "%" for example `%wordlistset`.
 
 E.g., {{{list(@wordlist)}}} where {{{@wordlist=(“cat”,”dog”,”fire breathing dragon”)}}} matches all three either “cat”, “dog” or “fire” “breathing” “dragon” (3 tokens).
 ==words:==
