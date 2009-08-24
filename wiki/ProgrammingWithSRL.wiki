@@ -41,7 +41,7 @@ The supported languages are
 Rules are organised into rule sets, individual rules can be accessed through the `rules` field. The key function for matching rules is `getMatch(SrlDocument,boolean)`. This requires an instantiated `SrlDocument` object and a second parameter turns on and off multiple matching. This returns the matches to each variable in the rule. The function `getHeads` applies the template rule and outputs the result in standard form.
 
 = Word lists =
-Word list are stored as sets of wordlists. Each set has an identifier and each list has itself a unique identifier. A wordlist can be found directly by calling the static function `getWordList`. A wordlist is then returned as a list of `WordList.Entry`. If (for some reason) you need to instantiate a WordList.Entry, use `WordList.getEntry()`.
+Word list are stored as sets of wordlists. Each set has an identifier and each list has itself a unique identifier. A word list can be found directly by calling the static function `getWordList`. A wordlist is then returned as a `WordList` object, which is a list of `WordListEntry`s.
 
 = Corpus =
 Corpus is a wrapper for Lucene and contains many functions. Any particular Document can be manipulated by `addDoc` and `removeDoc` and obtained by `getDoc`. Once a document is added it is stored in the Lucene database as multiple fields, a root document and for each sentence a sentence entry. A root document has the following fields
