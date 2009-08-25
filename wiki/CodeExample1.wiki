@@ -7,7 +7,7 @@ import srl.rule.*;
 import srl.wordlist.*;
 import java.util.*;
 import java.io.*;
-import mccrae.tools.struct.Pair;
+import srl.tools.struct.Pair;
 
 
 public class CodeExample1 {
@@ -15,11 +15,12 @@ public class CodeExample1 {
 	try {
 	    // Instantiate a new project with English language processing
 	    SrlProject project = new SrlProject(new File("codeexample1"),
-						new Processor("English"));
+						Processor.getProcessor("English"));
 	    
 	    // Add a document to the corpus
 	    project.corpus.addDoc("testDocName", 
-				  "This is the contents of the test document");
+				  "This is the contents of the test document", 
+				  true);
 	    
 	    // Create a rule set
 	    RuleSet ruleSet = new RuleSet(Rule.ENTITY_RULE, "testRuleSet");
@@ -38,16 +39,19 @@ public class CodeExample1 {
 						    entityRule));
 	    
 	    // Add a word list
-	    WordList wordListSet = new WordList("wordListSetName", 
-						project.processor);
+	    WordListSet wordListSet = new WordListSet("wordListSetName", 
+						      project.processor);
 	    project.wordlists.add(wordListSet);
 	    wordListSet.addList("wordListID");
 	    String[] wordListEntries = { "some", "words", "in", "this", "list" };
-	    WordList.addToList("wordListID",wordListEntries);
+	    WordListSet.addToList("wordListID",wordListEntries);
 	    
+	    // Create a corpus extractor object
+	    CorpusExtractor extractor = new CorpusExtractor(project.corpus);
+
 	    // Apply matching to corpus documents
 	    // 2nd parameter allows for overlap detection
-	    project.corpus.tagCorpus(project.entityRulesets,null);
+	    extractor.tagCorpus(project.entityRulesets,null,true);
 	    
 	    // Get the result
 	    List<String> results = project.corpus.getDocTaggedContents("testDocName");
@@ -56,7 +60,7 @@ public class CodeExample1 {
 	    }
 	    
 	    // Apply template rules
-	    project.corpus.extractTemplates(project.templateRulesets);
+	    extractor.extractTemplates(project.templateRulesets,true);
 	    
 	    // Get the result
 	    results = project.corpus.getDocTemplateExtractions("testDocName");
