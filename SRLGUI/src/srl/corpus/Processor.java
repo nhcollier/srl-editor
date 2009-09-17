@@ -177,11 +177,11 @@ public class Processor {
     }
 
     /** Get the analyzer class name */
-    public String getAnalyzerName() { return analyzer; }
+    //public String getAnalyzerName() { return analyzer; }
     /** Get the tokenizer class name */
-    public String getTokenizerName() { return tokenizer; }
+    //public String getTokenizerName() { return tokenizer; }
     /** Get the splitter class name */
-    public String getSplitterName() { return splitter; }
+    //public String getSplitterName() { return splitter; }
     /** Get the language name */
     public String getName() { return name; }
 
