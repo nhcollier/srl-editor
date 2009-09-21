@@ -280,16 +280,22 @@ public class Rule implements Expr, Comparable<Rule> {
     public List<String> getHeads(SrlDocument sentence) {
         List<String> rv = new LinkedList<String>();
         List<HashMap<Entity, SrlMatchRegion>> ents = getMatch(sentence, false);
-        Vector<Pair<Entity,SrlMatchRegion>> matches = srl.corpus.CorpusExtractor.sortMatches(ents);
-        for (Pair<Entity,SrlMatchRegion> map : matches) {
+        //Vector<Pair<Entity,SrlMatchRegion>> matches = srl.corpus.CorpusExtractor.sortMatches(ents);
+        for (HashMap<Entity,SrlMatchRegion> matches : ents) {
             StringBuffer headStr = new StringBuffer();
-            for (Head head : heads) {
+            LOOP: for (Head head : heads) {
                 if(headStr.length() > 0)
                     headStr.append(";");
                 if(head.var.matches("\".*\"")) {
                     headStr.append(head.name + "(" + head.var + ")");
-                } else if (map.first.var.equals(head.var)) {
-                    headStr.append(head.name + "(\"" + map.second.value.toString() + "\")");
+                } else {
+                    for(Map.Entry<Entity,SrlMatchRegion> match : matches.entrySet()) {
+                        if(match.getKey().var.equals(head.var)) {
+                            headStr.append(head.name + "(" + match.getValue().value + ")");
+                            continue LOOP;
+                        }
+                    }
+                    System.err.println(head.toString());
                 } 
             }
             rv.add(headStr.toString());

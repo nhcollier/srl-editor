@@ -337,6 +337,7 @@ public class SRLGUIView extends FrameView {
         settingMenuItem = new javax.swing.JMenuItem();
         javax.swing.JMenu helpMenu = new javax.swing.JMenu();
         wikiMenuItem = new javax.swing.JMenuItem();
+        jMenuItem1 = new javax.swing.JMenuItem();
         languageDescriptionMenuItem = new javax.swing.JMenuItem();
         jSeparator7 = new javax.swing.JSeparator();
         javax.swing.JMenuItem aboutMenuItem = new javax.swing.JMenuItem();
@@ -591,7 +592,6 @@ public class SRLGUIView extends FrameView {
         rulesMenu.add(importRuleSetMenuItem);
 
         deleteRuleSetMenuItem.setAction(actionMap.get("deleteRuleSet")); // NOI18N
-        deleteRuleSetMenuItem.setEnabled(false);
         deleteRuleSetMenuItem.setName("deleteRuleSetMenuItem"); // NOI18N
         rulesMenu.add(deleteRuleSetMenuItem);
 
@@ -599,12 +599,10 @@ public class SRLGUIView extends FrameView {
         rulesMenu.add(jSeparator5);
 
         addRuleMenuItem.setAction(actionMap.get("addRule")); // NOI18N
-        addRuleMenuItem.setEnabled(false);
         addRuleMenuItem.setName("addRuleMenuItem"); // NOI18N
         rulesMenu.add(addRuleMenuItem);
 
         removeRuleMenuItem.setAction(actionMap.get("removeRule")); // NOI18N
-        removeRuleMenuItem.setEnabled(false);
         removeRuleMenuItem.setName("removeRuleMenuItem"); // NOI18N
         rulesMenu.add(removeRuleMenuItem);
 
@@ -627,12 +625,10 @@ public class SRLGUIView extends FrameView {
         wordListsMenu.add(jSeparator8);
 
         addWordListMenuItem.setAction(actionMap.get("addWordListToSet")); // NOI18N
-        addWordListMenuItem.setEnabled(false);
         addWordListMenuItem.setName("addWordListMenuItem"); // NOI18N
         wordListsMenu.add(addWordListMenuItem);
 
         removeWordListMenuItem.setAction(actionMap.get("removeWordListFromSet")); // NOI18N
-        removeWordListMenuItem.setEnabled(false);
         removeWordListMenuItem.setName("removeWordListMenuItem"); // NOI18N
         wordListsMenu.add(removeWordListMenuItem);
 
@@ -700,6 +696,10 @@ public class SRLGUIView extends FrameView {
         wikiMenuItem.setAction(actionMap.get("openWiki")); // NOI18N
         wikiMenuItem.setName("wikiMenuItem"); // NOI18N
         helpMenu.add(wikiMenuItem);
+
+        jMenuItem1.setText(resourceMap.getString("jMenuItem1.text")); // NOI18N
+        jMenuItem1.setName("jMenuItem1"); // NOI18N
+        helpMenu.add(jMenuItem1);
 
         languageDescriptionMenuItem.setAction(actionMap.get("openLanguageDescription")); // NOI18N
         languageDescriptionMenuItem.setName("languageDescriptionMenuItem"); // NOI18N
@@ -1802,6 +1802,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             super(app);
         }
         @Override protected Object doInBackground() {
+            if(jfc == null)
+                jfc = new JFileChooser();
             jfc.setFileSelectionMode(jfc.DIRECTORIES_ONLY);
             try {
                 if(jfc.showOpenDialog(SRLGUIApp.getApplication().getMainFrame()) !=
@@ -1851,6 +1853,8 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             super(app);
         }
         @Override protected Object doInBackground() {
+            if(jfc == null)
+                jfc = new JFileChooser();
             jfc.setFileSelectionMode(jfc.DIRECTORIES_ONLY);
             try {
                 if(jfc.showOpenDialog(SRLGUIApp.getApplication().getMainFrame()) !=
@@ -2398,6 +2402,7 @@ private void mainTreeMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JMenuItem importRuleSetMenuItem;
     private javax.swing.JMenuItem importTaggedMenuItem;
     private javax.swing.JMenuItem importWLSMenuItem;
+    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator10;

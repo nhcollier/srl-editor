@@ -29,7 +29,7 @@ public class AutoCompleteTextField extends JTextArea {
     TreeSet<String> entitiesKeyWords = new TreeSet<String>();
     HashMap<String, TreeSet<String>> entityValues = new HashMap<String, TreeSet<String>>();
     TreeSet<String> wordLists = new TreeSet<String>();
-    public static final String[] KEY_WORDS = {"list","strmatches", "words", "approx", "regex", "ortho","begins","ends","contains","optional"};
+    public static final String[] KEY_WORDS = {"list","strmatches", "words","regex", "ortho","begins","ends","contains","optional"};
     PopUpWindow popupMenu;
     JWindow theMenu;
     boolean ignoreNextSpace = false;
@@ -188,14 +188,27 @@ public class AutoCompleteTextField extends JTextArea {
             Matcher m = Pattern.compile(".* ([a-z][A-Za-z0-9]*)").matcher(text);
             m.matches();
             showMatches(entitiesKeyWords.subSet(m.group(1), m.group(1) + "{"));
-        } else if (text.matches(".* (strmatches|list|approx)?\\s*\\(\\s*@\\w*")) {
-            Matcher m = Pattern.compile(".* (strmatches|list|approx)?\\s*\\(\\s*@(\\w*)").matcher(text);
+        } else if (text.matches(".* (strmatches|list|optional|not)\\s*\\(\\s*@\\w*")) {
+            Matcher m = Pattern.compile(".* (strmatches|list|optional|not)\\s*\\(\\s*@(\\w*)").matcher(text);
             m.matches();
             if (m.group(2) != null && m.group(2).length() > 0) {
                 showMatches(wordLists.subSet(m.group(2), m.group(2) + "{"));
             } else {
                 showMatches(wordLists);
             }
+        } else if(text.matches(".* (strmatches|list|optional|not)\\s*\\(\\s*%\\w*")) {
+            Matcher m = Pattern.compile(".* (strmatches|list|optional|not)\\s*\\(\\s*%(\\w*)").matcher(text);
+            m.matches();
+            TreeSet<String> setNames = new TreeSet<String>();
+            for(WordListSet wls : SRLGUIApp.getApplication().proj.wordlists) {
+                setNames.add(wls.name);
+            }
+            if(m.group(2) != null && m.group(2).length() > 0) {
+                showMatches(setNames.subSet(m.group(2), m.group(2) + "{"));
+            } else {
+                showMatches(setNames);
+            }
+
         } else {
             Matcher m = Pattern.compile(".* ([a-z][A-Za-z0-9]*)\\((\\w*)").matcher(text);
             if (!m.matches() || entityValues.get(m.group(1)) == null) {

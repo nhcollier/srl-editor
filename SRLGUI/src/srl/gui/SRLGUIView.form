@@ -443,7 +443,6 @@
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
                   <action class="srl.gui.SRLGUIView" id="deleteRuleSet" methodName="deleteRuleSet"/>
                 </Property>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="name" type="java.lang.String" value="deleteRuleSetMenuItem" noResource="true"/>
               </Properties>
             </MenuItem>
@@ -457,7 +456,6 @@
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
                   <action class="srl.gui.SRLGUIView" id="addRule" methodName="addRule"/>
                 </Property>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="name" type="java.lang.String" value="addRuleMenuItem" noResource="true"/>
               </Properties>
             </MenuItem>
@@ -466,7 +464,6 @@
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
                   <action class="srl.gui.SRLGUIView" id="removeRule" methodName="removeRule"/>
                 </Property>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="name" type="java.lang.String" value="removeRuleMenuItem" noResource="true"/>
               </Properties>
             </MenuItem>
@@ -506,7 +503,6 @@
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
                   <action class="srl.gui.SRLGUIView" id="addWordListToSet" methodName="addWordListToSet"/>
                 </Property>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="name" type="java.lang.String" value="addWordListMenuItem" noResource="true"/>
               </Properties>
             </MenuItem>
@@ -515,7 +511,6 @@
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
                   <action class="srl.gui.SRLGUIView" id="removeWordListFromSet" methodName="removeWordListFromSet"/>
                 </Property>
-                <Property name="enabled" type="boolean" value="false"/>
                 <Property name="name" type="java.lang.String" value="removeWordListMenuItem" noResource="true"/>
               </Properties>
             </MenuItem>
@@ -639,6 +634,12 @@
                   <action class="srl.gui.SRLGUIView" id="openWiki" methodName="openWiki"/>
                 </Property>
                 <Property name="name" type="java.lang.String" value="wikiMenuItem" noResource="true"/>
+              </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="jMenuItem1">
+              <Properties>
+                <Property name="text" type="java.lang.String" resourceKey="jMenuItem1.text"/>
+                <Property name="name" type="java.lang.String" value="jMenuItem1" noResource="true"/>
               </Properties>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="languageDescriptionMenuItem">

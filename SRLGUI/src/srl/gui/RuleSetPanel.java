@@ -24,11 +24,10 @@ import org.jdesktop.application.Action;
 import srl.rule.*;
 import javax.swing.table.*;
 import java.util.*;
-import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.undo.UndoableEdit;
 import srl.tools.process.StopSignal;
 import srl.tools.strings.Strings;
 import srl.tools.struct.Pair;
@@ -52,12 +51,17 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
     /** Creates new form RuleSetPanel */
     public RuleSetPanel(RuleSet ps) {
         initComponents();
+        initRuleList();
+
         ruleSet = ps;
-        DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
+        DefaultTableModel dtm = (DefaultTableModel) ruleList.getModel();
         ruleLookup = new HashMap<String, Rule>();
 
         for (int i = 0; i < ps.rules.size(); i++) {
-            dlm.addElement(ps.rules.get(i).first + ": " + ps.rules.get(i).second.toString());
+            Object[] objs = new Object[2];
+            objs[0] = ps.rules.get(i).first;
+            objs[1] = ps.rules.get(i).second.toString();
+            dtm.addRow(objs);
             ruleLookup.put(ps.rules.get(i).first, ps.rules.get(i).second);
         }
         commentField.getDocument().addDocumentListener(new DocumentListener() {
@@ -81,7 +85,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             }
         });
         if (ps.rules.size() > 0) {
-            ruleIDList.setSelectedIndex(0);
+            ruleList.getSelectionModel().setSelectionInterval(0, 0);
             ruleEditor.setEnabled(true);
             idEditor.setEnabled(true);
             commentField.setEnabled(true);
@@ -104,11 +108,86 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
                 ruleEditorActionPerformed(e);
             }
         });
+
+        ruleList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+
+            public void valueChanged(ListSelectionEvent arg0) {
+                ruleIDListValueChanged(arg0);
+            }
+        });
+        ruleList.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        TableColumn col = ruleList.getColumnModel().getColumn(0);
+        col.setMinWidth(40);
+        col.setMaxWidth(40);
+        col.setResizable(false);
+
     }
     private boolean dontMatch = false;
 
+    private void initRuleList() {
+        ruleList = new MultiLineTable();
+        ruleList.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "ID", "Rule"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        ruleList.setName("ruleList"); // NOI18N
+        jScrollPane1.setViewportView(ruleList);
+        ruleList.getColumnModel().getColumn(0).setCellRenderer(new MultiLineCellRenderer());
+        ruleList.getColumnModel().getColumn(1).setCellRenderer(new MultiLineCellRenderer());
+    }
+
     void addRule() {
         addButtonActionPerformed(null);
+    }
+
+    void ruleIDListValueChanged(javax.swing.event.ListSelectionEvent evt) {
+        if (oldSelectIndex >= 0 && oldSelectIndex != ruleList.getSelectedRow()) {
+            try {
+                Rule rule = Rule.ruleFromString(ruleEditor.getText(), ruleSet.ruleType);
+                rule.comment = commentField.getText();
+                ruleSet.rules.get(oldSelectIndex).second = rule;
+                ruleSet.rules.get(oldSelectIndex).first = idEditor.getText();
+                validateRule(rule);
+            } catch (ParseException x) {
+                if (JOptionPane.showConfirmDialog(this, "Rule syntax is not correct, discard changes?", "Can't save rule", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+                    int temp = oldSelectIndex;
+                    oldSelectIndex = -1;
+                    resetRuleEditor = false;
+                    ruleList.getSelectionModel().setSelectionInterval(temp, temp);
+                    return;
+                }
+            } catch (TokenMgrError x) {
+                if (JOptionPane.showConfirmDialog(this, "Rule syntax is not correct, discard changes?", "Can't save rule", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
+                    int temp = oldSelectIndex;
+                    oldSelectIndex = -1;
+                    resetRuleEditor = false;
+                    ruleList.getSelectionModel().setSelectionInterval(temp, temp);
+                    return;
+                }
+            }
+        }
+        if (ruleList.getSelectedRow() >= 0) {
+            onRuleSelect();
+        }
     }
 
     /** This method is called from within the constructor to
@@ -132,7 +211,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         removeButton = new javax.swing.JButton();
         addButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        ruleIDList = new javax.swing.JList();
+        ruleList = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
         showMatchButton = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -227,18 +306,33 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             }
         });
 
-        jScrollPane1.setMaximumSize(new java.awt.Dimension(258, 32767));
         jScrollPane1.setName("jScrollPane1"); // NOI18N
 
-        ruleIDList.setModel(new DefaultListModel());
-        ruleIDList.setMaximumSize(new java.awt.Dimension(250, 2000000));
-        ruleIDList.setName("ruleIDList"); // NOI18N
-        ruleIDList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                ruleIDListValueChanged(evt);
+        ruleList.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "ID", "Rule"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(ruleIDList);
+        ruleList.setName("ruleList"); // NOI18N
+        jScrollPane1.setViewportView(ruleList);
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -344,15 +438,15 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             return;
         }
         addRule(ruleID);
-        SRLGUIApp.getApplication().addUndoableEdit(new AddRuleEdit(ruleID, ruleIDList.getModel().getSize() - 1));
+        SRLGUIApp.getApplication().addUndoableEdit(new AddRuleEdit(ruleID, ruleList.getModel().getRowCount() - 1));
     }
 
     private void addRule(String ruleID) {
-        addRule(ruleID, ruleIDList.getModel().getSize());
+        addRule(ruleID, ruleList.getModel().getRowCount());
     }
 
     private void addRule(String ruleID, int idx) {
-        DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
+        DefaultTableModel dtm = (DefaultTableModel) ruleList.getModel();
         if (ruleLookup.containsKey(ruleID)) {
             JOptionPane.showMessageDialog(this, "ID already exists");
             return;
@@ -364,7 +458,8 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
         }
         ruleSet.rules.add(idx, new Pair<String, Rule>((String) ruleID, rule));
         ruleLookup.put(ruleID, rule);
-        dlm.add(idx, ruleID + ": " + rule.toString());
+        Object[] objs = {ruleID, rule.toString()};
+        dtm.insertRow(idx, objs);
         dontMatch = false;
     }//GEN-LAST:event_addButtonActionPerformed
 
@@ -373,7 +468,7 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
     }
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
-        int idx = ruleIDList.getSelectedIndex();
+        int idx = ruleList.getSelectedRow();
         if (idx < 0) {
             return;
         }
@@ -389,29 +484,29 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
             return;
         }
         ruleLookup.remove(ruleSet.rules.get(idx).first);
-        DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
-        dlm.removeElementAt(idx);
+        DefaultTableModel dtm = (DefaultTableModel) ruleList.getModel();
+        dtm.removeRow(idx);
         ruleSet.rules.remove(idx);
         idEditor.setText("");
         idEditor.setEditable(false);
         ruleEditor.setText("");
         ruleEditor.setEditable(false);
         matchesLabel.setText("Matches");
-        DefaultTableModel dtm = (DefaultTableModel) matchesTable.getModel();
-        dtm.setRowCount(0);
+        DefaultTableModel dtm2 = (DefaultTableModel) matchesTable.getModel();
+        dtm2.setRowCount(0);
         userChangeFlag = true;
         oldSelectIndex = -1;
     }//GEN-LAST:event_removeButtonActionPerformed
 
     public boolean onClose() {
-        if (ruleIDList.getSelectedIndex() == -1) {
+        if (ruleList.getSelectedRow() == -1) {
             return true;
         }
         try {
             Rule rule = Rule.ruleFromString(ruleEditor.getText(), ruleSet.ruleType);
             rule.comment = commentField.getText();
-            ruleSet.rules.get(ruleIDList.getSelectedIndex()).second = rule;
-            ruleSet.rules.get(ruleIDList.getSelectedIndex()).first = idEditor.getText();
+            ruleSet.rules.get(ruleList.getSelectedRow()).second = rule;
+            ruleSet.rules.get(ruleList.getSelectedRow()).first = idEditor.getText();
         } catch (ParseException x) {
             if (JOptionPane.showConfirmDialog(this, "Rule syntax is not correct, discard changes?", "Can't save rule", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
                 return false;
@@ -425,37 +520,6 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
     }
     private boolean resetRuleEditor = true;
 
-    private void ruleIDListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_ruleIDListValueChanged
-        if (oldSelectIndex >= 0 && oldSelectIndex != ruleIDList.getSelectedIndex()) {
-            try {
-                Rule rule = Rule.ruleFromString(ruleEditor.getText(), ruleSet.ruleType);
-                rule.comment = commentField.getText();
-                ruleSet.rules.get(oldSelectIndex).second = rule;
-                ruleSet.rules.get(oldSelectIndex).first = idEditor.getText();
-                validateRule(rule);
-            } catch (ParseException x) {
-                if (JOptionPane.showConfirmDialog(this, "Rule syntax is not correct, discard changes?", "Can't save rule", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
-                    int temp = oldSelectIndex;
-                    oldSelectIndex = -1;
-                    resetRuleEditor = false;
-                    ruleIDList.setSelectedIndex(temp);
-                    return;
-                }
-            } catch (TokenMgrError x) {
-                if (JOptionPane.showConfirmDialog(this, "Rule syntax is not correct, discard changes?", "Can't save rule", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION) {
-                    int temp = oldSelectIndex;
-                    oldSelectIndex = -1;
-                    resetRuleEditor = false;
-                    ruleIDList.setSelectedIndex(temp);
-                    return;
-                }
-            }
-        }
-        if (ruleIDList.getSelectedIndex() >= 0) {
-            onRuleSelect();
-        }
-    }//GEN-LAST:event_ruleIDListValueChanged
-
     private boolean isRuleID(String s) {
         if (!s.matches("\\w+") ||
                 !Character.isUpperCase(s.charAt(0))) {
@@ -465,42 +529,45 @@ public class RuleSetPanel extends javax.swing.JPanel implements Closeable {
     }
 
 private void idEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_idEditorActionPerformed
-        if (ruleIDList.getSelectedIndex() == -1) {
+        if (ruleList.getSelectedRow() == -1) {
             return;
         }
-        String oldRuleID = ruleSet.rules.get(ruleIDList.getSelectedIndex()).first;
+        String oldRuleID = ruleSet.rules.get(ruleList.getSelectedRow()).first;
         String ruleID = idEditor.getText();
         if (!isRuleID(ruleID)) {
             JOptionPane.showMessageDialog(this, "Rule ID must start with an uppercase letter and contain only word characters", "Invalid Rule ID",
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-        changeRuleID(ruleIDList.getSelectedIndex(), ruleID);
-        SRLGUIApp.getApplication().addUndoableEdit(new RuleIDChangeEdit(ruleIDList.getSelectedIndex(), oldRuleID, ruleID));
+        changeRuleID(ruleList.getSelectedRow(), ruleID);
+        SRLGUIApp.getApplication().addUndoableEdit(new RuleIDChangeEdit(ruleList.getSelectedRow(), oldRuleID, ruleID));
     }
 
     private void changeRuleID(int idx, String ruleID) {
         ruleSet.rules.get(idx).first = ruleID;
-        DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
-        dlm.setElementAt(ruleID + ": " + ruleEditor.getText(), idx);
+        DefaultTableModel dtm = (DefaultTableModel) ruleList.getModel();
+        Object[] objs = {ruleID, ruleEditor.getText()};
+        dtm.setValueAt(ruleID, idx, 0);
+        dtm.setValueAt(ruleEditor.getText(), idx, 1);
 }//GEN-LAST:event_idEditorActionPerformed
 
 private void ruleEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ruleEditorActionPerformed
-    if (ruleIDList.getSelectedIndex() == -1) {
+    if (ruleList.getSelectedRow() == -1) {
         return;
     }
     Rule rule;
     try {
-        String oldRule = ruleSet.rules.get(ruleIDList.getSelectedIndex()).second.toString();
+        String oldRule = ruleSet.rules.get(ruleList.getSelectedRow()).second.toString();
         rule = Rule.ruleFromString(ruleEditor.getText(), ruleSet.ruleType);
-        ruleSet.rules.get(ruleIDList.getSelectedIndex()).second = rule;
-        DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
-        String ruleID = ruleSet.rules.get(ruleIDList.getSelectedIndex()).first;
-        dlm.setElementAt(ruleID + ": " + rule.toString(), ruleIDList.getSelectedIndex());
+        ruleSet.rules.get(ruleList.getSelectedRow()).second = rule;
+        DefaultTableModel dtm = (DefaultTableModel) ruleList.getModel();
+        String ruleID = ruleSet.rules.get(ruleList.getSelectedRow()).first;
+        dtm.setValueAt(ruleID,ruleList.getSelectedRow(), 0);
+        dtm.setValueAt(rule.toString(), ruleList.getSelectedRow(), 1);
         rule.comment = commentField.getText();
         validateRule(rule);
         SRLGUIApp.getApplication().addUndoableEdit(new RuleChangeEdit(ruleID,
-                ruleIDList.getSelectedIndex(), oldRule, ruleEditor.getText(), rule.comment));
+                ruleList.getSelectedRow(), oldRule, ruleEditor.getText(), rule.comment));
         if (matcherThread != null && matcherThread.isAlive()) {
             matchFinder.sig.stop();
         }
@@ -511,12 +578,14 @@ private void ruleEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         }
     } catch (ParseException x) {
         JOptionPane.showMessageDialog(this, x.getMessage(), "Rule error", JOptionPane.WARNING_MESSAGE);
+    } catch (IllegalArgumentException x) {
+        JOptionPane.showMessageDialog(this, x.getMessage(), "Rule error", JOptionPane.WARNING_MESSAGE);
     }
 
 }//GEN-LAST:event_ruleEditorActionPerformed
 
     private void changeRule(String ruleID, int ruleIdx, String rule, String comment) {
-        if (ruleIdx == ruleIDList.getSelectedIndex()) { // Changing selected rule
+        if (ruleIdx == ruleList.getSelectedRow()) { // Changing selected rule
             ruleEditor.setText(rule);
             ruleEditorActionPerformed(null);
             return;
@@ -525,8 +594,9 @@ private void ruleEditorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         try {
             Rule newRule = Rule.ruleFromString(rule, ruleSet.ruleType);
             ruleSet.rules.get(ruleIdx).second = newRule;
-            DefaultListModel dlm = (DefaultListModel) ruleIDList.getModel();
-            dlm.setElementAt(ruleID + ": " + newRule.toString(), ruleIdx);
+            DefaultTableModel dtm = (DefaultTableModel) ruleList.getModel();
+            dtm.setValueAt(ruleID, ruleIdx, 0);
+            dtm.setValueAt(newRule.toString(), ruleIdx, 1);
             newRule.comment = comment;
             validateRule(newRule);
         } catch (ParseException x) {
@@ -636,13 +706,13 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
     private RuleMatchFinder matchFinder;
 
     private void onRuleSelect() {
-        if (oldSelectIndex == ruleIDList.getSelectedIndex()) {
+        if (oldSelectIndex == ruleList.getSelectedRow()) {
             return;
         }
-        Rule r = ruleSet.rules.get(ruleIDList.getSelectedIndex()).second;
+        Rule r = ruleSet.rules.get(ruleList.getSelectedRow()).second;
         if (resetRuleEditor) {
             ruleEditor.setText(r.toString());
-            idEditor.setText(ruleSet.rules.get(ruleIDList.getSelectedIndex()).first);
+            idEditor.setText(ruleSet.rules.get(ruleList.getSelectedRow()).first);
         } else {
             resetRuleEditor = true;
         }
@@ -658,7 +728,7 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
                 matcherThread.start();
             }
         }
-        oldSelectIndex = ruleIDList.getSelectedIndex();
+        oldSelectIndex = ruleList.getSelectedRow();
         ruleEditor.setEnabled(true);
         ruleEditor.setEditable(true);
         idEditor.setEnabled(true);
@@ -668,13 +738,13 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
     }
 
     private void onCommentChange() {
-        if (ruleIDList.getSelectedIndex() < 0) {
+        if (ruleList.getSelectedRow() < 0) {
             return;
         }
-        String oldComment = ruleSet.rules.get(ruleIDList.getSelectedIndex()).second.comment;
-        ruleSet.rules.get(ruleIDList.getSelectedIndex()).second.comment =
+        String oldComment = ruleSet.rules.get(ruleList.getSelectedRow()).second.comment;
+        ruleSet.rules.get(ruleList.getSelectedRow()).second.comment =
                 commentField.getText();
-        SRLGUIApp.getApplication().addUndoableEdit(new RuleCommentChangeEdit(ruleSet.rules.get(ruleIDList.getSelectedIndex()).first, ruleIDList.getSelectedIndex(), oldComment, commentField.getText()));
+        SRLGUIApp.getApplication().addUndoableEdit(new RuleCommentChangeEdit(ruleSet.rules.get(ruleList.getSelectedRow()).first, ruleList.getSelectedRow(), oldComment, commentField.getText()));
     }
     public HashMap<String, HashMap<Entity, SrlMatchRegion>> results = new HashMap<String, HashMap<Entity, SrlMatchRegion>>();
 
@@ -821,7 +891,7 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
 
         public void redo() throws CannotRedoException {
             undone = false;
-            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+            if (ruleIdx == ruleList.getSelectedRow()) {
                 idEditor.setText(newVal);
             }
             changeRuleID(ruleIdx, newVal);
@@ -829,7 +899,7 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
 
         public void undo() throws CannotUndoException {
             undone = true;
-            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+            if (ruleIdx == ruleList.getSelectedRow()) {
                 idEditor.setText(oldVal);
             }
             changeRuleID(ruleIdx, oldVal);
@@ -858,7 +928,7 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
 
         public void redo() throws CannotRedoException {
             undone = false;
-            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+            if (ruleIdx == ruleList.getSelectedRow()) {
                 ruleEditor.setText(newRule);
             }
             changeRule(ruleID, ruleIdx, newRule, comment);
@@ -866,7 +936,7 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
 
         public void undo() throws CannotUndoException {
             undone = true;
-            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+            if (ruleIdx == ruleList.getSelectedRow()) {
                 ruleEditor.setText(oldRule);
             }
             changeRule(ruleID, ruleIdx, oldRule, comment);
@@ -893,7 +963,7 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
 
         public void redo() throws CannotRedoException {
             undone = false;
-            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+            if (ruleIdx == ruleList.getSelectedRow()) {
                 userChangeFlag = false;
                 commentField.setText(newComment);
                 userChangeFlag = true;
@@ -903,7 +973,7 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
 
         public void undo() throws CannotUndoException {
             undone = true;
-            if (ruleIdx == ruleIDList.getSelectedIndex()) {
+            if (ruleIdx == ruleList.getSelectedRow()) {
                 userChangeFlag = false;
                 commentField.setText(oldComment);
                 userChangeFlag = true;
@@ -929,7 +999,7 @@ private void matchesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
     private javax.swing.JTable matchesTable;
     private javax.swing.JButton removeButton;
     private srl.gui.AutoCompleteTextField ruleEditor;
-    private javax.swing.JList ruleIDList;
+    private javax.swing.JTable ruleList;
     private javax.swing.JButton showMatchButton;
     // End of variables declaration//GEN-END:variables
 }
